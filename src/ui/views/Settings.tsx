@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import { GEAR, START, addDays, fmtShort } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
+import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 
 const HOWTO: [string, string][] = [
   ["Every weekday", "Cardio and strength. The Home screen shows today's session; the Plan tab shows the whole year. Weekends are rest or a make-up day."],
@@ -15,6 +16,33 @@ const HOWTO: [string, string][] = [
   ["Bad day", "Do 10 minutes and log it. Showing up is the whole game."],
   ["Not medical advice", "This app is a training guide, not medical advice. Check with a doctor before starting, and stop if something hurts."],
 ];
+
+const CHECK_TEXT: Record<CheckResult, string> = {
+  ready: "Update ready.",
+  current: "You're on the latest version.",
+  offline: "You're offline. Try again later.",
+  error: "Couldn't check. Try again later.",
+  unsupported: "Updates install automatically in the installed app.",
+};
+
+function VersionRow() {
+  const [status, setStatus] = useState<"idle" | "checking" | CheckResult>("idle");
+  const ready = useUpdateReady() || status === "ready";
+  const built = BUILT_AT.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", " + BUILT_AT.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const note = ready ? CHECK_TEXT.ready : status === "checking" ? "Checking for updates" : status === "idle" ? `Built ${built}` : CHECK_TEXT[status];
+  return (
+    <div className="setrow">
+      <span>App version<small aria-live="polite">{note}</small></span>
+      {ready ? (
+        <button className="chip solid" onClick={applyUpdate}>Refresh</button>
+      ) : (
+        <button className="chip" disabled={status === "checking"} onClick={async () => { setStatus("checking"); setStatus(await checkForUpdate()); }}>
+          {status === "checking" ? "Checking" : "Check"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 function GearList() {
   const { model, state, update } = useApp();
@@ -48,13 +76,13 @@ function GearList() {
   </>;
 }
 
-export function Profile() {
+export function Settings() {
   const { state, update, openSheet } = useApp();
   const [name, setName] = useState(state.settings.name || "");
   const [wt, setWt] = useState(state.settings.startWt ? String(state.settings.startWt) : "");
   return (
-    <section className="view stack" aria-label="Profile">
-      <h1 className="pagetitle">Profile</h1>
+    <section className="view stack" aria-label="Settings">
+      <h1 className="pagetitle">Settings</h1>
       <section className="card group">
         <label className="setrow" htmlFor="pName">
           <span>Name<small>For your greeting</small></span>
@@ -74,6 +102,7 @@ export function Profile() {
           <span>Backup<small>Move progress between devices</small></span>
           <span className="btnpair"><button className="chip" onClick={() => openSheet({ kind: "export" })}>Export</button><button className="chip" onClick={() => openSheet({ kind: "import" })}>Import</button></span>
         </div>
+        <VersionRow />
       </section>
       <GearList />
       <div className="sechead"><h3 style={{ fontSize: 24 }}>How it works</h3></div>

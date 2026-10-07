@@ -4,7 +4,7 @@ import { GEAR, milestones } from "./data";
 import { phaseOf } from "./plan";
 import type { Model } from "./types";
 
-export type TipAction = { type: "steps"; date: Date } | { type: "profile" };
+export type TipAction = { type: "steps"; date: Date } | { type: "settings" };
 export interface Tip { t: string; a?: string; action?: TipAction; adj?: boolean }
 
 /** The single most useful nudge for today. `hour` is the current local hour. */
@@ -16,7 +16,7 @@ export function coachTip(model: Model, hour: number): Tip | undefined {
   if (hour >= 18 && state.steps[dayKey(today)] == null) tips.push({ t: "End of the day. How many steps today?", a: "Add", action: { type: "steps", date: today } });
   if (phaseOf(curWeek) >= 1 && foot.swapped >= 2) tips.push({ t: `${foot.swapped} of your last ${foot.planned} runs went to the bike. Your legs need time on your feet for 13.1.` });
   const due = GEAR.filter((g) => g.wk <= curWeek && !state.gear[g.k] && g.need);
-  if (due.length) tips.push({ t: `Gear due: ${due[0].name}${due.length > 1 ? ` and ${due.length - 1} more` : ""}.`, a: "View", action: { type: "profile" } });
+  if (due.length) tips.push({ t: `Gear due: ${due[0].name}${due.length > 1 ? ` and ${due.length - 1} more` : ""}.`, a: "View", action: { type: "settings" } });
   if (milestones[curWeek]) tips.push({ t: milestones[curWeek] });
   const a: string[] = [];
   if (adapt.run) a.push(`running ${pctTxt(adapt.run)}`);

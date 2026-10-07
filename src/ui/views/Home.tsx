@@ -86,7 +86,7 @@ export function Home() {
   const tip = coachTip(model, now.getHours());
   const runTip = (t: Tip) => {
     if (t.action?.type === "steps") openSheet({ kind: "steps", date: t.action.date });
-    else if (t.action?.type === "profile") setTab("profile");
+    else if (t.action?.type === "settings") setTab("settings");
   };
 
   const last = timedCardioLogs(state).pop();

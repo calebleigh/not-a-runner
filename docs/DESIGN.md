@@ -22,7 +22,7 @@ Dark, rugged, sporty. One hero per screen, huge condensed numbers, very little t
 - **Plan:** race header card (days to race, miles, workouts, week progress), week pills W1 to W52, a session card per day. Tap a day for a sheet with everything for that day.
 - **Center + button:** sheet with big tiles for each thing to log.
 - **Stats:** month or all-time toggle, total distance in large type, four tiles, year chart, steps strip, goal times, weight, plan adjustments, history.
-- **Profile:** name, weight, sync, backup, gear checklist, how it works.
+- **Settings:** name, weight, storage, backup, app version and update check, gear checklist, how it works.
 
 ## Motion
 

@@ -5,14 +5,14 @@ import { SheetHost } from "./sheets";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Home } from "./views/Home";
 import { Plan } from "./views/Plan";
-import { Profile } from "./views/Profile";
+import { Settings } from "./views/Settings";
 import { Stats } from "./views/Stats";
 
 const TABS: { tab: Tab; label: string; icon: () => React.JSX.Element }[] = [
   { tab: "home", label: "Home", icon: Icon.home },
   { tab: "plan", label: "Plan", icon: Icon.plan },
   { tab: "stats", label: "Stats", icon: Icon.stats },
-  { tab: "profile", label: "Profile", icon: Icon.profile },
+  { tab: "settings", label: "Settings", icon: Icon.settings },
 ];
 
 function Toast() {
@@ -40,7 +40,7 @@ function Shell() {
         {tab === "home" && <Home />}
         {tab === "plan" && <Plan />}
         {tab === "stats" && <Stats />}
-        {tab === "profile" && <Profile />}
+        {tab === "settings" && <Settings />}
       </main>
     </div>
     <nav className="bnav" aria-label="Main">

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createStorage } from "../storage/store";
 import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
 
-export type Tab = "home" | "plan" | "stats" | "profile";
+export type Tab = "home" | "plan" | "stats" | "settings";
 export type SheetSpec =
   | { kind: "day"; w: number; d: number }
   | { kind: "cardio"; w: number; d: number; fromExtra?: number }
@@ -32,7 +32,7 @@ interface AppCtx {
 
 const Ctx = createContext<AppCtx | null>(null);
 const TAB_KEY = "tab";
-const TABS: Tab[] = ["home", "plan", "stats", "profile"];
+const TABS: Tab[] = ["home", "plan", "stats", "settings"];
 
 // A refresh keeps the current tab; opening the app fresh starts on Home (sessionStorage is per launch).
 function savedTab(): Tab {
