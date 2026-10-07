@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DN, RACE, WEEKS, daysBetween, fmtShort, hms, phaseOf, phases, totals, weekFrac, type CardioKind } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
-import { Grow, Num } from "../motion";
+import { Grow, Num, reducedMotion } from "../motion";
 
 const KC: Record<CardioKind, string> = { bike: "#FFA35C", walk: "#9A958F", run: "#FF6A13", long: "#FF6A13", test: "#FFD08A", race: "#FFD08A", rest: "#33302D" };
 
@@ -11,6 +11,19 @@ export function Plan() {
   const { curWeek, todayIdx, isWeekend, today } = model;
   const [planWeek, setPlanWeek] = useState(curWeek);
   const pillsRef = useRef<HTMLDivElement>(null);
+  const [jump, setJump] = useState(0);
+
+  // "Today" button: show the current week, bring today's card into view and flash it.
+  useEffect(() => {
+    if (!jump) return;
+    const card = document.querySelector<HTMLElement>(".sess.today") || document.querySelector<HTMLElement>(".sess");
+    card?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
+    if (card?.classList.contains("today")) {
+      card.classList.remove("flash");
+      void card.offsetWidth;
+      card.classList.add("flash");
+    }
+  }, [jump]);
 
   const T = totals(model), totMi = T.walk + T.run + T.bike;
   const daysLeft = Math.max(0, daysBetween(today, RACE));
@@ -51,7 +64,10 @@ export function Plan() {
         })}
       </div>
 
-      <div className="sechead"><span className="lbl">{vp.name}</span><span className="lbl">{fmtShort(w.s)} to {fmtShort(w.days[w.days.length - 1].date)}</span></div>
+      <div className="sechead">
+        <span className="lbl">{vp.name}<span className="sub2">{fmtShort(w.s)} to {fmtShort(w.days[w.days.length - 1].date)}</span></span>
+        <button className="todaybtn" onClick={() => { setPlanWeek(curWeek); setJump((j) => j + 1); }}>Today</button>
+      </div>
 
       {w.days.map((x) => {
         const c = x.c, lg = state.logs[x.ids[0]], cd = !!state.done[x.ids[0]], sd = x.ids[1] ? !!state.done[x.ids[1]] : true, all = cd && sd;

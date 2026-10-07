@@ -101,7 +101,7 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     }
     case "cardio":
       title = dayTitle(spec.w, spec.d) + ", cardio";
-      body = <CardioCard w={spec.w} d={spec.d} startOpen />;
+      body = <CardioCard w={spec.w} d={spec.d} startOpen fromExtra={spec.fromExtra} />;
       break;
     case "strength":
       title = dayTitle(spec.w, spec.d) + ", strength";

@@ -305,3 +305,20 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .filebtn:focus-within{outline:3px solid var(--sky);outline-offset:2px}
 .sheet-body{overscroll-behavior:contain}
+
+/* No pull-to-refresh or scroll chaining; the app is not a web page. */
+html,body{overscroll-behavior-y:none}
+/* Sheet title and close stay put while the sheet scrolls. */
+.sheet-head{position:sticky;top:-10px;z-index:3;background:var(--paper);margin:0 -16px 12px;padding:8px 16px 10px;box-shadow:0 1px 0 var(--line)}
+/* Two-tap delete: the armed state is red. */
+.btn.confirm,.btn.small.confirm,.btn.solid.confirm{background:var(--bad);border-color:var(--bad);color:var(--on-accent)}
+.xact{flex:none;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.btn.small.use{border-color:var(--accent);color:var(--accent)}
+.card p.fromx{color:var(--ink);font-weight:600;margin-top:12px}
+/* Plan: make today obvious and reachable. */
+.sess.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sechead .sub2{display:block;margin-top:3px;letter-spacing:.08em}
+.todaybtn{flex:none;align-self:center;border:0;border-radius:20px;padding:7px 14px;background:var(--accent-soft);color:var(--accent);font:700 14px var(--body);cursor:pointer}
+.todaybtn:active{transform:scale(.95)}
+@keyframes flash{0%,100%{box-shadow:inset 0 0 0 1px var(--accent)}50%{box-shadow:inset 0 0 0 3px var(--accent-hi),0 0 0 4px rgba(255,106,19,.25)}}
+.sess.today.flash{animation:flash .9s var(--ease) 2}

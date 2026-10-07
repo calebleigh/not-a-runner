@@ -5,7 +5,7 @@ import { computeModel, mergeState, startOfDay, type Model, type State } from "..
 export type Tab = "home" | "plan" | "stats" | "profile";
 export type SheetSpec =
   | { kind: "day"; w: number; d: number }
-  | { kind: "cardio"; w: number; d: number }
+  | { kind: "cardio"; w: number; d: number; fromExtra?: number }
   | { kind: "strength"; w: number; d: number }
   | { kind: "steps"; date: Date }
   | { kind: "weigh" }
@@ -31,6 +31,13 @@ interface AppCtx {
 }
 
 const Ctx = createContext<AppCtx | null>(null);
+const TAB_KEY = "tab";
+const TABS: Tab[] = ["home", "plan", "stats", "profile"];
+
+// A refresh keeps the current tab; opening the app fresh starts on Home (sessionStorage is per launch).
+function savedTab(): Tab {
+  try { const t = sessionStorage.getItem(TAB_KEY) as Tab; return TABS.includes(t) ? t : "home"; } catch { return "home"; }
+}
 const storage = createStorage();
 
 export function useApp(): AppCtx {
@@ -55,7 +62,7 @@ function useNow(): Date {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State | null>(null);
-  const [tab, setTabRaw] = useState<Tab>("home");
+  const [tab, setTabRaw] = useState<Tab>(savedTab);
   const [sheet, setSheet] = useState<SheetSpec | null>(null);
   const [toastMsg, setToastMsg] = useState<{ text: string; id: number } | null>(null);
   const now = useNow();
@@ -91,7 +98,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (stateRef.current) commit(mergeState(stateRef.current, incoming));
   }, [commit]);
 
-  const setTab = useCallback((t: Tab) => { setTabRaw(t); window.scrollTo(0, 0); }, []);
+  const setTab = useCallback((t: Tab) => {
+    setTabRaw(t);
+    window.scrollTo(0, 0);
+    try { sessionStorage.setItem(TAB_KEY, t); } catch { /* private mode */ }
+  }, []);
   const closeSheet = useCallback(() => setSheet(null), []);
 
   // Recompute the plan when state changes or the date rolls over (not every minute).

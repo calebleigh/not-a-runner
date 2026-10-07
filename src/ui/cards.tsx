@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
-  parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
+  applyExtraAsCardio, canUseAsCardio, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
 } from "../training";
 import { useApp } from "./app-state";
 
@@ -23,14 +23,27 @@ export function useSheetFocus<T extends HTMLElement>(enabled: boolean) {
 
 const num = (v: string) => (v.trim() === "" ? 0 : Number(v));
 
+/** Deletes need two taps: the first arms the button (red, "Confirm"), the second acts. */
+export function ConfirmButton({ className, label, confirmLabel, onConfirm }: { className: string; label: string; confirmLabel: string; onConfirm: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = window.setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <button className={className + (armed ? " confirm" : "")} onBlur={() => setArmed(false)}
+      onClick={() => { if (armed) { setArmed(false); onConfirm(); } else setArmed(true); }}>
+      {armed ? confirmLabel : label}
+    </button>
+  );
+}
+
 export function MarkBtn({ id }: { id: string }) {
   const { state, update } = useApp();
   const on = !!state.done[id];
-  return (
-    <button className={"btn" + (on ? " solid" : "")} onClick={() => update((s) => { if (on) delete s.done[id]; else s.done[id] = 1; })}>
-      {on ? "Done" : "Mark done"}
-    </button>
-  );
+  if (on) return <ConfirmButton className="btn solid" label="Done" confirmLabel="Confirm undo" onConfirm={() => update((s) => { delete s.done[id]; })} />;
+  return <button className="btn" onClick={() => update((s) => { s.done[id] = 1; })}>Mark done</button>;
 }
 
 function FeelPicker({ value, onPick }: { value?: Feel; onPick: (f: Feel) => void }) {
@@ -43,9 +56,12 @@ function FeelPicker({ value, onPick }: { value?: Feel; onPick: (f: Feel) => void
   );
 }
 
-function LogForm({ id, c, onClose }: { id: string; c: Cardio; onClose: () => void }) {
+/** An extra being moved into this cardio slot. */
+export interface FromExtra { w: number; d: number; index: number; extra: Extra }
+
+function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () => void; from?: FromExtra }) {
   const { state, update } = useApp();
-  const lg = state.logs[id];
+  const lg = state.logs[id] ?? (from ? { dist: from.extra.dist, time: from.extra.time, at: 0 } : undefined);
   const t = lg?.time || 0;
   const [dist, setDist] = useState(lg?.dist ? String(lg.dist) : c.kind === "test" && !lg ? "1" : "");
   const [min, setMin] = useState(t ? String(Math.floor(t / 60)) : "");
@@ -55,9 +71,10 @@ function LogForm({ id, c, onClose }: { id: string; c: Cardio; onClose: () => voi
   const ref = useSheetFocus<HTMLDivElement>(true);
   const save = () => {
     const d = num(dist) || 0, m = Math.floor(num(min)) || 0, s = Math.floor(num(sec)) || 0, h = Math.floor(num(hr)) || 0;
+    const log = { dist: Math.round(d * 100) / 100, time: m * 60 + s, feel, ...(h ? { hr: h } : {}) };
     update((st) => {
-      st.logs[id] = { dist: Math.round(d * 100) / 100, time: m * 60 + s, feel, at: Date.now() };
-      if (h) st.logs[id].hr = h;
+      if (from && applyExtraAsCardio(st, from.w, from.d, from.index, from.extra, c.kind, log, Date.now())) return;
+      st.logs[id] = { ...log, at: Date.now() };
       st.done[id] = 1;
     });
     onClose();
@@ -79,10 +96,12 @@ function LogForm({ id, c, onClose }: { id: string; c: Cardio; onClose: () => voi
   );
 }
 
-export function CardioCard({ w, d, startOpen = false }: { w: number; d: number; startOpen?: boolean }) {
+export function CardioCard({ w, d, startOpen = false, fromExtra }: { w: number; d: number; startOpen?: boolean; fromExtra?: number }) {
   const { model, state, update } = useApp();
   const day = dayAt(model, w, d)!;
   const id = day.ids[0], c = day.c, lg = state.logs[id], isDone = !!state.done[id];
+  const extra = fromExtra !== undefined && !isDone ? extrasFor(state, w, d)[fromExtra] : undefined;
+  const [from] = useState<FromExtra | undefined>(extra && { w, d, index: fromExtra!, extra });
   const [formOpen, setFormOpen] = useState<boolean>(startOpen && !isDone);
   const swapOpts: [("bike" | "walk" | "run"), string][] = [["bike", "Bike"], ["walk", "Walk"]];
   if (phaseOf(w) >= 1) swapOpts.push(["run", "Walk/run"]);
@@ -116,10 +135,11 @@ export function CardioCard({ w, d, startOpen = false }: { w: number; d: number; 
               <small>{[lg.dist ? (c.kind === "bike" ? mph(lg.time, lg.dist) : pace(lg.time, lg.dist)) : null, lg.hr ? `${lg.hr} bpm` : null, `~${cardioCal(state, kind, lg, w)} cal`, lg.feel ? "Felt " + FEEL[lg.feel].toLowerCase() : null].filter(Boolean).join(", ")}</small>
             </div>
           ) : null}
-          {formOpen ? <LogForm id={id} c={c} onClose={() => setFormOpen(false)} /> : isDone ? (
+          {formOpen && from && !isDone && <p className="fromx">From your extra activity: {from.extra.kind === "bike" ? "Bike" : "Walk"}{from.extra.label ? `, ${from.extra.label}` : ""}. Saving moves it here.</p>}
+          {formOpen ? <LogForm id={id} c={c} from={isDone ? undefined : from} onClose={() => setFormOpen(false)} /> : isDone ? (
             <div className="row2">
               <button className="btn small" onClick={() => setFormOpen(true)}>{lg ? "Edit log" : "Add details"}</button>
-              <button className="btn small" onClick={() => update((s) => { delete s.done[id]; delete s.logs[id]; })}>Undo</button>
+              <ConfirmButton className="btn small" label="Undo" confirmLabel="Confirm undo" onConfirm={() => update((s) => { delete s.done[id]; delete s.logs[id]; })} />
             </div>
           ) : (
             <button className="btn solid" onClick={() => setFormOpen(true)}>Log it</button>
@@ -150,7 +170,7 @@ export function StrengthCard({ w, d }: { w: number; d: number }) {
       {st.light ? <MarkBtn id={id} /> : isDone ? (
         <>
           <div className="logged">{lg?.feel ? `Felt ${FEEL[lg.feel].toLowerCase()}` : "Done"}</div>
-          <button className="btn small" onClick={() => update((s) => { delete s.done[id]; delete s.logs[id]; })}>Undo</button>
+          <ConfirmButton className="btn small" label="Undo" confirmLabel="Confirm undo" onConfirm={() => update((s) => { delete s.done[id]; delete s.logs[id]; })} />
         </>
       ) : (
         <>
@@ -255,8 +275,9 @@ function ExtraForm({ onSave, onCancel }: { onSave: (e: Extra) => void; onCancel:
 }
 
 export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number; startOpen?: boolean }) {
-  const { state, update } = useApp();
+  const { model, state, update, openSheet } = useApp();
   const key = `${w}-${d}`, list = extrasFor(state, w, d);
+  const canUse = canUseAsCardio(state, w, d, dayAt(model, w, d)?.c.kind);
   const [open, setOpen] = useState(startOpen);
   return (
     <section className="card">
@@ -268,7 +289,11 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
             <b>{x.kind === "bike" ? "Bike" : "Walk"}{x.label ? ": " + x.label : ""}</b>
             <small>{[x.steps ? `${x.steps.toLocaleString("en-US")} steps` : null, `${x.dist} mi`, x.time ? `${Math.round(x.time / 60)} min` : null, `~${cardioCal(state, x.kind, x, w)} cal`].filter(Boolean).join(", ")}</small>
           </div>
-          <button className="btn small inline" onClick={() => update((s) => { const l = [...(s.extras[key] || [])]; l.splice(i, 1); if (l.length) s.extras[key] = l; else delete s.extras[key]; })}>Remove</button>
+          <div className="xact">
+            {canUse && <button className="btn small inline use" onClick={() => openSheet({ kind: "cardio", w, d, fromExtra: i })}>Use as cardio</button>}
+            <ConfirmButton className="btn small inline" label="Remove" confirmLabel="Confirm remove"
+              onConfirm={() => update((s) => { const l = [...(s.extras[key] || [])]; l.splice(i, 1); if (l.length) s.extras[key] = l; else delete s.extras[key]; })} />
+          </div>
         </div>
       ))}
       {open ? (
