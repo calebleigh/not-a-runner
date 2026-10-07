@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppProvider, useApp, type Tab } from "./app-state";
 import { Icon } from "./icons";
 import { SheetHost } from "./sheets";
+import { UpdatePrompt } from "./UpdatePrompt";
 import { Home } from "./views/Home";
 import { Plan } from "./views/Plan";
 import { Profile } from "./views/Profile";
@@ -49,6 +50,7 @@ function Shell() {
     </nav>
     <SheetHost />
     <Toast />
+    <UpdatePrompt />
   </>;
 }
 

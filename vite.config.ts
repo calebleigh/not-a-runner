@@ -8,15 +8,14 @@ export default defineConfig({
     VitePWA({
       // sw.js and manifest.webmanifest keep the same paths as the old app so the
       // installed home screen icon and service worker upgrade in place.
-      registerType: "autoUpdate",
+      // New versions wait until the user taps the "Update ready" bar.
+      registerType: "prompt",
       filename: "sw.js",
       manifestFilename: "manifest.webmanifest",
       includeAssets: ["icon-180.png"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
       },
       manifest: {
         name: "St. George Half Training",
