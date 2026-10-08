@@ -192,7 +192,7 @@ function ExportBody() {
   const download = () => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([code], { type: "text/plain" }));
-    a.download = `half-training-backup-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `not-a-runner-backup-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };

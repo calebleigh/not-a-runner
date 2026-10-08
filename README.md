@@ -1,4 +1,4 @@
-# Half Training
+# Not a Runner
 
 Training app for people who don't like running. See `CLAUDE.md` and `docs/`.
 

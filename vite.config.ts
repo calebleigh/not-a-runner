@@ -22,9 +22,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: "St. George Half Training",
-        short_name: "Half Training",
-        description: "Training plan, logging and progress for the St. George Half.",
+        name: "Not a Runner",
+        short_name: "Not a Runner",
+        description: "Train for a race even if you hate running.",
         start_url: "./",
         scope: "./",
         display: "standalone",

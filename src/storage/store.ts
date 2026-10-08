@@ -31,6 +31,7 @@ function readLegacy(ls: KV | null): State | null {
   }
 }
 
+// The database keeps the app's original name so existing saved data still loads.
 export function createStorage(db: UseStore = createStore("half-training", "kv"), ls: KV | null = safeLocalStorage()): Storage_ {
   return {
     async load() {

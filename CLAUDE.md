@@ -2,7 +2,7 @@
 
 A training app for people who don't like running but want a real goal: a 5K, a half marathon, or just getting fit. Most running apps assume you want to be a runner. This one treats biking, walking and bodyweight strength as real training, eases people in, and adapts when knees hurt or life gets in the way.
 
-Working title is TBD. Read `docs/PRODUCT.md` before making product decisions.
+The app is called **Not a Runner**. Read `docs/PRODUCT.md` before making product decisions.
 
 ## Where things stand
 
