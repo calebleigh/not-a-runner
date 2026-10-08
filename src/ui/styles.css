@@ -300,7 +300,7 @@ html,body{overscroll-behavior-y:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-gear,.area-how{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-how{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -328,13 +328,11 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you data" "gear gear" "how how";gap:22px 18px}
-  .area-you{grid-area:you}.area-data{grid-area:data}.area-gear{grid-area:gear}.area-how{grid-area:how}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you data" "how how";gap:22px 18px}
+  .area-you{grid-area:you}.area-data{grid-area:data}.area-how{grid-area:how}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
-  /* Gear and How it works run in two columns across the full width. */
-  .gearlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
-  .gearlist .more,.gearlist .setnote{grid-column:1/-1}
+  /* How it works runs in two columns across the full width. */
   .howlist{columns:2;column-gap:32px}
   .howlist .acc{break-inside:avoid}
   .howlist .acc:last-child{border-bottom:1px solid var(--line)}
@@ -357,11 +355,6 @@ html,body{overscroll-behavior-y:none}
 
 /* Plan */
 .sub2{display:block;margin-top:3px;letter-spacing:.08em}
-.racep .trio .num{font-size:34px}
-.racep .trio .unit{font-size:14px}
-.racep .prog .bar{background:var(--surface2)}
-.racep .prog .bar i{background:linear-gradient(90deg,var(--accent-lo),var(--accent-hi))}
-.racep .prog b{color:var(--muted);font-weight:600}
 .weeksp .top{display:flex;justify-content:space-between;align-items:center}
 .wstrip{display:flex;gap:18px;overflow-x:auto;margin:10px -16px 0;padding:4px 16px 2px;scrollbar-width:none;scroll-behavior:smooth}
 .wstrip::-webkit-scrollbar{display:none}
@@ -406,6 +399,33 @@ html,body{overscroll-behavior-y:none}
 .sstat.todaytag{background:var(--accent);color:var(--on-accent)}
 .sstat.missed{background:var(--bad-soft);color:var(--bad)}
 .sstat.up{padding:0 4px;font:600 22px var(--body);color:var(--muted)}
-/* Plan shows today's hero only when there's room beside the session list. */
-.planhero{display:none}
-@media (min-width:900px){ .planhero{display:block} }
+
+/* Plan: countdown, phase panel, session list header */
+.countdown{flex:none;text-align:right;line-height:1}
+.countdown .num{display:block;font-size:44px}
+.countdown .lbl{font-size:11px}
+.phasep .top{display:flex;justify-content:space-between;align-items:baseline}
+.phasep .top b{font:700 15px var(--display);color:var(--accent);letter-spacing:.02em}
+.phname{font:800 30px/1 var(--display);margin:8px 0 4px}
+.phnote{margin:0;font-size:15px;color:var(--muted)}
+.phbar,.phlabels{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.phbar{margin-top:14px}
+.phbar span{position:relative;height:10px;border-radius:6px;background:var(--surface2);overflow:hidden}
+.phbar i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--accent-lo),var(--accent-hi));transition:width .9s var(--ease)}
+.phlabels{margin-top:6px}
+.phlabels small{font-size:11px;line-height:1.2;color:var(--muted)}
+.phlabels small.now{color:var(--accent);font-weight:700}
+.slhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--line)}
+.slhead b{flex:none;font:700 15px var(--display);color:var(--accent);letter-spacing:.02em}
+.slhead .lbl{line-height:1.2}
+.slist .srow:nth-child(2){border-top:0}
+
+/* Phones use overlay scrollbars; a page scrollbar here would push content out of line with the bottom nav. */
+@media (max-width:699px){
+  html{overflow-y:auto;scrollbar-gutter:auto;scrollbar-width:none}
+  html::-webkit-scrollbar{display:none}
+}
+.gearp .gitem{padding:0 16px}
+.gearp .gitem:last-of-type{border-bottom:0}
+.gearp .setnote{padding:14px 16px!important}
+.gearp .more{width:auto;margin:0 16px;padding-bottom:10px}

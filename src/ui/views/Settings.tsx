@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { GEAR, START, addDays, fmtShort } from "../../training";
 import { useApp } from "../app-state";
-import { Icon } from "../icons";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 
 const HOWTO: [string, string][] = [
-  ["Every weekday", "Cardio and strength. The Home screen shows today's session; the Plan tab shows the whole year. Weekends are rest or a make-up day."],
+  ["Every weekday", "Cardio and strength. The Home screen shows today's session; the Plan tab shows the whole year and your gear list. Weekends are rest or a make-up day."],
   ["Logging", "Tap the orange button. Enter miles, time, how it felt, and heart rate if you have the band. The plan adjusts itself from that."],
   ["Swapping", "Bike broken or knees sore? Swap any cardio to bike, walk or walk/run. The time adjusts so it's still a fair workout."],
   ["Steps", "Each evening, enter your full step total from Samsung Health. Steps are tracked on their own and never added to miles or calories."],
   ["Weigh-ins", "Mondays, first thing in the morning. Watch the trend line, not a single number."],
-  ["Gear", "Check off gear as you get it and your strength exercises upgrade to use it."],
+  ["Gear", "On the Plan tab. Check off gear as you get it and your strength exercises upgrade to use it."],
   ["Slow is correct", "If you can't talk in full sentences on cardio, slow down or walk."],
   ["Sharp knee pain", "Swap that cardio for the bike. Dull tiredness is fine, sharp pain is not."],
   ["Bad day", "Do 10 minutes and log it. Showing up is the whole game."],
@@ -42,38 +40,6 @@ function VersionRow() {
       )}
     </div>
   );
-}
-
-function GearList() {
-  const { model, state, update } = useApp();
-  const [showAll, setShowAll] = useState(false);
-  const [openK, setOpenK] = useState<string | null>(null);
-  const list = [...GEAR].sort((a, b) => a.wk - b.wk), owned = list.filter((g) => state.gear[g.k]).length;
-  const shown = showAll ? list : list.filter((g) => !state.gear[g.k]).slice(0, 6);
-  return <>
-    <div className="sechead"><h3 className="sectitle">Gear</h3><span className="lbl">{owned} of {list.length} owned</span></div>
-    <section className="card group gearlist">
-      {shown.map((g) => {
-        const due = addDays(START, (g.wk - 1) * 7), have = !!state.gear[g.k], over = !have && g.wk < model.curWeek, soon = !have && !over && g.wk <= model.curWeek + 2;
-        return (
-          <div className="gitem" key={g.k}>
-            <div className={"grow" + (have ? " owned" : "") + (over ? " overdue" : "") + (soon ? " soon" : "")}>
-              <span className="gcheck">
-                <input type="checkbox" checked={have} aria-label={g.name} onChange={(e) => { const on = e.target.checked; update((s) => { if (on) s.gear[g.k] = 1; else delete s.gear[g.k]; }); }} />
-                <span className="box"><Icon.box /></span>
-              </span>
-              <span className="gt"><b>{g.name}</b><small>{g.need ? "Need" : "Helpful"}, {g.cost}</small></span>
-              <span className="due">{have ? "Owned" : over ? "Overdue" : fmtShort(due)}</span>
-              <button className="ibtn" aria-label={`Why ${g.name}`} aria-expanded={openK === g.k} onClick={() => setOpenK(openK === g.k ? null : g.k)}>i</button>
-            </div>
-            {openK === g.k && <div className="gwhy">{g.why}{g.mp ? " Facebook Marketplace is fine for this one." : ""}</div>}
-          </div>
-        );
-      })}
-      {!shown.length && <p className="setnote" style={{ padding: "14px 0" }}>You have everything on the list.</p>}
-      <button className="more" onClick={() => setShowAll(!showAll)}>{showAll ? "Show only what's next" : `Show all ${list.length}, including owned`}</button>
-    </section>
-  </>;
 }
 
 export function Settings() {
@@ -112,7 +78,6 @@ export function Settings() {
         <VersionRow />
       </section>
       </div>
-      <div className="area-gear"><GearList /></div>
       <div className="area-how">
       <div className="sechead"><h3 className="sectitle">How it works</h3></div>
       <section className="card group howlist">

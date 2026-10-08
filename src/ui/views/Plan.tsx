@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  DN, RACE, WEEKS, dateOf, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, totals, weekFrac,
+  DN, RACE, dateOf, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac,
   type CardioKind, type Day,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { useMirroredState } from "../mirror";
 import { Grow, Num, reducedMotion } from "../motion";
-import { TodayHero } from "../TodayHero";
+import { GearList } from "../GearList";
 
 const KC: Record<CardioKind, string> = { bike: "#FFA35C", walk: "#9A958F", run: "#FF6A13", long: "#FF6A13", test: "#FFD08A", race: "#FFD08A", rest: "#33302D" };
 const DAY_SHORT = [...DN, "Sun"].map((d) => d.toUpperCase());
@@ -30,14 +30,11 @@ export function Plan() {
   const stripRef = useRef<HTMLDivElement>(null);
   const [jump, setJump] = useState(0);
 
-  const T = totals(model), totMi = T.walk + T.run + T.bike;
   const daysLeft = Math.max(0, daysBetween(today, RACE));
   const w = model.weeks[planWeek - 1], weekEnd = dateOf(planWeek, 6);
   const ids = w.days.flatMap((x) => x.ids), doneN = ids.filter((i) => state.done[i]).length;
-  const pct = Math.round(100 * doneN / ids.length);
   const isCur = planWeek === curWeek;
-  const weekMin = w.days.reduce((a, x) => a + x.c.m + (x.st ? x.st.min : 0), 0);
-  const wt = totals(model, (d) => d >= w.s && d <= weekEnd), weekMi = wt.walk + wt.run + wt.bike;
+  const ph = phaseOf(curWeek), P = phases[ph];
 
   // Keep the selected week tile in view.
   useLayoutEffect(() => {
@@ -84,18 +81,19 @@ export function Plan() {
           <div className="lbl">Race day, {RACE.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
           <h1>St. George Half</h1>
         </div>
-        <div className="wkbadge" style={{ ["--p" as string]: `${Math.round(100 * (curWeek - 1) / WEEKS)}%` }} title={`Week ${curWeek} of ${WEEKS}`}>
-          <span>W{curWeek}</span>
-        </div>
+        <div className="countdown"><span className="num"><Num value={daysLeft} /></span><span className="lbl">days to go</span></div>
       </div>
 
-      <section className="panelc racep">
-        <div className="trio">
-          <div><span className="num"><Num value={daysLeft} /></span><span className="lbl">Days to race</span></div>
-          <div><span className="num"><Num value={totMi} dec={1} /><span className="unit">mi</span></span><span className="lbl">Logged</span></div>
-          <div><span className="num"><Num value={Object.keys(state.done).length} /></span><span className="lbl">Workouts</span></div>
+      <section className="panelc phasep">
+        <div className="top"><span className="lbl">Phase {ph + 1} of {phases.length}</span><b>{P.to - curWeek + 1} weeks left</b></div>
+        <h3 className="phname">{P.name}</h3>
+        <p className="phnote">{P.note}</p>
+        <div className="phbar" aria-hidden="true">
+          {phases.map((p, i) => (
+            <span key={p.name}><Grow pct={i < ph ? 100 : i === ph ? Math.round(100 * (curWeek - p.from + 1) / (p.to - p.from + 1)) : 0} /></span>
+          ))}
         </div>
-        <div className="prog"><span className="bar"><Grow pct={Math.round(100 * (curWeek - 1) / WEEKS)} /></span><b>Week {curWeek} of {WEEKS}</b></div>
+        <div className="phlabels">{phases.map((p, i) => <small key={p.name} className={i === ph ? "now" : ""}>{p.name}</small>)}</div>
       </section>
 
       <section className="panelc weeksp">
@@ -126,25 +124,11 @@ export function Plan() {
 
       <div className="cols">
         <div className="col">
-          <section className="panelc vol" key={planWeek}>
-            <div className="top">
-              <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}</span></span>
+          <section className="panelc slist" aria-label="Sessions">
+            <div className="slhead">
+              <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}, {phases[phaseOf(planWeek)].name}</span></span>
               <b>{doneN} / {ids.length} done</b>
             </div>
-            <div className="meter">
-              <Grow pct={pct} />
-              <div className="mtxt"><span className="num"><Num value={pct} /><span className="unit">%</span></span><em>{phases[phaseOf(planWeek)].name}</em></div>
-            </div>
-            <div className="split">
-              <span>Planned <b>{Math.floor(weekMin / 60) ? `${Math.floor(weekMin / 60)}h ` : ""}{weekMin % 60}m</b></span>
-              <span>Logged <b>{weekMi.toFixed(1)} mi</b></span>
-            </div>
-          </section>
-          {isCur && <div className="planhero"><TodayHero /></div>}
-        </div>
-
-        <div className="col">
-          <section className="panelc slist" aria-label="Sessions">
             {rows.map((r) => (
               <button key={r.d} className={"srow " + r.status + (r.isToday ? " today" : "") + (r.rest ? " rest" : "")}
                 style={{ ["--kc" as string]: KC[r.kind] }} onClick={() => openSheet({ kind: "day", w: planWeek, d: r.d })}>
@@ -155,6 +139,7 @@ export function Plan() {
             ))}
           </section>
         </div>
+        <div className="col"><GearList /></div>
       </div>
     </section>
   );
