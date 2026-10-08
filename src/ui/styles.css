@@ -668,3 +668,10 @@ input[type="date"].txtin{width:150px}
 .rtx small{color:var(--muted);font-size:13px}
 .rwhen{flex:none;color:var(--muted);font-size:13px;font-weight:600}
 .rempty{margin:0;padding:6px 10px 12px;color:var(--muted);font-size:15px}
+
+/* Today's nudge: a quiet line under the greeting */
+.nudge{margin:8px 0 0;color:var(--muted);font-size:15px;line-height:1.35;text-wrap:pretty}
+.nudge button{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer}
+.nudge.adj{color:var(--ink)}
+.nudge.why{font-style:italic}
+.greet>div:first-child{min-width:0}

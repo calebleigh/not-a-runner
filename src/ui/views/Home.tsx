@@ -64,6 +64,13 @@ export function Home() {
           ) : (
             <h1>{name ? `Ready, ${name}?` : "Ready to move?"}</h1>
           )}
+          {tip ? (
+            <p className={"nudge" + (tip.adj ? " adj" : "")}>
+              {tip.t}{tip.a && <> <button onClick={() => runTip(tip)}>{tip.a}</button></>}
+            </p>
+          ) : why ? (
+            <p className="nudge why">{why}</p>
+          ) : null}
         </div>
         <div className="wkbadge" style={{ ["--p" as string]: `${Math.round(100 * (curWeek - 1) / model.spec.weeks)}%` }} title={`Week ${curWeek} of ${model.spec.weeks}`}>
           <span>W{curWeek}</span>
@@ -107,15 +114,6 @@ export function Home() {
       <div className="col">
       <div className="o5"><Recent /></div>
 
-      {tip ? (
-        <div className={"coach o4" + (tip.adj ? " adj" : "")}>
-          <span className="dot2" />
-          <span>{tip.t}</span>
-          {tip.a && <button onClick={() => runTip(tip)}>{tip.a}</button>}
-        </div>
-      ) : why ? (
-        <div className="coach why o4"><span className="dot2" /><span><small>Your why</small>{why}</span></div>
-      ) : null}
 
       {(() => {
         const q = quoteForWeek(curWeek);
