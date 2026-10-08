@@ -1,6 +1,5 @@
 import { pctTxt } from "./adapt";
 import { addDays, dayKey } from "./calendar";
-import { gearFor } from "./spec";
 import { phaseOf } from "./plan";
 import type { Model } from "./types";
 
@@ -15,8 +14,6 @@ export function coachTip(model: Model, hour: number): Tip | undefined {
   if (yd >= spec.start && state.steps[dayKey(spec, yd)] == null) tips.push({ t: "You haven't logged yesterday's steps.", a: "Add", action: { type: "steps", date: yd } });
   if (hour >= 18 && state.steps[dayKey(spec, today)] == null) tips.push({ t: "End of the day. How many steps today?", a: "Add", action: { type: "steps", date: today } });
   if (phaseOf(spec, curWeek) >= 1 && foot.swapped >= 2) tips.push({ t: `${foot.swapped} of your last ${foot.planned} runs went to the bike. Your legs need time on your feet for 13.1.` });
-  const due = gearFor(spec).filter((g) => g.week <= curWeek && !state.gear[g.k] && g.need);
-  if (due.length) tips.push({ t: `Gear due: ${due[0].name}${due.length > 1 ? ` and ${due.length - 1} more` : ""}.`, a: "View", action: { type: "plan" } });
   if (spec.milestones[curWeek]) tips.push({ t: spec.milestones[curWeek] });
   const a: string[] = [];
   if (adapt.run) a.push(`running ${pctTxt(adapt.run)}`);

@@ -58,3 +58,15 @@ describe("backup", () => {
     expect(m.settings.name).toBe("Zoë");
   });
 });
+
+describe("to-do backups", () => {
+  it("carries the to-do list through a backup and a merge", () => {
+    const s = emptyState();
+    s.todos.a = { text: "PT visit", at: 1 };
+    const back = decodeBackup(encodeBackup(s));
+    expect(back.todos).toEqual({ a: { text: "PT visit", at: 1 } });
+    const other = emptyState();
+    other.todos.b = { text: "Healthier snacks", at: 2, done: 3 };
+    expect(Object.keys(mergeState(back, other).todos).sort()).toEqual(["a", "b"]);
+  });
+});

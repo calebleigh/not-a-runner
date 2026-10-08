@@ -675,3 +675,13 @@ input[type="date"].txtin{width:150px}
 .nudge.adj{color:var(--ink)}
 .nudge.why{font-style:italic}
 .greet>div:first-child{min-width:0}
+
+/* To do */
+.todop .gitem{padding:0 16px}
+.todop .gitem:last-of-type{border-bottom:0}
+.todoadd{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.todoadd .txtin{flex:1;min-width:0;width:auto;text-align:left}
+.todoadd .chip{flex:none}
+.todop .more{padding:12px 16px 8px;text-align:left}
+.tdel{flex:none;min-width:30px;height:30px;padding:0 8px;border-radius:var(--rc);border:1px solid var(--line);background:none;color:var(--muted);font:700 15px var(--body);cursor:pointer}
+.tdel.confirm{background:var(--bad);border-color:var(--bad);color:#fff;font-size:13px}

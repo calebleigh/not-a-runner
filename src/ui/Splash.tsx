@@ -5,6 +5,27 @@ import { Logo } from "./Logo";
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LENGTH = REDUCED ? 700 : 1850;
 
+// Plays when the app opens from closed, and after an update. Folding or unfolding the phone also
+// reloads the page, but sessionStorage survives that (it's cleared only when the app is closed).
+const LAUNCHED = "launched", AFTER_UPDATE = "splashNext";
+function shouldPlay(): boolean {
+  try {
+    const play = !sessionStorage.getItem(LAUNCHED) || !!sessionStorage.getItem(AFTER_UPDATE);
+    sessionStorage.setItem(LAUNCHED, "1");
+    sessionStorage.removeItem(AFTER_UPDATE);
+    return play;
+  } catch {
+    return true;
+  }
+}
+/** Decided once per page load. */
+const PLAY = shouldPlay();
+
+/** Called just before the app reloads into a new version, so the animation plays once more. */
+export function playSplashNextLoad() {
+  try { sessionStorage.setItem(AFTER_UPDATE, "1"); } catch { /* blocked */ }
+}
+
 /** The runner, drawn as in the logo but with plain strokes so each part can move on its own. */
 function Runner() {
   return <>
@@ -52,7 +73,7 @@ function Mark({ round }: { round: boolean }) {
 
 /** Plays on every real load of the app: a launch from closed, or a refresh. Tap to skip. */
 export function Splash() {
-  const [run, setRun] = useState(1);
+  const [run, setRun] = useState(PLAY ? 1 : 0);
   useEffect(() => {
     if (!run) return;
     const t = setTimeout(() => setRun(0), LENGTH);

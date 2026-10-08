@@ -3,7 +3,7 @@ import { emptyState } from "./types";
 import type { State } from "./types";
 
 export const BACKUP_PREFIX = "SGH1.";
-export const STATE_KEYS = ["done", "logs", "gear", "swaps", "weights", "settings", "extras", "steps", "plan"] as const;
+export const STATE_KEYS = ["done", "logs", "gear", "swaps", "weights", "settings", "extras", "steps", "plan", "todos"] as const;
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
@@ -33,6 +33,8 @@ export function normalizeState(raw: unknown): State {
 export function encodeBackup(state: State): string {
   const o: Record<string, unknown> = { v: 1 };
   for (const k of STATE_KEYS) o[k] = state[k];
+  // Left out when empty so codes stay the same as before to-dos existed.
+  if (!Object.keys(state.todos || {}).length) delete o.todos;
   return BACKUP_PREFIX + toBase64(JSON.stringify(o));
 }
 

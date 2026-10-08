@@ -26,6 +26,14 @@ export interface Extra {
   at?: number;
 }
 
+export interface Todo {
+  text: string;
+  /** When it was added (ms). */
+  at: number;
+  /** When it was checked off (ms). */
+  done?: number;
+}
+
 export interface Settings {
   name?: string;
   startWt?: number;
@@ -55,6 +63,8 @@ export interface State {
   settings: Settings;
   extras: Record<string, Extra[]>;
   steps: Record<string, number>;
+  /** The user's own to-do items (gear lives in `gear`). */
+  todos: Record<string, Todo>;
   /** Onboarding answers the plan is generated from. Missing means the owner's original plan. */
   plan?: import("./spec").PlanState;
 }
@@ -125,5 +135,5 @@ export interface Model {
 }
 
 export function emptyState(): State {
-  return { done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {} };
+  return { done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {}, todos: {} };
 }

@@ -1,3 +1,4 @@
+import { playSplashNextLoad } from "./Splash";
 // Shared app-update state: the service worker registration, whether a new version is waiting,
 // and a manual check used by Settings. The update bar (UpdatePrompt) keeps this in sync.
 import { useSyncExternalStore } from "react";
@@ -25,7 +26,7 @@ export const useUpdateReady = () =>
  */
 export function applyUpdate(fallbackMs = 1500) {
   let done = false;
-  const reload = () => { if (!done) { done = true; window.location.reload(); } };
+  const reload = () => { if (!done) { done = true; playSplashNextLoad(); window.location.reload(); } };
   navigator.serviceWorker?.addEventListener("controllerchange", reload, { once: true });
   const waiting = registration?.waiting;
   if (waiting) waiting.postMessage({ type: "SKIP_WAITING" });

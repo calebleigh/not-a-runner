@@ -7,7 +7,7 @@ import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { useMirroredState } from "../mirror";
 import { Grow, Num, reducedMotion } from "../motion";
-import { GearList } from "../GearList";
+import { TodoList } from "../TodoList";
 
 const KC: Record<CardioKind, string> = { bike: "var(--accent-hi)", walk: "var(--muted)", run: "var(--accent)", long: "var(--accent)", test: "var(--gold)", race: "var(--gold)", rest: "var(--bar)" };
 const DAY_SHORT = DN.map((d) => d.toUpperCase());
@@ -147,7 +147,7 @@ export function Plan() {
             ))}
           </section>
         </div>
-        <div className="col"><GearList /></div>
+        <div className="col"><TodoList /></div>
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import {
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Recent } from "../Recent";
+import { TodoCard } from "../TodoList";
 import { Wordmark } from "../Logo";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
@@ -109,12 +110,6 @@ export function Home() {
 
       <div className="o2"><TodayHero /></div>
       <div className="chips o3" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
-      </div>
-
-      <div className="col">
-      <div className="o5"><Recent /></div>
-
-
       {(() => {
         const q = quoteForWeek(curWeek);
         return (
@@ -125,6 +120,13 @@ export function Home() {
           </figure>
         );
       })()}
+      </div>
+
+      <div className="col">
+      <div className="o5"><Recent /></div>
+      <div className="o4"><TodoCard /></div>
+
+
 
       </div>
       </div>

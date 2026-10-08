@@ -23,7 +23,7 @@ export interface SyncMeta {
   cursor: string | null;
 }
 
-const MAPS = ["done", "logs", "gear", "swaps", "weights", "steps"] as const;
+const MAPS = ["done", "logs", "gear", "swaps", "weights", "steps", "todos"] as const;
 type MapKey = (typeof MAPS)[number];
 
 /** A new id for an extra activity. */

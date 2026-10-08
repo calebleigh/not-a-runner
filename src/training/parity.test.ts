@@ -6,7 +6,7 @@ import { specOf } from "./spec";
 
 const SPEC = specOf({});
 import { GEAR } from "./data";
-import { coachTip, computeModel, encodeBackup, predict, bestFor, stepStats, totals, loggedFootSteps } from "./index";
+import { coachTip, computeModel, decodeBackup, encodeBackup, predict, bestFor, stepStats, totals, loggedFootSteps } from "./index";
 import type { Feel, State, SwapKind } from "./types";
 
 const html = readFileSync(new URL("../../reference/prototype.html", import.meta.url), "utf8");
@@ -16,6 +16,8 @@ const DST_FIXES: [string, string][] = [
   ["const from=new Date(today.getTime()-13*DAY), to=new Date(START.getTime()+(curWeek*7-1)*DAY);", "const from=__ad(today,-13), to=__ad(START,curWeek*7-1);"],
   ["const dt=new Date(START.getTime()+((n-1)*7+d)*DAY);", "const dt=__ad(START,(n-1)*7+d);"],
   ["const dateOf=(w,d)=>new Date(START.getTime()+((w-1)*7+d)*DAY);", "const dateOf=(w,d)=>__ad(START,(w-1)*7+d);"],
+  // Deliberate change: gear moved to the to-do list, so the app no longer has a "Gear due" tip.
+  ["  if(due.length) tips.push({t:`Gear due: ${due[0].name}${due.length>1?` and ${due.length-1} more`:\"\"}.`,a:\"View\",f:()=>setTab(\"profile\")});", ""],
 ];
 let code = html.slice(html.indexOf("const START = new Date(2026, 9, 5);"), html.indexOf("/* ---------- Tabs & refresh ---------- */"));
 for (const [from, to] of DST_FIXES) {
@@ -45,7 +47,7 @@ function randomState(seed: number, today: Date, feelBias: [number, number], swap
   const r = rng(seed);
   const pick = <T,>(a: readonly T[]) => a[Math.floor(r() * a.length)];
   const feel = (): Feel => { const x = r(); return x < feelBias[0] ? "easy" : x < feelBias[1] ? "ok" : "hard"; };
-  const s: State = { done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {} };
+  const s: State = { done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {}, todos: {} };
   for (const g of GEAR) if (r() < 0.5) s.gear[g.k] = 1;
   if (r() < 0.5) s.settings.startWt = 180 + Math.round(r() * 60);
   for (let w = 1; w <= 52; w++) {
@@ -92,8 +94,8 @@ afterAll(() => {
 describe("prototype parity", () => {
   it("matches for an empty state at plan start", () => {
     vi.useFakeTimers(); vi.setSystemTime(DATES[0]);
-    const P = runPrototype({ done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {} });
-    const m = computeModel({ done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {} }, DATES[0]);
+    const P = runPrototype({ done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {}, todos: {} });
+    const m = computeModel({ done: {}, logs: {}, gear: {}, swaps: {}, weights: {}, settings: {}, extras: {}, steps: {}, todos: {} }, DATES[0]);
     expect(m.weeks[0].days[0].c.t).toBe(P.weeks[0].days[0].c.t);
   });
 
@@ -136,7 +138,8 @@ describe("prototype parity", () => {
           }
           for (let w = 1; w <= 52; w += 5) for (let d = 0; d < 7; d++) expect(loggedFootSteps(state, w, d)).toBe(P.loggedFootSteps(w, d));
           expect(coachTip(m, now.getHours())?.t).toEqual(P.coachTip()?.t);
-          expect(encodeBackup(state)).toBe(P.encodeBackup());
+          // Backups now also carry the to-do list (empty here); everything else is byte-for-byte the same.
+          expect(decodeBackup(encodeBackup(state))).toEqual({ ...decodeBackup(P.encodeBackup()), todos: {} });
         });
       }
     }
