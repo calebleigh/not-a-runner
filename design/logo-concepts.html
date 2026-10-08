@@ -82,6 +82,53 @@
         <polyline points="50,32 60,44 66,54" />
       </g>
     </symbol>
+    <!-- G: Owner's norunning.png as vector. Square frame 116 wide, 45 degree slash 109 wide. -->
+    <linearGradient id="gn" x1="0" y1="1531" x2="1531" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E95C14"/><stop offset="1" stop-color="#FA8A3C"/>
+    </linearGradient>
+    <clipPath id="sq"><rect x="0" y="0" width="1531" height="1531"/></clipPath>
+    <symbol id="g1" viewBox="-60 -60 1651 1651">
+      <g fill="none" clip-path="url(#sq)">
+        <rect x="58" y="58" width="1415" height="1415" stroke-width="116"/>
+        <line x1="0" y1="19" x2="1512" y2="1531" stroke-width="109"/>
+      </g>
+    </symbol>
+    <!-- G: owner's version. Running man at full size, placed at (252,374), drawn over the slash in a contrast color. -->
+    <symbol id="nr" viewBox="-60 -60 1651 1651">
+      <g fill="none" clip-path="url(#sq)">
+        <rect x="58" y="58" width="1415" height="1415" stroke-width="116"/>
+        <line x1="0" y1="19" x2="1512" y2="1531" stroke-width="109"/>
+      </g>
+      <svg x="252" y="374" width="1028" height="841" viewBox="0 0 1028 841" style="fill:var(--man);stroke:var(--man)">
+        <polygon points="786,0 939,153 787,305 634,152" stroke="none"/>
+        <g fill="none" stroke-width="109" stroke-linejoin="miter" stroke-miterlimit="10">
+          <polyline points="190.5,329 390,130 789,528.5 988.5,329"/>
+          <polyline points="345,403 544.5,603 345,803"/>
+          <polyline points="38,803 275.5,565"/>
+        </g>
+      </svg>
+    </symbol>
+    <!-- G2: the running man inside the frame, cut by the slash: a "no running" sign. -->
+    <mask id="slashcut" maskUnits="userSpaceOnUse" x="0" y="0" width="1531" height="1531">
+      <rect width="1531" height="1531" fill="#fff"/>
+      <line x1="0" y1="19" x2="1512" y2="1531" stroke="#000" stroke-width="229"/>
+    </mask>
+    <symbol id="g2" viewBox="-60 -60 1651 1651">
+      <g fill="none" clip-path="url(#sq)">
+        <rect x="58" y="58" width="1415" height="1415" stroke-width="116"/>
+        <line x1="0" y1="19" x2="1512" y2="1531" stroke-width="109"/>
+      </g>
+      <g mask="url(#slashcut)">
+        <svg x="250" y="250" width="1031" height="1031" viewBox="-41 -135 1110 1110">
+          <polygon points="786,0 939,153 787,305 634,152" stroke="none"/>
+          <g fill="none" stroke-width="109" stroke-linejoin="miter" stroke-miterlimit="10">
+            <polyline points="190.5,329 390,130 789,528.5 988.5,329"/>
+            <polyline points="345,403 544.5,603 345,803"/>
+            <polyline points="38,803 275.5,565"/>
+          </g>
+        </svg>
+      </g>
+    </symbol>
     <!-- F: Owner's running man (runningman.png), redrawn as vector. All strokes at 45 degrees, 109 units wide. -->
     <symbol id="f" viewBox="-41 -135 1110 1110">
       <polygon points="786,0 939,153 787,305 634,152" stroke="none" />
@@ -119,6 +166,8 @@
 
 <script>
   const CONCEPTS = [
+    ["nr", "G. No running (yours)", "Your norunning.png as vector: the running man in front of the frame and slash, in a contrast color. Your original PNG first, on charcoal so the white figure shows."],
+    ["g2", "G2. No running, cut", "Same idea, but the slash cuts through the man like a real prohibition sign. One color, so it also works as a single-color stamp."],
     ["f", "F. Your running man", "Your design, redrawn as a vector so it stays sharp at every size and can change color. Your original PNG is first in the row for comparison."],
     ["d", "D. Zigzag stride", "One thick band that climbs and drops like a stride, cut flat where it meets the ground. Abstract, like your reference."],
     ["e", "E. NR ligature", "N and R share a stem; the R's leg kicks back like a runner's. A monogram for Not a Runner."],
@@ -127,19 +176,21 @@
     ["c", "C. The walker", "Upright and relaxed, mid-step. The joke in the name: moving, just not running."],
   ];
   // Paint a mark: gradient on dark and light, solid dark on orange.
-  const mark = (id, color) => {
+  const mark = (id, color, bg) => {
     if (color === "url(#g)" && id === "f") color = "url(#gf)";
-    return `<svg viewBox="0 0 100 100"><use href="#${id}" stroke="${color}" fill="${color}"/></svg>`;
+    if (color === "url(#g)" && (id === "nr" || id.startsWith("g"))) color = "url(#gn)";
+    const man = color === "#141210" ? "#F4F1EC" : bg === "light" ? "#141210" : "#F4F1EC";
+    return `<svg viewBox="0 0 100 100" style="--man:${man}"><use href="#${id}" stroke="${color}" fill="${color}"/></svg>`;
   };
   for (const [id, name, note] of CONCEPTS) {
     const n = document.getElementById("concept").content.cloneNode(true);
     n.querySelector(".concept").classList.add(id);
     n.querySelector("h2").textContent = name;
     n.querySelector("small").textContent = note;
-    n.querySelector(".row").innerHTML = (id === "f" ? `<div class="tile t-white big"><img src="/runningman.png" alt="Original PNG" style="width:78%"></div>` : "") + `
+    n.querySelector(".row").innerHTML = (id === "f" ? `<div class="tile t-white big"><img src="/runningman.png" alt="Original PNG" style="width:78%"></div>` : id === "nr" ? `<div class="tile t-dark big"><img src="/norunning.png" alt="Original PNG" style="width:72%"></div>` : "") + `
       <div class="tile t-dark big">${mark(id, "url(#g)")}</div>
       <div class="tile t-orange big">${mark(id, "#141210")}</div>
-      <div class="tile t-white big">${mark(id, "url(#g)")}</div>
+      <div class="tile t-white big">${mark(id, "url(#g)", "light")}</div>
       <div class="tile t-dark med">${mark(id, "url(#g)")}</div>
       <div class="tile t-dark sm">${mark(id, "url(#g)")}</div>
       <div class="lockup">${mark(id, "url(#g)")}<div class="word"><span>Not a</span>Runner</div></div>`;
