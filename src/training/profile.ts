@@ -30,3 +30,11 @@ export function birthdayInfo(birthday: string | undefined, now: Date): BirthdayI
   const daysUntil = daysBetween(today, next);
   return { age, daysUntil, isToday: daysUntil === 0, turning: daysUntil === 0 ? age : age + 1 };
 }
+
+/** True when `date` is the birthday (Feb 29 birthdays fall on Feb 28 in other years). */
+export function isBirthdayOn(birthday: string | undefined, date: Date): boolean {
+  const b = parseBirthday(birthday);
+  if (!b) return false;
+  const day = birthdayIn(b, date.getFullYear());
+  return day.getMonth() === date.getMonth() && day.getDate() === date.getDate() && date.getFullYear() >= b.y;
+}

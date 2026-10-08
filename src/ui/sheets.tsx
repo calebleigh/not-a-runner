@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { dateOf, dayAt, dayKey, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
+import { dateOf, dayAt, dayKey, isBirthdayOn, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
 import { CardioCard, ExtraSection, StepsCard, StepsEntry, StrengthCard, WeighCard } from "./cards";
 import { Icon } from "./icons";
@@ -73,11 +73,11 @@ export function SheetHost() {
   );
 }
 
-function Head({ title }: { title: string }) {
+function Head({ title, cake }: { title: string; cake?: boolean }) {
   const { closeSheet } = useApp();
   return (
     <div className="sheet-head">
-      <h2 id="sheetTitle">{title}</h2>
+      <h2 id="sheetTitle">{title}{cake && <span className="inlinecake" title="Your birthday"><Icon.cake /></span>}</h2>
       <button className="xbtn" aria-label="Close" onClick={closeSheet}>&#10005;</button>
     </div>
   );
@@ -139,7 +139,9 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
       body = <ImportBody />;
       break;
   }
-  return <div key={key}><Head title={title} />{body}</div>;
+  const dayOfSheet = "date" in spec ? spec.date : "w" in spec ? dateOf(spec.w, spec.d) : null;
+  const cake = !!dayOfSheet && isBirthdayOn(model.state.settings.birthday, dayOfSheet);
+  return <div key={key}><Head title={title} cake={cake} />{body}</div>;
 }
 
 function StepsSheetBody({ date }: { date: Date }) {

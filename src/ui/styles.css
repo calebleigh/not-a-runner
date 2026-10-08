@@ -495,3 +495,9 @@ input[type="date"].txtin{width:150px;color-scheme:dark}
 .bdayhello{display:flex;align-items:center;gap:10px}
 .bdayhello .cake{width:34px;height:34px;flex:none;color:var(--accent)}
 .coach.why small{display:block;font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+/* Birthday cake markers on day views */
+.daycake{position:absolute;top:3px;right:3px;width:16px;height:16px;color:var(--accent);z-index:1}
+.wt .daycake{top:2px;right:2px;width:13px;height:13px}
+.daycake svg,.inlinecake svg{width:100%;height:100%}
+.inlinecake{display:inline-block;width:.85em;height:.85em;margin-left:.35em;vertical-align:-.05em;color:var(--accent)}
+.weekstrip .v .inlinecake{width:16px;height:16px;margin:0}

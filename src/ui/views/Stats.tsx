@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  FEEL, GOALS, START, TARGET_PACE, WEEKS, addDays, dayAt, dayKey, hms, idParts, kfmt, mph, pace, pctTxt, phaseOf, predict, bestFor,
+  FEEL, GOALS, START, isBirthdayOn, TARGET_PACE, WEEKS, addDays, dayAt, dayKey, hms, idParts, kfmt, mph, pace, pctTxt, phaseOf, predict, bestFor,
   runLogs, stepStats, timedCardioLogs, totals, weekFrac, type AdaptKey,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -126,7 +126,7 @@ export function Stats() {
             return (
               <button key={i} className={(i === 6 ? "today " : "") + (!v && !before ? "missing" : "")} disabled={before} onClick={() => onPick(dt)}
                 aria-label={`${dt.toLocaleDateString("en-US", { weekday: "long" })}: ${v ? v + " steps" : "not logged"}`}>
-                <span className="v">{v ? kfmt(v) : ""}</span>
+                <span className="v">{isBirthdayOn(state.settings.birthday, dt) ? <span className="inlinecake" title="Your birthday"><Icon.cake /></span> : v ? kfmt(v) : ""}</span>
                 <span className="bar"><Grow dir="h" pct={Math.round(100 * v / mx)} /></span>
                 <span className="lbl2">{i === 6 ? "Today" : dt.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2)}</span>
               </button>

@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, WEEKS, birthdayInfo, coachTip, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
+  LONGDAY, WEEKS, birthdayInfo, coachTip, dateOf, isBirthdayOn, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
   dayAt, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -86,7 +86,7 @@ export function Home() {
             return (
               <button key={d} className={"d7" + (isT ? " today" : "")} aria-label={LONGDAY[d]}
                 onClick={() => openSheet({ kind: "day", w: curWeek, d })}>
-                <span className={"t" + (f < 0 ? " rest" : "")}><Grow dir="h" pct={f > 0 ? Math.round(f * 100) : 0} /></span>
+                <span className={"t" + (f < 0 ? " rest" : "")}><Grow dir="h" pct={f > 0 ? Math.round(f * 100) : 0} />{isBirthdayOn(state.settings.birthday, dateOf(curWeek, d)) && <span className="daycake"><Icon.cake /></span>}</span>
                 <small>{"MTWTFSS"[d]}</small>
               </button>
             );

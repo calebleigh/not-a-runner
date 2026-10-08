@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  DN, RACE, dateOf, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac,
+  DN, RACE, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac,
   type CardioKind, type Day,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -111,7 +111,7 @@ export function Plan() {
                   return (
                     <button key={wk.n} className={"wt" + (wk.n === planWeek ? " sel" : "") + (wk.n === curWeek ? " cur" : "")}
                       aria-label={`Week ${wk.n}`} aria-pressed={wk.n === planWeek} onClick={() => setPlanWeek(wk.n)}>
-                      <span className="t"><Grow dir="h" pct={Math.round(f * 100)} /></span>
+                      <span className="t"><Grow dir="h" pct={Math.round(f * 100)} />{[0, 1, 2, 3, 4, 5, 6].some((d) => isBirthdayOn(state.settings.birthday, dateOf(wk.n, d))) && <span className="daycake"><Icon.cake /></span>}</span>
                       <small>{wk.n}</small>
                     </button>
                   );
@@ -133,7 +133,7 @@ export function Plan() {
               <button key={r.d} className={"srow " + r.status + (r.isToday ? " today" : "") + (r.rest ? " rest" : "")}
                 style={{ ["--kc" as string]: KC[r.kind] }} onClick={() => openSheet({ kind: "day", w: planWeek, d: r.d })}>
                 <span className="sday"><small>{DAY_SHORT[r.d]}</small><b>{r.date.getDate()}</b></span>
-                <span className="sbody"><b>{r.title}</b><small>{r.sub}</small></span>
+                <span className="sbody"><b>{r.title}{isBirthdayOn(state.settings.birthday, r.date) && <span className="inlinecake" title="Your birthday"><Icon.cake /></span>}</b><small>{r.sub}</small></span>
                 {STATUS[r.status]()}
               </button>
             ))}

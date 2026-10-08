@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { birthdayInfo, parseBirthday } from "./profile";
+import { birthdayInfo, isBirthdayOn, parseBirthday } from "./profile";
 
 describe("birthday", () => {
   it("parses only real dates", () => {
@@ -25,5 +25,13 @@ describe("birthday", () => {
 
   it("ignores birthdays in the future", () => {
     expect(birthdayInfo("2030-01-01", new Date(2026, 9, 7))).toBeNull();
+  });
+
+  it("finds the birthday on any date", () => {
+    expect(isBirthdayOn("1990-10-07", new Date(2027, 9, 7))).toBe(true);
+    expect(isBirthdayOn("1990-10-07", new Date(2027, 9, 8))).toBe(false);
+    expect(isBirthdayOn("1992-02-29", new Date(2027, 1, 28))).toBe(true);
+    expect(isBirthdayOn("1992-02-29", new Date(2028, 1, 28))).toBe(false);
+    expect(isBirthdayOn(undefined, new Date(2027, 9, 7))).toBe(false);
   });
 });
