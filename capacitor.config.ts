@@ -10,6 +10,11 @@ const config: CapacitorConfig = {
     // Matches the app's dark paper so there's no white flash on launch.
     backgroundColor: "#111110",
   },
+  plugins: {
+    // The app draws under the status and gesture bars and pads itself (--safe-area-inset-* in CSS).
+    // Light icons on the dark app; the app switches them for light mode.
+    SystemBars: { style: "DARK", insetsHandling: "css" },
+  },
 };
 
 export default config;

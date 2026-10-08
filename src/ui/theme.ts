@@ -1,3 +1,4 @@
+import { Capacitor, SystemBars, SystemBarsStyle } from "@capacitor/core";
 // Accent themes: a gradient (light end, dark end) becomes the app's accent colors.
 // The default is the original orange and leaves the CSS tokens untouched.
 
@@ -126,6 +127,8 @@ export const isLight = (mode: Mode | undefined) =>
 /** Sets light or dark on the page, including the browser's bar color. */
 export function applyMode(light: boolean, root: HTMLElement = document.documentElement) {
   root.dataset.mode = light ? "light" : "dark";
+  // Android app: status and gesture bar icons dark on light, light on dark.
+  if (Capacitor.isNativePlatform()) SystemBars.setStyle({ style: light ? SystemBarsStyle.Light : SystemBarsStyle.Dark }).catch(() => {});
   // Remembered so the next launch starts in the right mode before the app loads (see index.html).
   try { localStorage.setItem("mode", light ? "light" : "dark"); } catch { /* blocked */ }
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", light ? LIGHT_PAPER : PAPER);
