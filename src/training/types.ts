@@ -22,6 +22,8 @@ export interface Extra {
   time: number;
   steps?: number;
   label?: string;
+  /** When it was logged (ms). Older entries have none. */
+  at?: number;
 }
 
 export interface Settings {

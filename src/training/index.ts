@@ -12,3 +12,4 @@ export * from "./extras";
 export * from "./profile";
 export * from "./quotes";
 export * from "./spec";
+export * from "./recent";

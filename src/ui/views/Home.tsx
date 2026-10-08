@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
+  LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, kfmt, phaseOf, phases, todayDay,
   dayAt, whyForDay, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
+import { Recent } from "../Recent";
 import { Wordmark } from "../Logo";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
@@ -52,8 +53,6 @@ export function Home() {
     else if (t.action?.type === "plan") setTab("plan");
   };
 
-  const last = timedCardioLogs(state).pop();
-
   return (
     <section className="view stack" aria-label="Home">
       <div className="brandbar"><Wordmark size={22} /></div>
@@ -71,9 +70,9 @@ export function Home() {
         </div>
       </div>
 
-      <div className="cols">
+      <div className="cols homecols">
       <div className="col">
-      <section className="panelc vol">
+      <section className="panelc vol o1">
         <div className="top">
           <span className="lbl">This week</span>
           <span className="wkcounts">
@@ -101,26 +100,27 @@ export function Home() {
         </div>
       </section>
 
-      <TodayHero />
+      <div className="o2"><TodayHero /></div>
+      <div className="chips o3" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
       </div>
 
       <div className="col">
-      <div className="chips" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
+      <div className="o5"><Recent /></div>
 
       {tip ? (
-        <div className={"coach" + (tip.adj ? " adj" : "")}>
+        <div className={"coach o4" + (tip.adj ? " adj" : "")}>
           <span className="dot2" />
           <span>{tip.t}</span>
           {tip.a && <button onClick={() => runTip(tip)}>{tip.a}</button>}
         </div>
       ) : why ? (
-        <div className="coach why"><span className="dot2" /><span><small>Your why</small>{why}</span></div>
+        <div className="coach why o4"><span className="dot2" /><span><small>Your why</small>{why}</span></div>
       ) : null}
 
       {(() => {
         const q = quoteForWeek(curWeek);
         return (
-          <figure className="panelc quote">
+          <figure className="panelc quote o6">
             <span className="lbl">Quote of the week</span>
             <blockquote>{q.text}</blockquote>
             <figcaption>{q.by}</figcaption>
@@ -128,27 +128,6 @@ export function Home() {
         );
       })()}
 
-      {last && (() => {
-        const [id, l] = last, p = idParts(id), b = dayAt(model, p.w, p.d)?.c;
-        if (!b) return null;
-        const when = dayAt(model, p.w, p.d)!.date, dd = daysBetween(when, today);
-        const whenTxt = dd === 0 ? "Today" : dd === 1 ? "Yesterday" : when.toLocaleDateString("en-US", { weekday: "long" });
-        const bike = b.kind === "bike";
-        return <>
-          <div className="sechead"><span className="lbl">Last session</span><button onClick={() => setTab("stats")}>History ›</button></div>
-          <section className="panelc last">
-            <svg className="route" viewBox="0 0 100 100" aria-hidden="true"><path d="M10 80 L30 55 L22 40 L48 30 L62 12 L70 40 L88 52 L72 78 L50 70 Z" fill="none" style={{ stroke: "var(--accent)" }} strokeWidth="2.5" strokeLinejoin="round" /></svg>
-            <span className="tag">{whenTxt}, {b.t}</span>
-            <div className="row">
-              <div><div className="lbl">Distance</div><div className="num">{l.dist ? <Num value={l.dist} dec={2} /> : "0"}<span className="unit">mi</span></div></div>
-              <div style={{ textAlign: "right" }}>
-                <div className="lbl">{bike ? "Speed" : "Pace"}</div>
-                <div className="num">{l.dist ? (bike ? (l.dist / (l.time! / 3600)).toFixed(1) : hms(l.time! / l.dist)) : hms(l.time!)}<span className="unit">{l.dist ? (bike ? "mph" : "/mi") : ""}</span></div>
-              </div>
-            </div>
-          </section>
-        </>;
-      })()}
       </div>
       </div>
     </section>

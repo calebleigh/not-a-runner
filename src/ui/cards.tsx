@@ -305,7 +305,7 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
         </div>
       ))}
       {open ? (
-        <ExtraForm onCancel={() => setOpen(false)} onSave={(e) => { update((s) => { s.extras[key] = [...(s.extras[key] || []), { ...e, id: newId() }]; }); setOpen(false); }} />
+        <ExtraForm onCancel={() => setOpen(false)} onSave={(e) => { update((s) => { s.extras[key] = [...(s.extras[key] || []), { ...e, id: newId(), at: Date.now() }]; }); setOpen(false); }} />
       ) : (
         <button className="btn" onClick={() => setOpen(true)}>+ Add extra activity</button>
       )}

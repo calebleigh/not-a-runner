@@ -643,3 +643,28 @@ input[type="date"].txtin{width:150px}
 .modeseg{margin-bottom:14px}
 :root[data-mode="light"] .meter .mtxt em{background:rgba(255,255,255,.75);color:var(--ink)}
 .area-sync .btnpair .chip{white-space:nowrap}
+
+/* Home: on phones one column in reading order; on wide screens "now" on the left, "what happened" on the right. */
+@media (max-width:899px){
+  .homecols>.col{display:contents}
+  .homecols .o1{order:1}.homecols .o2{order:2}.homecols .o3{order:3}.homecols .o4{order:4}.homecols .o5{order:5}.homecols .o6{order:6}
+}
+@media (min-width:900px){
+  .homecols{gap:22px}
+  .homecols>.col{gap:16px}
+}
+/* Recent entries */
+.recent{padding:14px 6px 6px}
+.recent .top{display:flex;justify-content:space-between;align-items:baseline;padding:0 10px 6px}
+.recent .more{flex:none;width:auto;margin-left:auto;background:none;border:0;color:var(--muted);font:600 14px var(--body);cursor:pointer;padding:0}
+.recent ul{list-style:none;margin:0;padding:0}
+.recent li+li{border-top:1px solid var(--line)}
+.recent li button{display:flex;align-items:center;gap:12px;width:100%;padding:10px;background:none;border:0;color:inherit;text-align:left;cursor:pointer;border-radius:min(12px,var(--rmax))}
+.recent li button:hover{background:var(--surface2)}
+.ric{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:min(10px,var(--rmax));background:var(--accent-soft);color:var(--accent)}
+.ric svg{width:18px;height:18px}
+.rtx{flex:1;min-width:0;display:flex;flex-direction:column}
+.rtx b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtx small{color:var(--muted);font-size:13px}
+.rwhen{flex:none;color:var(--muted);font-size:13px;font-weight:600}
+.rempty{margin:0;padding:6px 10px 12px;color:var(--muted);font-size:15px}
