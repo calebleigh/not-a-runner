@@ -781,3 +781,8 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .streakfacts div{padding:12px 14px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax))}
 .streakfacts b{display:block;font:800 28px/1 var(--display)}
 .streakfacts small{color:var(--muted);font-size:13px}
+.notelist li.missed .ndot{background:var(--bad)}
+
+/* Page name in the top bar (Home shows the logo instead) */
+.apphead-title{margin:0;font:800 30px/1 var(--display);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:900px){.apphead-title{font-size:34px}}

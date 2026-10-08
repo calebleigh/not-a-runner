@@ -113,6 +113,7 @@ function AboutYou() {
   const whys = whyList(st);
   const [wt, setWt] = useField(st.startWt ? String(st.startWt) : "");
   const [goal, setGoal] = useField(st.goalWt ? String(st.goalWt) : "");
+  const [stepGoal, setStepGoal] = useField(st.stepGoal ? String(st.stepGoal) : "");
   const b = birthdayInfo(st.birthday, now);
   const bdayNote = !b ? "We'll have cake on the day" : b.isToday ? `Happy birthday! ${b.age} today` : `Turning ${b.turning} in ${b.daysUntil} day${b.daysUntil === 1 ? "" : "s"}`;
   const weight = (v: string, key: "startWt" | "goalWt") => update((s) => { const n = parseFloat(v); if (n > 50 && n < 600) s.settings[key] = n; else delete s.settings[key]; });
@@ -147,6 +148,14 @@ function AboutYou() {
           <span className="unitin">
             <input type="number" inputMode="decimal" id="goalWt" min="80" max="500" placeholder="none" value={goal} onChange={(e) => setGoal(e.target.value)} onBlur={() => weight(goal, "goalWt")} />
             <em>lb</em>
+          </span>
+        </label>
+        <label className="setrow" htmlFor="stepGoal">
+          <span>Daily step goal<small>Optional. The bell tells you when a day comes in under.</small></span>
+          <span className="unitin">
+            <input type="number" inputMode="numeric" id="stepGoal" min="1000" max="50000" step="500" placeholder="none" value={stepGoal} onChange={(e) => setStepGoal(e.target.value)}
+              onBlur={() => update((s) => { const n = parseInt(stepGoal); if (n >= 1000 && n <= 50000) s.settings.stepGoal = n; else delete s.settings.stepGoal; })} />
+            <em>steps</em>
           </span>
         </label>
       </section>
@@ -243,7 +252,6 @@ export function Settings() {
   const { openSheet } = useApp();
   return (
     <section className="view stack" aria-label="Settings">
-      <h1 className="pagetitle">Settings</h1>
       <div className="setgrid">
       <SyncSection />
       <AboutYou />

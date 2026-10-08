@@ -31,9 +31,11 @@ export function useNotes(): Note[] {
   return update ? [{ key: `update:${model.today.toDateString()}`, kind: "tip", text: "A new version of the app is ready.", action: { label: "Update", to: { type: "plan" } } }, ...list] : list;
 }
 
-/** Top bar: the app's name, then sync status and notifications. */
+const TITLES = { home: "Home", plan: "Plan", stats: "Stats", settings: "Settings" } as const;
+
+/** Top bar: the app's name on Home, the page name elsewhere; then streak, sync and notifications. */
 export function AppHeader() {
-  const { model, setTab, openSheet } = useApp();
+  const { model, tab, setTab, openSheet } = useApp();
   const sync = useSync();
   const streak = streakOf(model);
   const lit = streak.current > 0;
@@ -44,7 +46,9 @@ export function AppHeader() {
   const goSync = () => { setTab("settings"); window.setTimeout(() => document.querySelector(".area-sync")?.scrollIntoView({ block: "start" }), 60); };
   return (
     <header className="apphead">
-      <span className="apphead-brand"><Wordmark size={24} /></span>
+      {tab === "home"
+        ? <span className="apphead-brand"><Wordmark size={24} /></span>
+        : <h1 className="apphead-title">{TITLES[tab]}</h1>}
       <span className="apphead-acts">
         <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
           <Icon.flame /><b>{streak.current}</b>
@@ -70,6 +74,8 @@ export function NotesSheetBody() {
     if (!to) return;
     if (n.key.startsWith("update:")) { applyUpdate(); return; }
     if (to.type === "steps") openSheet({ kind: "steps", date: to.date });
+    else if (to.type === "day") openSheet({ kind: "day", w: to.w, d: to.d });
+    else if (to.type === "weigh") openSheet({ kind: "weigh" });
     else { setTab("plan"); closeSheet(); }
   };
   if (!notes.length) return <p className="setnote">All caught up. Nothing new today.</p>;

@@ -30,7 +30,6 @@ export function Stats() {
     // Remount on range change so the big numbers count up again.
     <section className="view stack" aria-label="Stats" key={range}>
       <div className="pagehead">
-      <h1 className="pagetitle">Stats</h1>
       <div className="seg" role="group" aria-label="Range">
         <button className={range === "month" ? "sel" : ""} aria-pressed={range === "month"} onClick={() => setRange("month")}>{today.toLocaleDateString("en-US", { month: "long" })}</button>
         <button className={range === "all" ? "sel" : ""} aria-pressed={range === "all"} onClick={() => setRange("all")}>All time</button>

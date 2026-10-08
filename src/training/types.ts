@@ -52,6 +52,8 @@ export interface Settings {
   strength?: boolean;
   /** Corner style; also picks the matching logo. Missing means squared. */
   shape?: "round" | "square";
+  /** Optional daily step goal; the bell mentions days that came in under it. */
+  stepGoal?: number;
   /** Missing means dark. */
   mode?: "light" | "system";
 }
