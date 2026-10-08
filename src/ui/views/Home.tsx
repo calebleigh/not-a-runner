@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, WEEKS, birthdayInfo, coachTip, dateOf, isBirthdayOn, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
+  LONGDAY, WEEKS, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
   dayAt, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -109,6 +109,17 @@ export function Home() {
       ) : why ? (
         <div className="coach why"><span className="dot2" /><span><small>Your why</small>{why}</span></div>
       ) : null}
+
+      {(() => {
+        const q = quoteForWeek(curWeek);
+        return (
+          <figure className="panelc quote">
+            <span className="lbl">Quote of the week</span>
+            <blockquote>{q.text}</blockquote>
+            <figcaption>{q.by}</figcaption>
+          </figure>
+        );
+      })()}
 
       {last && (() => {
         const [id, l] = last, p = idParts(id), b = dayAt(model, p.w, p.d)?.c;

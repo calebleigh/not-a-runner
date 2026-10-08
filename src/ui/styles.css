@@ -496,8 +496,13 @@ input[type="date"].txtin{width:150px;color-scheme:dark}
 .bdayhello .cake{width:34px;height:34px;flex:none;color:var(--accent)}
 .coach.why small{display:block;font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 /* Birthday cake markers on day views */
-.daycake{position:absolute;top:3px;right:3px;width:16px;height:16px;color:var(--accent);z-index:1}
-.wt .daycake{top:2px;right:2px;width:13px;height:13px}
+.daycake{position:absolute;inset:0;margin:auto;width:20px;height:20px;color:var(--accent);z-index:1}
+.wt .daycake{width:16px;height:16px}
 .daycake svg,.inlinecake svg{width:100%;height:100%}
 .inlinecake{display:inline-block;width:.85em;height:.85em;margin-left:.35em;vertical-align:-.05em;color:var(--accent)}
 .weekstrip .v .inlinecake{width:16px;height:16px;margin:0}
+/* Quote of the week */
+.quote{margin:0;position:relative;overflow:hidden}
+.quote::before{content:"“";position:absolute;right:10px;top:-18px;font:800 120px/1 var(--display);color:var(--accent);opacity:.18;pointer-events:none}
+.quote blockquote{margin:8px 0 0;font:700 italic 22px/1.2 var(--display);letter-spacing:-.005em;text-wrap:pretty}
+.quote figcaption{margin-top:10px;font-size:14px;font-weight:600;color:var(--accent)}
