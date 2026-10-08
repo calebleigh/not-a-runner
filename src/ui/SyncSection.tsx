@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from "react";
-import { IS_NATIVE } from "./apk";
 import { onSyncStatus, signInSync, signOutSync, syncNow, syncStatus, type SyncStatus } from "../sync/controller";
 
 export const useSync = (): SyncStatus => useSyncExternalStore(onSyncStatus, syncStatus);
@@ -39,7 +38,7 @@ export function SyncSection() {
         {!on || !s.account ? (
           <div className="syncoff">
             <p><b>Use the app on more than one device?</b> Sign in and your phone and computer stay in sync. Without an account, everything stays on this device.</p>
-            {IS_NATIVE ? <p className="syncerr">Sign-in in the Android app is coming in the next update. Until then, move data with Export and Import.</p> : <GoogleButton busy={s.phase === "starting"} />}
+            <GoogleButton busy={s.phase === "starting"} />
             {s.error && <p className="syncerr" role="alert">{s.error}</p>}
           </div>
         ) : (

@@ -1,9 +1,10 @@
 // Firebase connection: sign-in and the synced entries. Loaded only once sync is turned on, so the
 // app starts just as fast for people who never sign in.
 import { initializeApp } from "firebase/app";
+import { Capacitor } from "@capacitor/core";
 import {
   GoogleAuthProvider, OAuthProvider, browserLocalPersistence, browserPopupRedirectResolver, getRedirectResult,
-  indexedDBLocalPersistence, initializeAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbSignOut, type User,
+  indexedDBLocalPersistence, initializeAuth, onAuthStateChanged, signInWithCredential, signInWithPopup, signInWithRedirect, signOut as fbSignOut, type User,
 } from "firebase/auth";
 import { Timestamp, collection, doc, initializeFirestore, memoryLocalCache, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import type { Row } from "./engine";
@@ -53,6 +54,7 @@ export async function finishRedirect(): Promise<Account | null> {
  * browsers use a popup. Returns null when the page is about to leave.
  */
 export async function signIn(kind: Provider): Promise<Account | null> {
+  if (Capacitor.isNativePlatform()) return signInNative(kind);
   const p = kind === "apple" ? new OAuthProvider("apple.com") : new GoogleAuthProvider();
   if (kind === "google") (p as GoogleAuthProvider).setCustomParameters({ prompt: "select_account" });
   if (kind === "apple") (p as OAuthProvider).addScope("email");
@@ -69,7 +71,29 @@ export async function signIn(kind: Provider): Promise<Account | null> {
   return null;
 }
 
-export const signOut = () => fbSignOut(auth);
+/**
+ * Android app: Google's sign-in page doesn't run inside apps, so Android's account picker signs in
+ * and hands back a token, which signs in to Firebase here.
+ */
+async function signInNative(kind: Provider): Promise<Account> {
+  const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
+  if (kind === "apple") {
+    const r = await FirebaseAuthentication.signInWithApple({ skipNativeAuth: true });
+    const cred = new OAuthProvider("apple.com").credential({ idToken: r.credential?.idToken, rawNonce: r.credential?.nonce });
+    return account((await signInWithCredential(auth, cred)).user);
+  }
+  const r = await FirebaseAuthentication.signInWithGoogle({ skipNativeAuth: true });
+  const cred = GoogleAuthProvider.credential(r.credential?.idToken);
+  return account((await signInWithCredential(auth, cred)).user);
+}
+
+export async function signOut() {
+  await fbSignOut(auth);
+  if (Capacitor.isNativePlatform()) {
+    const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
+    await FirebaseAuthentication.signOut().catch(() => {});
+  }
+}
 
 /** Live download: every row written at or after `cursor`, now and as new ones arrive. */
 export function listen(uid: string, cursor: string | null, onRows: (rows: Row[]) => void, onError: (e: Error) => void): () => void {

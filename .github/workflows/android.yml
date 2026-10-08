@@ -7,6 +7,11 @@ on:
     branches: [master]
     paths-ignore: ["docs/**", "**/*.md", "design/**", "reference/**"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish as a release (the app offers it as an update)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -58,7 +63,17 @@ jobs:
           ./gradlew assembleRelease --no-daemon
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/not-a-runner-$APP_VERSION_NAME.apk"
 
+      # Test builds (run by hand, publish off) keep the APK as a download on the run, not a release.
+      - name: Keep test APK
+        if: github.event_name != 'push' && !inputs.publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: not-a-runner-test-${{ env.APP_VERSION_NAME }}
+          path: ${{ runner.temp }}/*.apk
+          retention-days: 7
+
       - name: Publish release
+        if: github.event_name == 'push' || inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

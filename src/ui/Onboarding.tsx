@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import { DN, WHY_IDEAS, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
 import { TooSoonNote } from "./TooSoonNote";
 import { GoogleButton, useSync } from "./SyncSection";
-import { IS_NATIVE } from "./apk";
 import { useApp } from "./app-state";
 import { Logo } from "./Logo";
 
@@ -116,7 +115,7 @@ export function Onboarding() {
           </div>
           <div className="onbcta">
             <button className="btn solid" onClick={next}>Get started</button>
-            {!IS_NATIVE && <GoogleButton label="I have an account" busy={sync.phase === "starting"} />}
+            <GoogleButton label="I have an account" busy={sync.phase === "starting"} />
             {sync.error && <p className="syncerr" role="alert">{sync.error}</p>}
             <button className="btn small" onClick={() => openSheet({ kind: "import" })}>I have a backup code</button>
           </div>

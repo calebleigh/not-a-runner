@@ -14,6 +14,9 @@ const config: CapacitorConfig = {
     // The app draws under the status and gesture bars and pads itself (--safe-area-inset-* in CSS).
     // Light icons on the dark app; the app switches them for light mode.
     SystemBars: { style: "DARK", insetsHandling: "css" },
+    // Google sign-in uses Android's own account picker; the app then signs in to Firebase in JS
+    // (skipNativeAuth) so sync works the same as on the web.
+    FirebaseAuthentication: { skipNativeAuth: true, providers: ["google.com"] },
   },
 };
 

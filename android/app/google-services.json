@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "216360511088",
+    "project_id": "not-a-runner",
+    "storage_bucket": "not-a-runner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216360511088:android:b1c52fa041c230922e36b5",
+        "android_client_info": {
+          "package_name": "com.notarunner.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "216360511088-ubtv1b08q4rqljd9lsb91qq9otvfo29o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9hLbYEfWzqmM9pDP5nCyYoayaJku-Er8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "216360511088-ubtv1b08q4rqljd9lsb91qq9otvfo29o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

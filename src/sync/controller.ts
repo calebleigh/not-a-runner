@@ -81,7 +81,8 @@ export async function signInSync(kind: Provider): Promise<void> {
   } catch (e) {
     try { localStorage.removeItem(REDIRECT_FLAG); } catch { /* blocked */ }
     const code = (e as { code?: string }).code;
-    const closed = code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request";
+    // Closing the popup (web) or backing out of Android's account picker isn't an error.
+    const closed = code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || /cancel/i.test((e as Error)?.message ?? "");
     emit({ phase: saved.on ? status.phase : "off", error: closed ? null : message(e) });
   }
 }
