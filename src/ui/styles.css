@@ -137,15 +137,16 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 .ocard .ohead h3{font-size:22px;font-weight:700}
 .ocard .ohead span{font-size:13px;color:var(--muted)}
 .foot{font-size:13px;color:var(--muted);margin:10px 0 0}
-.goal{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+/* Goal times: tier names once at the top, then one line per distance */
+.goal{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,minmax(58px,72px));align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
 .goal:last-of-type{border-bottom:0}
-.goal b{font-weight:700}
-.goal small{color:var(--muted);font-size:13px}
-.tiers{display:flex;gap:6px;grid-column:1/-1}
-.tiers span{flex:1;background:var(--surface2);border-radius:min(10px,var(--rmax));padding:7px 8px;font:700 15px var(--display);text-align:center}
-.tiers span em{display:block;font:500 11px var(--body);font-style:normal;color:var(--muted)}
-.tiers span.hit{background:var(--accent);color:var(--on-accent)}
-.tiers span.hit em{color:color-mix(in srgb,var(--on-accent) 70%,transparent)}
+.goalhead{padding:0 0 4px}
+.goalhead em{font:600 11px var(--body);font-style:normal;color:var(--muted);text-align:center;letter-spacing:.04em}
+.gname{display:flex;flex-direction:column;min-width:0}
+.gname b{font-weight:700}
+.gname small{color:var(--muted);font-size:13px}
+.tier{background:var(--surface2);border-radius:min(10px,var(--rmax));padding:8px 4px;font:700 15px var(--display);text-align:center}
+.tier.hit{background:var(--accent);color:var(--on-accent)}
 .weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end}
 .weekstrip button{background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:0;font:600 12px var(--body)}
 .weekstrip .bar{width:100%;max-width:30px;border-radius:min(8px,var(--rmax));background:var(--bar);position:relative;height:72px;overflow:hidden}
@@ -696,4 +697,19 @@ input[type="date"].txtin{width:150px}
   .homecols .quote{justify-content:center}
   .homecols .todop{display:flex;flex-direction:column}
   .homecols .todop>.more{margin-top:auto}
+}
+
+/* Landscape: side-by-side cards always match heights */
+.statgrid{display:flex;flex-direction:column;gap:14px}
+@media (min-width:900px){
+  .statstop{align-items:stretch}
+  .statstop .bigstat{display:flex;flex-direction:column;justify-content:space-between}
+  .statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:stretch}
+  .statgrid>.ocard{display:flex;flex-direction:column}
+  .statgrid>.ocard>.foot:last-child{margin-top:auto}
+  .goals .goal:last-of-type{margin-bottom:auto}
+  /* Plan: To do takes This week's height and scrolls inside when it has more. */
+  .plancols{align-items:stretch}
+  .plancols>.col:last-child{contain:size;min-height:320px}
+  .plancols>.col:last-child>.todop{height:100%;overflow-y:auto;overscroll-behavior:contain}
 }

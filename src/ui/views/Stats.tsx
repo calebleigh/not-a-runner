@@ -37,7 +37,7 @@ export function Stats() {
       </div>
       </div>
 
-      <div className="cols">
+      <div className="cols statstop">
       <section className="panelc bigstat">
         <span className="lbl">Total distance</span>
         <div><span className="num"><Num value={mi} dec={1} /></span><span className="unit">mi</span></div>
@@ -53,15 +53,12 @@ export function Stats() {
       </div>
 
       {yearChart()}
-      <div className="cols">
-        <div className="col">
-          {stepsStrip((dt) => openSheet({ kind: "steps", date: dt }))}
-          {goals()}
-        </div>
-        <div className="col">
-          {weight()}
-          {adjustments()}
-        </div>
+      {/* Pairs share a row on wide screens, so each pair is the same height and the rows line up. */}
+      <div className="statgrid">
+        {stepsStrip((dt) => openSheet({ kind: "steps", date: dt }))}
+        {weight()}
+        {goals()}
+        {adjustments()}
       </div>
 
       {(() => {
@@ -141,19 +138,17 @@ export function Stats() {
   function goals() {
     const hp = predict(state, 13.1);
     return (
-      <section className="ocard">
+      <section className="ocard goals">
         <div className="ohead"><h3>Goal times</h3><span>{hp ? `Half outlook ${hms(hp)}` : "Log runs for a prediction"}</span></div>
+        <div className="goal goalhead" aria-hidden="true"><span /><em>Finish</em><em>Solid</em><em>Stretch</em></div>
         {GOALS.map((g) => {
           const best = bestFor(state, g.dist), pr = predict(state, g.dist);
           return (
             <div className="goal" key={g.k}>
-              <b>{g.name}</b>
-              <small>{best ? `Best ${hms(best)}` : pr ? `Predicted ${hms(pr)}` : `By week ${g.by}`}</small>
-              <div className="tiers">
-                {["Finish", "Solid", "Stretch"].map((n, i) => (
-                  <span key={n} className={best && best <= g.tiers[i] ? "hit" : ""}><em>{n}</em>{hms(g.tiers[i])}</span>
-                ))}
-              </div>
+              <span className="gname"><b>{g.name}</b><small>{best ? `Best ${hms(best)}` : pr ? `Predicted ${hms(pr)}` : `By week ${g.by}`}</small></span>
+              {["Finish", "Solid", "Stretch"].map((n, i) => (
+                <span key={n} className={"tier" + (best && best <= g.tiers[i] ? " hit" : "")} aria-label={`${n} ${hms(g.tiers[i])}`}>{hms(g.tiers[i])}</span>
+              ))}
             </div>
           );
         })}

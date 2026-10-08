@@ -127,7 +127,7 @@ export function Plan() {
         </div>
       </section>
 
-      <div className="cols">
+      <div className="cols plancols">
         <div className="col">
           <section className="panelc slist" aria-label="Sessions">
             <div className="slhead">
