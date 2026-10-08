@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
 import { TapLogo } from "../Splash";
+import { SyncSection } from "../SyncSection";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Preset, type Shape } from "../theme";
@@ -244,6 +245,7 @@ export function Settings() {
         {HOWTO.map(([t, d]) => <details className="acc" key={t}><summary>{t}</summary><p>{d}</p></details>)}
       </section>
       </div>
+      <SyncSection />
       <div className="area-data">
       <div className="sechead"><h3 className="sectitle">App and data</h3></div>
       <section className="card group datagrid">

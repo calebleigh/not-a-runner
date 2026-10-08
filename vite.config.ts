@@ -20,6 +20,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
         cleanupOutdatedCaches: true,
+        // Sign-in pages (proxied to Firebase, see vercel.json) must load from the network, not the app shell.
+        navigateFallbackDenylist: [/^\/__\//],
         // Once the user taps to update and the new version activates, it takes over open pages,
         // including ones opened before any version was in control. The waiting step stays (no skipWaiting).
         clientsClaim: true,

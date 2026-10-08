@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createStorage } from "../storage/store";
+import { initSync, noteChange } from "../sync/controller";
 import { mirrorSend, onMirror } from "./mirror";
 import { applyAccent, applyShape, type Shape } from "./theme";
 import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
@@ -79,18 +80,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stateRef.current = state;
       setState(state);
       if (migrated) toast("Your training data moved over");
+      initSync({ get: () => stateRef.current!, apply: (next) => commitRef.current(next, true) });
     });
   }, [toast]);
 
-  const commit = useCallback((next: State) => {
-    const prevDone = Object.keys(stateRef.current?.done || {}).length;
+  /** Saves a new state. `fromSync`: it came from another device, so it isn't uploaded again or celebrated. */
+  const commit = useCallback((next: State, fromSync = false) => {
+    const prev = stateRef.current;
+    const prevDone = Object.keys(prev?.done || {}).length;
+    if (prev && !fromSync) noteChange(prev, next);
     stateRef.current = next;
     setState(next);
     storage.save(next).catch(() => toast("Couldn't save. Export a backup."));
     mirrorSend("data", next);
     const nd = Object.keys(next.done).length;
-    if (nd > prevDone && prevDone) toast(nd % 5 === 0 ? `${nd} workouts. Keep stacking them.` : "Logged. Nice work.");
+    if (!fromSync && nd > prevDone && prevDone) toast(nd % 5 === 0 ? `${nd} workouts. Keep stacking them.` : "Logged. Nice work.");
   }, [toast]);
+
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
 
   const update = useCallback((fn: (draft: State) => void) => {
     if (!stateRef.current) return;

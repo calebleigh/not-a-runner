@@ -308,7 +308,7 @@ html,body{overscroll-behavior-y:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how,.area-sync{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -337,8 +337,9 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
-  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you you" "plan plan" "look look" "how how" "sync sync" "data data";gap:22px 18px}
+  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-sync{grid-area:sync}
+  .area-sync>.card{flex:1}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
   /* How it works runs in two columns across the full width. */
@@ -616,3 +617,18 @@ input[type="date"].xt{color-scheme:dark}
 @keyframes sp-shake-sm{0%,100%{transform:none}20%{transform:translate(-3px,2px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,1px)}80%{transform:translate(1px,0)}}
 .whyadd .whyin{flex:1;min-width:0;width:auto;text-align:left}
 .whyadd .btn{flex:none;width:auto;padding-left:20px;padding-right:20px}
+
+/* Sync */
+.syncoff{display:flex;flex-direction:column;gap:12px;padding:14px 16px}
+.syncoff p{margin:0;color:var(--muted);font-size:15px}
+.syncoff p b{color:var(--ink)}
+.gbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f;border:1px solid #dadce0;font-weight:700}
+.gbtn:disabled{opacity:.7}
+.syncerr{color:var(--warn,#f5a524)!important;font-size:14px!important}
+.syncdot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.syncdot.synced{background:var(--good)}
+.syncdot.syncing,.syncdot.starting{background:var(--accent);animation:pulse 1s ease-in-out infinite alternate}
+.syncdot.error{background:#f5a524}
+@keyframes pulse{to{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.syncdot{animation:none!important}}
+.onbcta .gbtn{width:100%}
