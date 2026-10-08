@@ -685,3 +685,12 @@ input[type="date"].txtin{width:150px}
 .todop .more{padding:12px 16px 8px;text-align:left}
 .tdel{flex:none;min-width:30px;height:30px;padding:0 8px;border-radius:var(--rc);border:1px solid var(--line);background:none;color:var(--muted);font:700 15px var(--body);cursor:pointer}
 .tdel.confirm{background:var(--bad);border-color:var(--bad);color:#fff;font-size:13px}
+/* Landscape Home: both columns always end together. The last card in each fills the gap. */
+@media (min-width:900px){
+  .homecols{align-items:stretch}
+  .homecols>.col>:last-child{flex:1 1 auto;display:flex;flex-direction:column}
+  .homecols>.col>:last-child>.panelc{flex:1 1 auto}
+  .homecols .quote{justify-content:center}
+  .homecols .todop{display:flex;flex-direction:column}
+  .homecols .todop>.more{margin-top:auto}
+}
