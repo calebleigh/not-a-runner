@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
-  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, canUseAsCardio, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
+  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, canUseAsCardio, makeUpTarget, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
 } from "../training";
 import { useApp } from "./app-state";
 
@@ -73,7 +73,7 @@ function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () 
     const d = num(dist) || 0, m = Math.floor(num(min)) || 0, s = Math.floor(num(sec)) || 0, h = Math.floor(num(hr)) || 0;
     const log = { dist: Math.round(d * 100) / 100, time: m * 60 + s, feel, ...(h ? { hr: h } : {}) };
     update((st) => {
-      if (from && applyExtraAsCardio(st, from.w, from.d, from.index, from.extra, c.kind, log, Date.now())) return;
+      if (from && applyExtraAsCardio(st, from.w, from.d, from.index, from.extra, c.kind, log, Date.now(), Number(id.split("-")[1]))) return;
       st.logs[id] = { ...log, at: Date.now() };
       st.done[id] = 1;
     });
@@ -96,12 +96,13 @@ function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () 
   );
 }
 
-export function CardioCard({ w, d, startOpen = false, fromExtra }: { w: number; d: number; startOpen?: boolean; fromExtra?: number }) {
+export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: number; d: number; startOpen?: boolean; fromExtra?: number; fromD?: number }) {
   const { model, state, update } = useApp();
   const day = dayAt(model, w, d)!;
   const id = day.ids[0], c = day.c, lg = state.logs[id], isDone = !!state.done[id];
-  const extra = fromExtra !== undefined && !isDone ? extrasFor(state, w, d)[fromExtra] : undefined;
-  const [from] = useState<FromExtra | undefined>(extra && { w, d, index: fromExtra!, extra });
+  const srcD = fromD ?? d;
+  const extra = fromExtra !== undefined && !isDone ? extrasFor(state, w, srcD)[fromExtra] : undefined;
+  const [from] = useState<FromExtra | undefined>(extra && { w, d: srcD, index: fromExtra!, extra });
   const [formOpen, setFormOpen] = useState<boolean>(startOpen && !isDone);
   const swapOpts: [("bike" | "walk" | "run"), string][] = [["bike", "Bike"], ["walk", "Walk"]];
   if (phaseOf(model.spec, w) >= 1) swapOpts.push(["run", "Walk/run"]);
@@ -281,6 +282,8 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
   const { model, state, update, openSheet } = useApp();
   const key = `${w}-${d}`, list = extrasFor(state, w, d);
   const canUse = canUseAsCardio(state, w, d, dayAt(model, w, d)?.c.kind);
+  // On a day off, a walk or ride can make up a session missed earlier this week.
+  const makeUp = !dayAt(model, w, d) ? makeUpTarget(model, w, d) : null;
   const [open, setOpen] = useState(startOpen);
   return (
     <section className="card">
@@ -294,6 +297,7 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
           </div>
           <div className="xact">
             {canUse && CARDIO_EXTRA_KINDS.includes(x.kind) && <button className="btn small inline use" onClick={() => openSheet({ kind: "cardio", w, d, fromExtra: i })}>Use as cardio</button>}
+            {makeUp && CARDIO_EXTRA_KINDS.includes(x.kind) && <button className="btn small inline use" onClick={() => openSheet({ kind: "cardio", w, d: makeUp.d, fromExtra: i, fromD: d })}>Make up {DN[makeUp.d]}</button>}
             <ConfirmButton className="btn small inline" label="Remove" confirmLabel="Confirm remove"
               onConfirm={() => update((s) => { const l = [...(s.extras[key] || [])]; l.splice(i, 1); if (l.length) s.extras[key] = l; else delete s.extras[key]; })} />
           </div>

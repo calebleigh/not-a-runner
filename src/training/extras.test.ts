@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canUseAsCardio, computeModel, emptyState, totals, applyExtraAsCardio } from "./index";
+import { canUseAsCardio, computeModel, emptyState, totals, applyExtraAsCardio, makeUpTarget } from "./index";
 import type { Extra } from "./types";
 
 const walk: Extra = { kind: "walk", dist: 1.5, time: 1800, label: "Evening walk" };
@@ -42,5 +42,27 @@ describe("using an extra as the day's cardio", () => {
     expect(canUseAsCardio(s, 1, 6, undefined)).toBe(false);
     s.done["1-2-c"] = 1;
     expect(canUseAsCardio(s, 1, 2, "bike")).toBe(false);
+  });
+});
+
+describe("weekend make-ups", () => {
+  const NOW = new Date(2026, 9, 10, 12); // Sat of week 1
+  it("finds the earliest missed session before the day", () => {
+    const s = emptyState();
+    s.done["1-0-c"] = 1;
+    const m = computeModel(s, NOW);
+    expect(makeUpTarget(m, 1, 5)?.d).toBe(1);
+    for (const d of [1, 2, 3, 4]) s.done[`1-${d}-c`] = 1;
+    expect(makeUpTarget(computeModel(s, NOW), 1, 5)).toBeNull();
+  });
+
+  it("moves a Saturday walk into the missed Tuesday slot", () => {
+    const s = emptyState();
+    s.extras["1-5"] = [walk];
+    expect(applyExtraAsCardio(s, 1, 5, 0, walk, "walk", { dist: 1.5, time: 1800, feel: "ok" }, 1, 1)).toBe(true);
+    expect(s.done["1-1-c"]).toBe(1);
+    expect(s.logs["1-1-c"]).toMatchObject({ dist: 1.5 });
+    expect(s.extras["1-5"]).toBeUndefined();
+    expect(s.swaps["1-1-c"]).toBeUndefined();
   });
 });

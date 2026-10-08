@@ -7,7 +7,8 @@ import { computeModel, mergeState, startOfDay, type Model, type State } from "..
 export type Tab = "home" | "plan" | "stats" | "settings";
 export type SheetSpec =
   | { kind: "day"; w: number; d: number }
-  | { kind: "cardio"; w: number; d: number; fromExtra?: number }
+  /** fromExtra: index of an extra to move into this slot; fromD: the day that extra was logged on (a make-up). */
+  | { kind: "cardio"; w: number; d: number; fromExtra?: number; fromD?: number }
   | { kind: "strength"; w: number; d: number }
   | { kind: "steps"; date: Date }
   | { kind: "weigh" }
