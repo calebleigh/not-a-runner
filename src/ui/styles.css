@@ -572,3 +572,28 @@ input[type="date"].xt{color-scheme:dark}
 .onbhero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
 .onbhero h1{font:800 italic 48px/1 var(--display)}
 .onbhero p{margin:0;color:var(--muted);font-size:17px;max-width:380px}
+.toosoon p{margin:0}
+.toosoonfix{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+/* Launch splash: runner runs in, the slash slams down on him */
+.splash{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:var(--paper);animation:sp-out .35s ease-in 1.5s forwards;cursor:pointer}
+.sp-mark{width:min(150px,38vw);height:auto;overflow:visible}
+.sp-runner{animation:sp-run .7s cubic-bezier(.2,.7,.3,1) both, sp-hit .3s ease-out .95s}
+.sp-stride{animation:sp-bob .175s ease-in-out 4 alternate}
+.sp-frame{animation:sp-in .3s ease-out both}
+.sp-slash{transform-origin:765px 765px;animation:sp-slam .25s cubic-bezier(.6,0,.9,.4) .72s both}
+.sp-shake{display:grid}
+.sp-shake>*{grid-area:1/1}
+.sp-shake{animation:sp-shake .3s linear .97s}
+.sp-name{font:800 italic 30px/1 var(--display);color:var(--ink);opacity:0;animation:sp-name .35s ease-out 1.05s forwards}
+@keyframes sp-run{from{transform:translateX(-900px);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
+@keyframes sp-bob{from{transform:translateY(0)}to{transform:translateY(-45px)}}
+@keyframes sp-hit{0%{transform:none}35%{transform:translate(18px,40px) scaleY(.94)}100%{transform:none}}
+@keyframes sp-in{from{opacity:0;transform:scale(.92);transform-origin:765px 765px}to{opacity:1;transform:none;transform-origin:765px 765px}}
+@keyframes sp-slam{from{opacity:0;transform:scale(2.6) rotate(-8deg)}60%{opacity:1}to{opacity:1;transform:none}}
+@keyframes sp-shake{0%,100%{transform:none}20%{transform:translate(-7px,5px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(2px,-1px)}}
+@keyframes sp-name{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sp-out{to{opacity:0;visibility:hidden}}
+.splash.still{animation:sp-out .3s ease-in .4s forwards}
+.splash.still *{animation:none!important;opacity:1}
+@media (prefers-reduced-motion: reduce){.splash *{animation:none!important;opacity:1}}

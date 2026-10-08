@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { OWNER_PROFILE, computeModel, emptyState, type Model, type PlanProfile } from "./index";
+import { OWNER_PROFILE, computeModel, emptyState, tooSoon, type Model, type PlanProfile } from "./index";
 
 const NOW = new Date(2026, 9, 7);
 /** "YYYY-MM-DD" for the Saturday of plan week `w` (week 1 starts Mon Oct 5, 2026). */
@@ -94,8 +94,10 @@ describe("plan generator", () => {
     expect(firstRun(true)).toBeGreaterThan(firstRun(false));
   });
 
-  it("warns when the race is too soon for the goal", () => {
-    expect(model(profile({ goal: "half", raceDate: raceIn(10) })).spec.warnings.length).toBe(1);
+  it("warns, but still builds, when the race is too soon for the goal", () => {
+    const m = model(profile({ goal: "half", raceDate: raceIn(10) }));
+    expect(m.spec.warnings.length).toBe(1);
+    expect(m.spec.weeks).toBe(10);
     expect(model(profile({ goal: "5k", raceDate: raceIn(10) })).spec.warnings).toEqual([]);
   });
 
@@ -111,5 +113,34 @@ describe("plan generator", () => {
     expect(m.spec.race).toBeNull();
     expect(Math.max(...m.spec.canon)).toBeLessThanOrEqual(39);
     expect(m.weeks.flatMap((w) => w.days).some((x) => x.c.kind === "race" || x.c.kind === "rest")).toBe(false);
+  });
+});
+
+describe("minimum training time", () => {
+  const p = (goal: PlanProfile["goal"], startLevel: PlanProfile["startLevel"], weeks: number) => profile({ goal, startLevel, raceDate: raceIn(weeks) });
+
+  it("flags a marathon from nothing in under a year, and suggests what fits", () => {
+    const soon = tooSoon(p("full", "cant_run_mile", 26))!;
+    expect(soon.minWeeks).toBe(52);
+    expect(soon.weeks).toBe(26);
+    expect(soon.shorter).toBe("10k");
+    expect(soon.earliest.toDateString()).toBe(new Date(raceIn(52) + "T00:00").toDateString());
+    expect(soon.message).toContain("we recommend at least 52 weeks");
+    expect(soon.message).not.toMatch(/—/);
+  });
+
+  it("allows it once the start level and time fit", () => {
+    expect(tooSoon(p("full", "run_6_plus", 26))).toBeNull();
+    expect(tooSoon(p("half", "cant_run_mile", 30))).toBeNull();
+    expect(tooSoon(p("5k", "cant_run_mile", 10))).toBeNull();
+    expect(tooSoon(profile({ goal: "fitness", raceDate: undefined }))).toBeNull();
+  });
+
+  it("the owner's plan is well within its minimum", () => {
+    expect(tooSoon(OWNER_PROFILE)).toBeNull();
+  });
+
+  it("offers no shorter goal when nothing fits", () => {
+    expect(tooSoon(p("10k", "cant_run_mile", 6))!.shorter).toBeNull();
   });
 });

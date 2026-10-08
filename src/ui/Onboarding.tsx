@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { DN, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { DN, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
 import { Logo } from "./Logo";
 
@@ -79,6 +80,7 @@ export function Onboarding() {
     ? buildSpec({ goal: d.goal, raceDate: d.raceDate, startDate: ymd(start), startLevel: d.startLevel, days: d.days, hasBike: d.hasBike, impactSensitive: d.impactSensitive })
     : null;
 
+  const soon = isRace && raceSpec ? tooSoon({ goal: d.goal!, raceDate: d.raceDate, startDate: ymd(start), startLevel: d.startLevel!, days: d.days, hasBike: d.hasBike, impactSensitive: d.impactSensitive }) : null;
   const steps = ["welcome", "goal", "level", ...(isRace ? ["race"] : []), "days", "body", "you", "weight", "why", "gear", "done"] as const;
   const at = steps[Math.min(step, steps.length - 1)];
   const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
@@ -133,9 +135,11 @@ export function Onboarding() {
         <label className="onbfield">Race name (optional)<input className="xt" maxLength={40} placeholder="Spring 5K" value={d.raceName} onChange={(e) => set({ raceName: e.target.value })} /></label>
         <label className="onbfield">Race date<input className="xt" type="date" min={minRace} max={maxRace} value={d.raceDate} onChange={(e) => set({ raceDate: e.target.value })} /></label>
         {raceSpec && <p className="onbnote">That's a {raceSpec.weeks}-week plan, starting {fmtLong(start)}.</p>}
-        {raceSpec?.warnings.map((w) => <p key={w} className="planwarn">{w}</p>)}
+        {soon && <TooSoonNote soon={soon} onDate={(v) => set({ raceDate: v })} onGoal={(g) => set({ goal: g })} />}
       </>;
+      // A recommendation, not a lock: people can still go ahead with a tight race date.
       canNext = !!raceSpec;
+      if (soon) cta = "Continue anyway";
       break;
     case "days":
       title = "Which days can you train?";

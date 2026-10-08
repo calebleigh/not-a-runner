@@ -5,6 +5,7 @@ import { Wordmark } from "./Logo";
 import { useMirroredScroll } from "./mirror";
 import { needsOnboarding } from "../training";
 import { Onboarding } from "./Onboarding";
+import { Splash } from "./Splash";
 import { SheetHost } from "./sheets";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Home } from "./views/Home";
@@ -68,5 +69,5 @@ function Root() {
 }
 
 export function App() {
-  return <AppProvider><Root /></AppProvider>;
+  return <AppProvider><Root /><Splash /></AppProvider>;
 }

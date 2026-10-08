@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { addDays, birthdayInfo, buildSpec, changePlan, changeWeek, parseBirthday, type PlanProfile, type RaceGoal } from "../../training";
+import { addDays, birthdayInfo, changePlan, changeWeek, parseBirthday, tooSoon, type PlanProfile, type RaceGoal } from "../../training";
+import { TooSoonNote } from "../TooSoonNote";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Logo } from "../Logo";
@@ -168,7 +169,7 @@ function YourPlan() {
   const maxRace = ymd(addDays(model.spec.start, 52 * 7 - 1)), minRace = ymd(addDays(model.today, 7));
   const raceOk = !isRace || (!!draft.raceDate && draft.raceDate >= minRace && draft.raceDate <= maxRace);
   const daysOk = draft.days.length >= 3 && draft.days.length <= 6;
-  const preview = dirty && raceOk && daysOk ? buildSpec({ ...draft, startDate: saved.startDate }) : null;
+  const soon = dirty && raceOk ? tooSoon({ ...draft, startDate: saved.startDate }) : null;
   const toggleDay = (d: number) => setDraft((x) => ({ ...x, days: x.days.includes(d) ? x.days.filter((y) => y !== d) : [...x.days, d].sort((a, b) => a - b) }));
   const strengthOn = state.settings.strength !== false;
   const save = () => {
@@ -210,12 +211,12 @@ function YourPlan() {
           <span>Easy on the knees<small>Sore knees or joints: more time on the bike before running ramps up.</small></span>
           <Switch on={draft.impactSensitive} label="Easy on the knees" onChange={(v) => set({ impactSensitive: v })} />
         </div>
-        {preview?.warnings.map((w) => <p key={w} className="planwarn">{w}</p>)}
+        {soon && <TooSoonNote soon={soon} onDate={(v) => set({ raceDate: v })} onGoal={(g) => set({ goal: g })} />}
         {dirty && (
           <div className="plansave">
             <p>{from <= 1 ? "Your whole plan will be rebuilt." : `${from === 2 ? "Week 1 stays as it is" : `Weeks 1 to ${from - 1} stay as they are`}. Week ${from} on is rebuilt.`}</p>
             <div className="row2">
-              <button className="btn solid" disabled={!raceOk || !daysOk} onClick={save}>Save changes</button>
+              <button className="btn solid" disabled={!raceOk || !daysOk} onClick={save}>{soon ? "Save anyway" : "Save changes"}</button>
               <button className="btn small" style={{ marginTop: 14 }} onClick={() => setDraft(saved)}>Cancel</button>
             </div>
           </div>

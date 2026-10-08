@@ -93,13 +93,55 @@ const weeksFrom = (a: Date, b: Date) => Math.round((Date.UTC(b.getFullYear(), b.
 /** Template phase (0 to 3) of a template week. */
 export const canonPhase = (c: number) => phases.findIndex((p) => c >= p.from && c <= p.to);
 
-export const GOALS_INFO: Record<RaceGoal, { label: string; miles: number; peakLong: number; shortScale: number; minWeeks: number }> = {
-  "5k": { label: "5K", miles: 3.1, peakLong: 4, shortScale: 0.85, minWeeks: 8 },
-  "10k": { label: "10K", miles: 6.2, peakLong: 7, shortScale: 0.95, minWeeks: 10 },
-  half: { label: "Half marathon", miles: 13.1, peakLong: 11, shortScale: 1, minWeeks: 16 },
-  full: { label: "Marathon", miles: 26.2, peakLong: 20, shortScale: 1.15, minWeeks: 20 },
-  fitness: { label: "Fitness", miles: 0, peakLong: 6, shortScale: 1, minWeeks: 0 },
+export const GOALS_INFO: Record<RaceGoal, { label: string; miles: number; peakLong: number; shortScale: number }> = {
+  "5k": { label: "5K", miles: 3.1, peakLong: 4, shortScale: 0.85 },
+  "10k": { label: "10K", miles: 6.2, peakLong: 7, shortScale: 0.95 },
+  half: { label: "Half marathon", miles: 13.1, peakLong: 11, shortScale: 1 },
+  full: { label: "Marathon", miles: 26.2, peakLong: 20, shortScale: 1.15 },
+  fitness: { label: "Fitness", miles: 0, peakLong: 6, shortScale: 1 },
 };
+
+/**
+ * Recommended fewest weeks of training, by goal and starting level. Conservative on purpose: the
+ * people this app is for are starting from little or nothing. Shorter plans can still be built
+ * (the user is warned); the volume governor keeps them from ramping too fast.
+ */
+export const MIN_WEEKS: Record<Exclude<RaceGoal, "fitness">, Record<StartLevel, number>> = {
+  "5k": { cant_run_mile: 10, run_1_mile: 8, run_3_miles: 6, run_6_plus: 4 },
+  "10k": { cant_run_mile: 16, run_1_mile: 12, run_3_miles: 10, run_6_plus: 8 },
+  half: { cant_run_mile: 30, run_1_mile: 22, run_3_miles: 16, run_6_plus: 12 },
+  full: { cant_run_mile: 52, run_1_mile: 40, run_3_miles: 26, run_6_plus: 20 },
+};
+const RACE_GOALS: Exclude<RaceGoal, "fitness">[] = ["5k", "10k", "half", "full"];
+const goalName = (g: RaceGoal) => ({ "5k": "5K", "10k": "10K", half: "half marathon", full: "marathon", fitness: "fitness plan" })[g];
+
+export interface TooSoon {
+  weeks: number;
+  minWeeks: number;
+  /** Earliest race date that meets the minimum (same weekday as the race). */
+  earliest: Date;
+  /** The longest shorter goal that fits this date from this starting level, if any. */
+  shorter: RaceGoal | null;
+  message: string;
+}
+
+/** Whether a race is too soon to train for from this starting level. Null when it's fine. */
+export function tooSoon(profile: PlanProfile): TooSoon | null {
+  if (profile.goal === "fitness") return null;
+  const race = parseYmd(profile.raceDate), start = parseYmd(profile.startDate);
+  if (!race || !start) return null;
+  const s = mondayOf(start);
+  const weeks = Math.min(52, weeksFrom(s, mondayOf(race)) + 1);
+  const min = MIN_WEEKS[profile.goal][profile.startLevel];
+  if (weeks >= min) return null;
+  const dow = (race.getDay() + 6) % 7;
+  const earliest = new Date(s.getFullYear(), s.getMonth(), s.getDate() + (min - 1) * 7 + dow);
+  const shorter = RACE_GOALS.slice(0, RACE_GOALS.indexOf(profile.goal)).reverse().find((g) => weeks >= MIN_WEEKS[g][profile.startLevel]) ?? null;
+  const when = earliest.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const message = `From where you're starting, we recommend at least ${min} weeks of training for a ${goalName(profile.goal)}. That race is ${Math.max(weeks, 0)} weeks away. A race on or after ${when} is safer` +
+    (shorter ? `, or try a ${goalName(shorter)} first: it fits your date.` : ".");
+  return { weeks, minWeeks: min, earliest, shorter, message };
+}
 
 /** How far into the template each starting level begins. */
 const LEVEL_OFFSET: Record<StartLevel, number> = { cant_run_mile: 0, run_1_mile: 7, run_3_miles: 20, run_6_plus: 27 };
@@ -137,7 +179,8 @@ export function buildSpec(profile: PlanProfile): PlanSpec {
     const raceMonday = mondayOf(race);
     weeks = weeksFrom(start, raceMonday) + 1;
     if (weeks > 52) { start = new Date(raceMonday.getFullYear(), raceMonday.getMonth(), raceMonday.getDate() - 51 * 7); weeks = 52; }
-    if (weeks < g.minWeeks) warnings.push(`That's ${Math.max(weeks, 0)} weeks away. A ${g.label} plan usually needs at least ${g.minWeeks}. This plan gets you to the finish, but a later race would be easier on your body.`);
+    const soon = tooSoon(profile);
+    if (soon) warnings.push(soon.message);
     weeks = Math.max(weeks, 4);
   }
   const offset = LEVEL_OFFSET[profile.startLevel];
