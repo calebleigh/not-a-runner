@@ -124,3 +124,34 @@ export function thinRoute(route: [number, number][], minM = 10): [number, number
   out.push(route[route.length - 1]);
   return out;
 }
+
+/**
+ * Route as an encoded polyline (the format map services use): about 6 characters a point instead
+ * of 30, and plain text, which the sync database can store.
+ */
+export function encodeRoute(route: [number, number][]): string {
+  let out = "", pLat = 0, pLon = 0;
+  const enc = (v: number) => {
+    let x = v < 0 ? ~(v << 1) : v << 1, s = "";
+    while (x >= 0x20) { s += String.fromCharCode((0x20 | (x & 0x1f)) + 63); x >>= 5; }
+    return s + String.fromCharCode(x + 63);
+  };
+  for (const [lat, lon] of route) {
+    const a = Math.round(lat * 1e5), b = Math.round(lon * 1e5);
+    out += enc(a - pLat) + enc(b - pLon);
+    pLat = a; pLon = b;
+  }
+  return out;
+}
+
+export function decodeRoute(s: string): [number, number][] {
+  const out: [number, number][] = [];
+  let i = 0, lat = 0, lon = 0;
+  const dec = () => {
+    let r = 0, sh = 0, b;
+    do { b = s.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20);
+    return r & 1 ? ~(r >> 1) : r >> 1;
+  };
+  while (i < s.length) { lat += dec(); lon += dec(); out.push([lat / 1e5, lon / 1e5]); }
+  return out;
+}

@@ -3,6 +3,7 @@ import { AppProvider, useApp, type Tab } from "./app-state";
 import { Icon } from "./icons";
 import { Wordmark } from "./Logo";
 import { AppHeader } from "./AppHeader";
+import { TrackerScreen } from "./TrackerScreen";
 import { useMirroredScroll } from "./mirror";
 import { needsOnboarding } from "../training";
 import { Onboarding } from "./Onboarding";
@@ -60,6 +61,7 @@ function Shell() {
       {TABS.slice(2).map(navBtn)}
     </nav>
     <SheetHost />
+    <TrackerScreen />
     <Toast />
     {IS_NATIVE ? <ApkUpdatePrompt /> : <UpdatePrompt />}
   </>;

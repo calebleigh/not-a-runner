@@ -787,3 +787,32 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .apphead-title{display:flex;align-items:center;gap:10px}
 .apphead-logo{display:flex;flex:none}
 @media (min-width:900px){.apphead-title{font-size:34px}.apphead-logo{display:none}}
+
+/* Workout tracker: full screen over everything */
+.tracker{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;flex-direction:column;gap:18px;padding:calc(16px + var(--sat)) 20px calc(20px + var(--sab));overflow-y:auto;max-width:620px;margin:0 auto}
+@media (min-width:900px){.tracker{max-width:none;padding-left:max(20px,calc(50vw - 300px));padding-right:max(20px,calc(50vw - 300px))}}
+.trk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.trk-top h2{font:800 26px/1.1 var(--display);margin-top:4px}
+.trk-ready{flex:1;display:flex;flex-direction:column;gap:16px}
+.trk-sim{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+.trk-go{margin:auto auto 8px;width:min(220px,60vw);aspect-ratio:1;border-radius:50%;border:0;background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));color:var(--on-accent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:800 30px var(--display);cursor:pointer;box-shadow:0 18px 40px -14px rgba(var(--accent-rgb),.7)}
+.trk-go svg{width:44px;height:44px}
+.trk-time{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0}
+.trk-time .num{font:800 clamp(64px,20vw,120px)/1 var(--display);letter-spacing:-.02em}
+.trk-time small,.trk-nums small{color:var(--muted);font-size:14px;font-weight:600}
+.trk-nums{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trk-nums div{display:flex;flex-direction:column;align-items:center;padding:16px 8px;border:1px solid var(--line);background:var(--surface);border-radius:min(18px,var(--rmax))}
+.trk-nums .num{font:800 clamp(38px,11vw,56px)/1 var(--display)}
+.trk-msg{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:min(14px,var(--rmax));background:var(--surface);border:1px solid var(--line);color:var(--muted);font-size:14px}
+.trk-msg.bad{border-color:var(--bad);color:var(--ink)}
+.trk-splits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:min(14px,var(--rmax));overflow:hidden}
+.trk-splits li{display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface)}
+.trk-splits li+li{border-top:1px solid var(--line)}
+.trk-splits b{font:700 17px var(--display)}
+.trk-ctrl{margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trk-btn{height:64px;border-radius:min(18px,var(--rmax));border:1px solid var(--line);background:var(--surface);color:var(--ink);font:800 22px var(--display);cursor:pointer}
+.trk-btn.go{background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border:0;color:var(--on-accent)}
+.trk-btn.finish.confirm{background:var(--bad);border-color:var(--bad);color:#fff}
+.trk-save{display:flex;flex-direction:column;gap:12px;margin-top:auto}
+.trk-extra{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.btn svg{width:18px;height:18px;vertical-align:-3px}

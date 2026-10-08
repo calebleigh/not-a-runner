@@ -12,6 +12,9 @@ export interface Log {
   feel?: Feel;
   hr?: number;
   at: number;
+  /** GPS route from the tracker, as an encoded polyline (see encodeRoute). Text, because the sync
+   *  database can't hold lists of lists. */
+  route?: string;
 }
 
 export interface Extra {
@@ -24,6 +27,9 @@ export interface Extra {
   label?: string;
   /** When it was logged (ms). Older entries have none. */
   at?: number;
+  /** GPS route from the tracker, as an encoded polyline (see encodeRoute). Text, because the sync
+   *  database can't hold lists of lists. */
+  route?: string;
 }
 
 export interface Todo {

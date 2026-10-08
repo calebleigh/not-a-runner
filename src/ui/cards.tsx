@@ -1,4 +1,7 @@
 import { newId } from "../sync/engine";
+import { openTracker } from "./tracker";
+import { Icon } from "./icons";
+import { trackKindFor } from "./trackFor";
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
@@ -47,7 +50,7 @@ export function MarkBtn({ id }: { id: string }) {
   return <button className="btn" onClick={() => update((s) => { s.done[id] = 1; })}>Mark done</button>;
 }
 
-function FeelPicker({ value, onPick }: { value?: Feel; onPick: (f: Feel) => void }) {
+export function FeelPicker({ value, onPick }: { value?: Feel; onPick: (f: Feel) => void }) {
   return (
     <div className="feel">
       {(Object.keys(FEEL) as Feel[]).map((k) => (
@@ -98,7 +101,7 @@ function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () 
 }
 
 export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: number; d: number; startOpen?: boolean; fromExtra?: number; fromD?: number }) {
-  const { model, state, update } = useApp();
+  const { model, state, update, closeSheet } = useApp();
   const day = dayAt(model, w, d)!;
   const id = day.ids[0], c = day.c, lg = state.logs[id], isDone = !!state.done[id];
   const srcD = fromD ?? d;
@@ -144,7 +147,10 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
               <ConfirmButton className="btn small" label="Undo" confirmLabel="Confirm undo" onConfirm={() => update((s) => { delete s.done[id]; delete s.logs[id]; })} />
             </div>
           ) : (
-            <button className="btn solid" onClick={() => setFormOpen(true)}>Log it</button>
+            <div className="row2">
+              <button className="btn solid" onClick={() => setFormOpen(true)}>Log it</button>
+              <button className="btn" onClick={() => { closeSheet(); openTracker(trackKindFor(c.kind), { w, d, title: c.t }); }}><Icon.play /> Track it</button>
+            </div>
           )}
         </>
       )}

@@ -91,3 +91,17 @@ describe("tracking", () => {
 
 // Keep Fix used for type checking in tests.
 export type _F = Fix;
+
+describe("route encoding", () => {
+  it("round-trips a route to within a meter, as short text", async () => {
+    const { encodeRoute, decodeRoute } = await import("./track");
+    const pts: [number, number][] = Array.from({ length: 50 }, (_, i) => [north(i * 20), START.lon + i * 0.0001]);
+    const s = encodeRoute(pts);
+    expect(typeof s).toBe("string");
+    expect(s.length).toBeLessThan(pts.length * 12);
+    decodeRoute(s).forEach(([la, lo], i) => {
+      expect(meters({ lat: la, lon: lo }, { lat: pts[i][0], lon: pts[i][1] })).toBeLessThan(1.5);
+    });
+    expect(decodeRoute(encodeRoute([[38.5, -120.2], [40.7, -120.95]]))).toEqual([[38.5, -120.2], [40.7, -120.95]]);
+  });
+});
