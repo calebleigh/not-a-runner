@@ -16,6 +16,8 @@
 html{overflow-y:scroll;scrollbar-gutter:stable;background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 body.locked{overflow:hidden}
+/* Nothing behind an open sheet scrolls or shows a scrollbar. */
+html:has(body.locked){overflow:hidden}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#3a3734;border-radius:min(8px,var(--rmax))}::-webkit-scrollbar-track{background:transparent}
 button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 button,input,summary{color:inherit}
@@ -200,9 +202,9 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 /* Sheets */
 .sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);pointer-events:none;transition:background .3s}
 .sheet.open{background:rgba(0,0,0,.66);pointer-events:auto}
-.sheet-body{background:var(--paper);width:100%;max-width:560px;max-height:90%;overflow-y:auto;border-radius:min(26px,var(--rmax)) min(26px,var(--rmax)) 0 0;border-top:1px solid var(--line);padding:10px 16px calc(28px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .38s var(--ease)}
+.sheet-body{background:var(--paper);width:100%;max-width:560px;max-height:90%;display:flex;flex-direction:column;overflow:hidden;border-radius:min(26px,var(--rmax)) min(26px,var(--rmax)) 0 0;border-top:1px solid var(--line);padding:10px 0 0;transform:translateY(105%);transition:transform .38s var(--ease)}
 .sheet.open .sheet-body{transform:none}
-.grabber{width:42px;height:5px;border-radius:min(5px,var(--rmax));background:var(--line);margin:0 auto 12px}
+.grabber{flex:none;width:42px;height:5px;border-radius:min(5px,var(--rmax));background:var(--line);margin:0 auto 8px}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .sheet-head h2{font-size:30px;font-weight:800}
 .xbtn{width:40px;height:40px;border-radius:var(--rc);border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:16px}
@@ -284,7 +286,10 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 /* No pull-to-refresh or scroll chaining; the app is not a web page. */
 html,body{overscroll-behavior-y:none}
 /* Sheet title and close stay put while the sheet scrolls. */
-.sheet-head{position:sticky;top:-10px;z-index:3;background:var(--paper);margin:0 -16px 12px;padding:8px 16px 10px;box-shadow:0 1px 0 var(--line)}
+/* Sheet: fixed header (handle and title), only the content below scrolls. */
+.sheet-inner{flex:1;min-height:0;display:flex;flex-direction:column}
+.sheet-head{flex:none;margin:0;padding:4px 16px 12px;border-bottom:1px solid var(--line)}
+.sheet-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px calc(28px + env(safe-area-inset-bottom,0px))}
 /* Two-tap delete: the armed state is red. */
 .btn.confirm,.btn.small.confirm,.btn.solid.confirm{background:var(--bad);border-color:var(--bad);color:var(--on-accent)}
 .xact{flex:none;display:flex;flex-direction:column;gap:6px;align-items:stretch}
@@ -320,10 +325,11 @@ html,body{overscroll-behavior-y:none}
   .toast,.update-toast{left:calc(50% + var(--rail) / 2);bottom:28px}
 
   .sheet{align-items:stretch;justify-content:flex-end}
-  .sheet-body{max-width:min(460px,100%);max-height:none;height:100%;border-radius:0;border-top:0;border-left:1px solid var(--line);padding:16px 20px 28px;transform:translateX(105%)}
+  .sheet-body{max-width:min(460px,100%);max-height:none;height:100%;border-radius:0;border-top:0;border-left:1px solid var(--line);padding:16px 0 0;transform:translateX(105%)}
   .sheet.open .sheet-body{transform:none}
   .sheet .grabber{display:none}
-  .sheet-head{top:-16px;margin:0 -20px 12px;padding:8px 20px 10px}
+  .sheet-head{padding:0 20px 12px}
+  .sheet-scroll{padding:12px 20px 28px}
 }
 
 @media (min-width:900px){

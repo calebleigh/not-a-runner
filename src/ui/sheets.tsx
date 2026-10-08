@@ -12,14 +12,17 @@ export function SheetHost() {
   const [open, setOpen] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
-  useMirroredScroll("sheet", useCallback(() => bodyRef.current, []));
+  // Only the content area scrolls; the handle and title above it stay put.
+  const scrollEl = () => bodyRef.current?.querySelector<HTMLElement>(".sheet-scroll") ?? null;
+  useMirroredScroll("sheet", useCallback(() => bodyRef.current, []), ".sheet-scroll");
 
   useEffect(() => {
     if (sheet) {
       lastFocus.current = document.activeElement as HTMLElement | null;
       setShown(sheet);
       const id = requestAnimationFrame(() => setOpen(true));
-      if (bodyRef.current) bodyRef.current.scrollTop = 0;
+      const sc = scrollEl();
+      if (sc) sc.scrollTop = 0;
       return () => cancelAnimationFrame(id);
     }
     setOpen(false);
@@ -42,7 +45,7 @@ export function SheetHost() {
     if (!S) return;
     let y0: number | null = null;
     const sidePanel = matchMedia("(min-width: 700px)");
-    const start = (e: TouchEvent) => { if (S.scrollTop <= 0 && !sidePanel.matches) y0 = e.touches[0].clientY; };
+    const start = (e: TouchEvent) => { if ((scrollEl()?.scrollTop ?? 0) <= 0 && !sidePanel.matches) y0 = e.touches[0].clientY; };
     const move = (e: TouchEvent) => {
       if (y0 == null) return;
       const dy = e.touches[0].clientY - y0;
@@ -141,7 +144,7 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
   }
   const dayOfSheet = "date" in spec ? spec.date : "w" in spec ? dateOf(model.spec, spec.w, spec.d) : null;
   const cake = !!dayOfSheet && isBirthdayOn(model.state.settings.birthday, dayOfSheet);
-  return <div key={key}><Head title={title} cake={cake} />{body}</div>;
+  return <div key={key} className="sheet-inner"><Head title={title} cake={cake} /><div className="sheet-scroll">{body}</div></div>;
 }
 
 function StepsSheetBody({ date }: { date: Date }) {

@@ -27,12 +27,18 @@ export function useMirroredState<T>(key: string, initial: T | (() => T)): [T, (v
   return [v, set];
 }
 
-/** Mirrors scroll position as a fraction, since the two screens lay out differently. */
-export function useMirroredScroll(key: string, getEl: () => HTMLElement | null) {
+/**
+ * Mirrors scroll position as a fraction, since the two screens lay out differently.
+ * With `selector`, the scrolling element is that descendant of getEl() (it may be replaced over time).
+ */
+export function useMirroredScroll(key: string, getEl: () => HTMLElement | null, selector?: string) {
   useEffect(() => {
     if (!channel) return;
     let quietUntil = 0, raf = 0;
-    const target = () => getEl() || document.scrollingElement;
+    const target = () => {
+      const el = getEl();
+      return selector ? el?.querySelector<HTMLElement>(selector) ?? null : el || document.scrollingElement;
+    };
     const scroller = () => (getEl() ? getEl()! : window);
     const onScroll = () => {
       if (performance.now() < quietUntil) return;
@@ -50,8 +56,9 @@ export function useMirroredScroll(key: string, getEl: () => HTMLElement | null) 
       quietUntil = performance.now() + 150;
       t.scrollTop = f * (t.scrollHeight - t.clientHeight);
     });
-    const s = scroller();
-    s.addEventListener("scroll", onScroll, { passive: true });
-    return () => { off(); s.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
-  }, [key, getEl]);
+    // With a selector, listen in the capture phase so scrolls inside a replaced child still reach us.
+    const s = scroller(), capture = !!selector;
+    s.addEventListener("scroll", onScroll, { passive: true, capture });
+    return () => { off(); s.removeEventListener("scroll", onScroll, { capture }); cancelAnimationFrame(raf); };
+  }, [key, getEl, selector]);
 }
