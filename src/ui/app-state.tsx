@@ -19,7 +19,8 @@ export type SheetSpec =
   | { kind: "import" }
   | { kind: "why" }
   | { kind: "todos"; which: "later" | "done" }
-  | { kind: "notes" };
+  | { kind: "notes" }
+  | { kind: "streak" };
 
 interface AppCtx {
   model: Model;

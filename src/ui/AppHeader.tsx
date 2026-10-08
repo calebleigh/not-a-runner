@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { notifications, type Note } from "../training";
+import { notifications, streakOf, type Note } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 import { Wordmark } from "./Logo";
@@ -33,8 +33,10 @@ export function useNotes(): Note[] {
 
 /** Top bar: the app's name, then sync status and notifications. */
 export function AppHeader() {
-  const { setTab, openSheet } = useApp();
+  const { model, setTab, openSheet } = useApp();
   const sync = useSync();
+  const streak = streakOf(model);
+  const lit = streak.current > 0;
   const notes = useNotes(), seen = useSeen();
   const unseen = notes.filter((n) => !seen.includes(n.key)).length;
   const on = sync.phase !== "off" && !!sync.account;
@@ -44,6 +46,9 @@ export function AppHeader() {
     <header className="apphead">
       <span className="apphead-brand"><Wordmark size={24} /></span>
       <span className="apphead-acts">
+        <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
+          <Icon.flame /><b>{streak.current}</b>
+        </button>
         <button className={"hicon sync " + (on ? sync.phase : "off")} aria-label={syncLabel} title={syncLabel} onClick={goSync}>
           {on && sync.phase !== "offline" ? <Icon.cloud /> : <Icon.cloudOff />}
         </button>
@@ -78,5 +83,33 @@ export function NotesSheetBody() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** The streak sheet: how many weeks in a row, this week's progress, and the rule. */
+export function StreakSheetBody() {
+  const { model } = useApp();
+  const k = streakOf(model), left = Math.max(0, k.thisWeek.need - k.thisWeek.done);
+  return (
+    <div className="streaksheet">
+      <div className="streakbig">
+        <span className={"streakflame" + (k.current ? " lit" : "")}><Icon.flame /></span>
+        <span className="num">{k.current}</span>
+        <span className="unit">{k.current === 1 ? "week" : "weeks"} in a row</span>
+      </div>
+      <p className="streaknow">{k.thisWeek.met ? "This week counts. Nice work." : k.thisWeek.need ? `${left} more ${left === 1 ? "session" : "sessions"} this week to keep it going.` : "Your streak starts with your first week."}</p>
+      <div className="streakweeks" aria-label="Recent weeks">
+        {k.recent.map((r) => (
+          <span key={r.week} className={(r.met ? "met" : "") + (r.current ? " now" : "")} title={`Week ${r.week}`}>
+            <i>{r.met && <Icon.flame />}</i><small>{r.current ? "Now" : `W${r.week}`}</small>
+          </span>
+        ))}
+      </div>
+      <div className="streakfacts">
+        <div><b>{k.best}</b><small>Best streak</small></div>
+        <div><b>{k.thisWeek.done}</b><small>Done this week, {k.thisWeek.need} needed</small></div>
+      </div>
+      <p className="setnote">A week counts when you do most of your planned cardio, like 3 of 5. Rest days and the odd missed day never break it.</p>
+    </div>
   );
 }
