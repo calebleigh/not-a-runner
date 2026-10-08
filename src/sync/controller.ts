@@ -2,13 +2,13 @@
 // after they happen, and applies what other devices upload. The app never waits on it.
 import { createStore, get, set } from "idb-keyval";
 import type { State } from "../training/types";
-import { afterPush, applyRemote, changedKeys, markDirty, pendingRows, startMeta, type SyncMeta } from "./engine";
+import { afterPush, applyRemote, changedKeys, markDirty, migrateExtras, pendingRows, startMeta, type SyncMeta } from "./engine";
 import type { Account, Provider } from "./firebase";
 
 export type SyncPhase = "off" | "starting" | "syncing" | "synced" | "offline" | "error";
 export interface SyncStatus { phase: SyncPhase; account: Account | null; pending: number; lastSync: number | null; error: string | null }
 
-interface Saved { on: boolean; meta: SyncMeta; account: Account | null; lastSync: number | null }
+interface Saved { on: boolean; meta: SyncMeta; account: Account | null; lastSync: number | null; /** 2: extras sync one by one. */ v?: number }
 interface Host { get(): State; apply(next: State): void }
 
 const KEY = "sync";
@@ -52,6 +52,10 @@ export async function initSync(h: Host): Promise<void> {
       return emit({ phase: saved.on ? "error" : "off", error: message(e) });
     }
   }
+  if (saved.on && (saved.v ?? 1) < 2) {
+    saved = { ...saved, v: 2, meta: migrateExtras(h.get(), saved.meta, Date.now()) };
+    await persist();
+  }
   if (saved.on) start();
   else emit({ phase: "off" });
   window.addEventListener("online", () => schedule(0));
@@ -85,7 +89,7 @@ export async function signInSync(kind: Provider): Promise<void> {
 /** Stops syncing on this device. Everything stays on the device; the account keeps its copy. */
 export async function signOutSync(): Promise<void> {
   stopListen?.(); stopAuth?.(); stopListen = stopAuth = null;
-  saved = { on: false, meta: { dirty: {}, cursor: null }, account: null, lastSync: null };
+  saved = { on: false, v: 2, meta: { dirty: {}, cursor: null }, account: null, lastSync: null };
   await persist();
   emit({ phase: "off", error: null });
   try { await (await fb()).signOut(); } catch { /* already signed out */ }
@@ -95,7 +99,7 @@ export const syncNow = () => schedule(0);
 
 async function turnOn(a: Account) {
   const sameAccount = saved.on && saved.account?.uid === a.uid;
-  saved = { on: true, account: a, lastSync: sameAccount ? saved.lastSync : null, meta: sameAccount ? saved.meta : startMeta(host!.get()) };
+  saved = { on: true, v: 2, account: a, lastSync: sameAccount ? saved.lastSync : null, meta: sameAccount ? saved.meta : startMeta(host!.get()) };
   await persist();
   start();
 }

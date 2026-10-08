@@ -1,3 +1,4 @@
+import { newId } from "../sync/engine";
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
@@ -304,7 +305,7 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
         </div>
       ))}
       {open ? (
-        <ExtraForm onCancel={() => setOpen(false)} onSave={(e) => { update((s) => { s.extras[key] = [...(s.extras[key] || []), e]; }); setOpen(false); }} />
+        <ExtraForm onCancel={() => setOpen(false)} onSave={(e) => { update((s) => { s.extras[key] = [...(s.extras[key] || []), { ...e, id: newId() }]; }); setOpen(false); }} />
       ) : (
         <button className="btn" onClick={() => setOpen(true)}>+ Add extra activity</button>
       )}

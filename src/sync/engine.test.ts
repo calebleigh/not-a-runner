@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { emptyState } from "../training";
 import type { State } from "../training/types";
-import { afterPush, applyRemote, changedKeys, markDirty, pendingRows, setEntry, startMeta, toEntries, type Row, type SyncMeta } from "./engine";
+import { afterPush, applyRemote, changedKeys, markDirty, migrateExtras, newId, pendingRows, setEntry, startMeta, toEntries, type Row, type SyncMeta } from "./engine";
+import type { Extra } from "../training/types";
 
 const withLog = (s: State, id: string, dist: number): State => ({ ...s, done: { ...s.done, [id]: 1 }, logs: { ...s.logs, [id]: { dist, time: 1200, feel: "ok", at: 1 } } });
 const empty: SyncMeta = { dirty: {}, cursor: null };
@@ -12,7 +13,9 @@ function server() {
   const rows = new Map<string, Row>();
   let clock = 0;
   return {
-    push(rs: Row[]) { for (const r of rs) rows.set(r.key, { ...r, updated_at: String(++clock).padStart(8, "0") }); },
+    // Like firestore.rules: an older edit never replaces a newer one.
+    push(rs: Row[]) { for (const r of rs) if (!(rows.get(r.key)?.edited_at! > r.edited_at)) rows.set(r.key, { ...r, updated_at: String(++clock).padStart(8, "0") }); },
+    raw: rows,
     pull(cursor: string | null) { return [...rows.values()].filter((r) => !cursor || r.updated_at! > cursor); },
   };
 }
@@ -102,5 +105,59 @@ describe("sync engine", () => {
     const got = applyRemote(emptyState(), empty, [{ key: "future/x", value: 1, deleted: false, edited_at: 1, updated_at: "1" }]);
     expect(got.changed).toBe(false);
     expect(got.meta.cursor).toBe("1");
+  });
+});
+
+describe("extra activities", () => {
+  const hike: Extra = { id: newId(), kind: "hike", dist: 3, time: 3600 };
+  const swim: Extra = { id: newId(), kind: "swim", dist: 0.5, time: 1800 };
+  const addExtra = (s: State, day: string, e: Extra): State => ({ ...s, extras: { ...s.extras, [day]: [...(s.extras[day] || []), e] } });
+
+  it("two devices adding activities on the same day keep both", () => {
+    const srv = server();
+    let phone: Dev = { state: emptyState(), meta: empty }, laptop: Dev = { state: emptyState(), meta: empty };
+    phone = edit(phone, addExtra(phone.state, "1-5", hike), 1);
+    laptop = edit(laptop, addExtra(laptop.state, "1-5", swim), 2);
+    phone = sync(phone, srv); laptop = sync(laptop, srv); phone = sync(phone, srv);
+    for (const d of [phone, laptop]) expect(d.state.extras["1-5"].map((e) => e.kind).sort()).toEqual(["hike", "swim"]);
+  });
+
+  it("deleting one activity leaves the others", () => {
+    const srv = server();
+    let phone: Dev = { state: emptyState(), meta: empty }, laptop: Dev = { state: emptyState(), meta: empty };
+    phone = sync(edit(phone, addExtra(addExtra(phone.state, "1-5", hike), "1-5", swim), 1), srv);
+    laptop = sync(laptop, srv);
+    phone = sync(edit(phone, { ...phone.state, extras: { "1-5": [swim] } }, 2), srv);
+    laptop = sync(laptop, srv);
+    expect(laptop.state.extras["1-5"]).toEqual([swim]);
+  });
+
+  it("older activities without ids match up across devices, repeats included", () => {
+    const walk: Extra = { kind: "walk", dist: 1, time: 1200 };
+    const s = addExtra(addExtra(emptyState(), "2-0", walk), "2-0", walk);
+    const keys = [...toEntries(s).keys()].filter((k) => k.startsWith("extras/"));
+    expect(keys.length).toBe(2);
+    expect([...toEntries(structuredClone(s)).keys()]).toEqual([...toEntries(s).keys()]);
+  });
+
+  it("a whole-day entry from before the change only adds, never removes", () => {
+    const mine = addExtra(emptyState(), "1-5", hike);
+    const old: Row = { key: "extras/1-5", value: [swim], deleted: false, edited_at: 5, updated_at: "1" };
+    expect(applyRemote(mine, empty, [old]).state.extras["1-5"].map((e) => e.kind)).toEqual(["hike", "swim"]);
+    const gone: Row = { ...old, value: null, deleted: true, updated_at: "2" };
+    expect(applyRemote(mine, empty, [gone]).state.extras["1-5"]).toEqual([hike]);
+  });
+
+  it("switching an already-synced account over doesn't bring back deleted activities", () => {
+    const srv = server();
+    // Before the change, the phone uploaded the whole day as one entry.
+    srv.push([{ key: "extras/1-5", value: [hike, swim], deleted: false, edited_at: 10 }]);
+    let phone: Dev = { state: addExtra(addExtra(emptyState(), "1-5", hike), "1-5", swim), meta: empty };
+    phone = sync({ ...phone, meta: migrateExtras(phone.state, empty, 20) }, srv);
+    expect(srv.raw.get("extras/1-5")!.deleted).toBe(true);
+    phone = sync(edit(phone, { ...phone.state, extras: { "1-5": [swim] } }, 30), srv);
+    // A device signing in later sees only the swim.
+    const later = sync({ state: emptyState(), meta: startMeta(emptyState()) }, srv);
+    expect(later.state.extras["1-5"]).toEqual([swim]);
   });
 });

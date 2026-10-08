@@ -3,7 +3,7 @@
 // Each local edit is stamped with the time it happened; when the same entry changed on both
 // devices, the later edit wins.
 import { normalizeState } from "../training/backup";
-import type { State } from "../training/types";
+import type { Extra, State } from "../training/types";
 
 /** One synced entry as stored on the server. */
 export interface Row {
@@ -23,13 +23,43 @@ export interface SyncMeta {
   cursor: string | null;
 }
 
-const MAPS = ["done", "logs", "gear", "swaps", "weights", "extras", "steps"] as const;
+const MAPS = ["done", "logs", "gear", "swaps", "weights", "steps"] as const;
 type MapKey = (typeof MAPS)[number];
+
+/** A new id for an extra activity. */
+export const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
+function hash(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * Ids for a day's extras. Older extras have no id, so theirs comes from their contents (plus a
+ * count for exact repeats). That's the same on every device, so the same activity matches up.
+ */
+export function extraIds(list: Extra[]): string[] {
+  const seen = new Map<string, number>();
+  return list.map((e) => {
+    if (e.id) return e.id;
+    const base = "h" + hash(JSON.stringify([e.kind, e.dist, e.time, e.steps ?? null, e.label ?? null]));
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    return n ? `${base}-${n}` : base;
+  });
+}
 
 /** Every entry in the state, keyed for sync. */
 export function toEntries(s: State): Map<string, unknown> {
   const m = new Map<string, unknown>();
   for (const k of MAPS) for (const [id, v] of Object.entries(s[k])) m.set(`${k}/${id}`, v);
+  // Each extra activity is its own entry ("extras/<day>/<id>"), so two devices adding
+  // activities on the same day keep both.
+  for (const [day, list] of Object.entries(s.extras)) {
+    const ids = extraIds(list);
+    list.forEach((e, i) => m.set(`extras/${day}/${ids[i]}`, e));
+  }
   for (const [f, v] of Object.entries(s.settings)) if (v !== undefined) m.set(`settings/${f}`, v);
   if (s.plan) m.set("plan", s.plan);
   return m;
@@ -45,10 +75,46 @@ export function setEntry(s: State, key: string, value: unknown): void {
   const i = key.indexOf("/");
   if (i < 1) return;
   const col = key.slice(0, i), id = key.slice(i + 1);
+  if (col === "extras") return setExtra(s, id, value);
   const obj = col === "settings" ? (s.settings as Record<string, unknown>) : MAPS.includes(col as MapKey) ? (s[col as MapKey] as Record<string, unknown>) : null;
   if (!obj || !id) return;
   if (value === undefined) delete obj[id];
   else obj[id] = value;
+}
+
+function setExtra(s: State, rest: string, value: unknown) {
+  const j = rest.indexOf("/");
+  if (j < 0) {
+    // Older format: one entry held the whole day. Only add what's missing; never remove.
+    if (!Array.isArray(value)) return;
+    const have = s.extras[rest] || [], ids = new Set(extraIds(have));
+    const incoming = value as Extra[], inIds = extraIds(incoming);
+    const add = incoming.filter((_, k) => !ids.has(inIds[k]));
+    if (add.length) s.extras[rest] = [...have, ...add];
+    return;
+  }
+  const day = rest.slice(0, j), id = rest.slice(j + 1);
+  const list = [...(s.extras[day] || [])], at = extraIds(list).indexOf(id);
+  if (value === undefined) {
+    if (at < 0) return;
+    list.splice(at, 1);
+  } else if (at >= 0) list[at] = value as Extra;
+  else list.push(value as Extra);
+  if (list.length) s.extras[day] = list;
+  else delete s.extras[day];
+}
+
+/**
+ * One-time step after this format change: upload each extra as its own entry and clear the old
+ * whole-day entries, so a device that signs in later doesn't bring back deleted activities.
+ */
+export function migrateExtras(state: State, meta: SyncMeta, now: number): SyncMeta {
+  const dirty = { ...meta.dirty };
+  for (const [day, list] of Object.entries(state.extras)) {
+    dirty[`extras/${day}`] = now;
+    for (const id of extraIds(list)) dirty[`extras/${day}/${id}`] ??= 0;
+  }
+  return { ...meta, dirty };
 }
 
 /** Keys whose value differs between two states (added, changed or removed). */
@@ -88,9 +154,11 @@ export function applyRemote(state: State, meta: SyncMeta, rows: Row[]): { state:
     const mine = dirty[r.key];
     if (mine !== undefined && mine > r.edited_at) continue;
     delete dirty[r.key];
-    const before = JSON.stringify(toEntries(next).get(r.key));
+    // Compare the whole collection the row belongs to (an older whole-day extras row touches several entries).
+    const col = r.key.split("/")[0] as keyof State, snap = () => JSON.stringify(next[col]);
+    const before = snap();
     setEntry(next, r.key, r.deleted ? undefined : r.value);
-    if (JSON.stringify(toEntries(next).get(r.key)) !== before) changed = true;
+    if (snap() !== before) changed = true;
   }
   return { state: changed ? next : state, meta: { dirty, cursor }, changed };
 }

@@ -15,6 +15,8 @@ export interface Log {
 }
 
 export interface Extra {
+  /** Lets each activity sync on its own. Older entries have none (see extraIds in src/sync/engine.ts). */
+  id?: string;
   kind: ExtraKind;
   dist: number;
   time: number;
