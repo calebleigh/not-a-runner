@@ -1,7 +1,7 @@
 // Adaptive rules: the plan steps up or eases back from how logged sessions went.
 import { addDays, dateOf } from "./calendar";
 import { cardio, phaseOf } from "./plan";
-import { specOf } from "./spec";
+import { specAt, specOf } from "./spec";
 import type { Adapt, AdaptKey, CardioKind, Foot, Log, State } from "./types";
 
 export const TARGET_PACE: (number | null)[] = [null, 16 * 60, 14 * 60 + 30, 13 * 60 + 15]; // sec per mile by phase
@@ -22,7 +22,7 @@ export function sortedLogs(state: State): [string, Log][] {
 
 /** The kind a cardio session actually is after any swap. */
 export function effKind(state: State, n: number, d: number): { kind: CardioKind; base: CardioKind; swapped: boolean } | null {
-  const spec = specOf(state);
+  const spec = specAt(state, n);
   if (!(n >= 1 && n <= spec.weeks)) return null;
   const b = cardio(spec, n, d, 0, 0);
   if (!b) return null;
@@ -37,7 +37,7 @@ export function computeFoot(state: State, today: Date, curWeek: number): Foot {
   const from = addDays(today, -13), to = dateOf(spec, curWeek, 6);
   let swapped = 0, planned = 0;
   for (let n = Math.max(1, curWeek - 2); n <= curWeek; n++) {
-    for (const { d } of spec.slots[n - 1] ?? []) {
+    for (const { d } of specAt(state, n).slots[n - 1] ?? []) {
       const dt = dateOf(spec, n, d);
       if (dt < from || dt > to) continue;
       const e = effKind(state, n, d);

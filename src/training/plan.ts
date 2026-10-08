@@ -2,7 +2,7 @@
 // and must match it exactly (see parity.test.ts).
 import { clamp, dateOf } from "./calendar";
 import { EX, ROUTINES, STRETCH, intervals, long3, long4, phases as TEMPLATE } from "./data";
-import { canonPhase, type PlanSpec, type Slot } from "./spec";
+import { canonPhase, specAt, type PlanSpec, type Slot } from "./spec";
 import type { Adapt, AdaptKey, Cardio, Day, Exercise, Foot, State, Strength, SwapKind, Week } from "./types";
 
 export interface PlanCtx {
@@ -191,9 +191,10 @@ export function convert(c: Cardio, to: SwapKind): Cardio {
 }
 
 export function cardioFor(ctx: PlanCtx, n: number, d: number): Cardio {
+  const spec = specAt(ctx.state, n);
   const bs = adaptFor(ctx, n, "bike");
-  let c = cardio(ctx.spec, n, d, adaptFor(ctx, n, "run"), bs)!;
-  if (c.kind === "bike" && phaseOf(ctx.spec, n) === 0) c = cardio(ctx.spec, n, d, bs, bs)!;
+  let c = cardio(spec, n, d, adaptFor(ctx, n, "run"), bs)!;
+  if (c.kind === "bike" && phaseOf(spec, n) === 0) c = cardio(spec, n, d, bs, bs)!;
   const sw = ctx.state.swaps[`${n}-${d}-c`];
   return sw ? convert(c, sw) : c;
 }
@@ -212,7 +213,7 @@ function swapFor(gear: State["gear"], key: string, lvl: number, wedHips?: boolea
 
 /** Strength for plan week n on a session with template role d (0 to 4). */
 export function strength(ctx: PlanCtx, n: number, d: number): Strength {
-  const cw = ctx.spec.canon[n - 1];
+  const cw = specAt(ctx.state, n).canon[n - 1];
   const p = canonPhase(cw), wip = cw - TEMPLATE[p].from, bump = wip >= 6 && p < 3, s = adaptFor(ctx, n, "str");
   const stretch = (): Exercise[] =>
     ctx.state.gear.roller ? [{ name: "Foam roll calves and quads", amount: 60, unit: " each", seconds: true }, ...STRETCH] : STRETCH;
@@ -241,7 +242,7 @@ export function buildWeeks(ctx: PlanCtx): Week[] {
   const strengthOn = ctx.state.settings.strength !== false;
   for (let n = 1; n <= spec.weeks; n++) {
     const days: Day[] = [];
-    for (const { d, role } of spec.slots[n - 1]) {
+    for (const { d, role } of specAt(ctx.state, n).slots[n - 1]) {
       // Strength rides along with the template's five weekday roles, not the race or an extra easy day.
       const c = cardioFor(ctx, n, d), st = role >= 0 && role <= 4 && strengthOn ? strength(ctx, n, role) : null;
       days.push({ d, date: dateOf(spec, n, d), c, st, ids: st ? [`${n}-${d}-c`, `${n}-${d}-s`] : [`${n}-${d}-c`] });

@@ -48,7 +48,7 @@ export interface State {
   extras: Record<string, Extra[]>;
   steps: Record<string, number>;
   /** Onboarding answers the plan is generated from. Missing means the owner's original plan. */
-  plan?: { profile: import("./spec").PlanProfile };
+  plan?: import("./spec").PlanState;
 }
 
 export interface Cardio {

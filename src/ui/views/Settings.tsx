@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { birthdayInfo, parseBirthday } from "../../training";
+import { addDays, birthdayInfo, buildSpec, changePlan, changeWeek, parseBirthday, type PlanProfile, type RaceGoal } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Logo } from "../Logo";
@@ -144,18 +144,85 @@ function AboutYou() {
   );
 }
 
-/** Plan options. Race name, date and training days join this section with the plan generator. */
+const GOAL_OPTIONS: [RaceGoal, string][] = [["5k", "5K"], ["10k", "10K"], ["half", "Half"], ["full", "Marathon"], ["fitness", "Fitness"]];
+const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+function Switch({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
+  return <button role="switch" aria-checked={on} aria-label={label} className={"switch" + (on ? " on" : "")} onClick={() => onChange(!on)}><span /></button>;
+}
+
+/**
+ * Your plan: race, goal, training days, bike and knees. Edits wait for Save, then rebuild the plan
+ * from this week (or next, if this week has logs). Earlier weeks keep their sessions.
+ */
 function YourPlan() {
-  const { state, update } = useApp();
-  const on = state.settings.strength !== false;
+  const { model, state, update, toast } = useApp();
+  const saved = model.spec.profile;
+  const [draft, setDraft] = useState<PlanProfile>(saved);
+  useEffect(() => { setDraft(saved); }, [saved]);
+  const set = (p: Partial<PlanProfile>) => setDraft((d) => ({ ...d, ...p }));
+  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  const from = changeWeek(state, model.curWeek, model.rawWeek);
+  const isRace = draft.goal !== "fitness";
+  const maxRace = ymd(addDays(model.spec.start, 52 * 7 - 1)), minRace = ymd(addDays(model.today, 7));
+  const raceOk = !isRace || (!!draft.raceDate && draft.raceDate >= minRace && draft.raceDate <= maxRace);
+  const daysOk = draft.days.length >= 3 && draft.days.length <= 6;
+  const preview = dirty && raceOk && daysOk ? buildSpec({ ...draft, startDate: saved.startDate }) : null;
+  const toggleDay = (d: number) => set({ days: draft.days.includes(d) ? draft.days.filter((x) => x !== d) : [...draft.days, d].sort((a, b) => a - b) });
+  const strengthOn = state.settings.strength !== false;
+  const save = () => {
+    update((s) => { s.plan = changePlan(s, draft, from); });
+    toast(from <= 1 ? "Plan updated" : `Plan updated from week ${from}`);
+  };
+
   return (
     <div className="area-plan">
-      <div className="sechead"><h3 className="sectitle">Your plan</h3></div>
-      <section className="card group">
+      <div className="sechead"><h3 className="sectitle">Your plan</h3><span className="lbl">{model.spec.weeks} weeks</span></div>
+      <section className="card group planform">
+        <div className="setrow col">
+          <span>Goal</span>
+          <div className="seg goalseg" role="radiogroup" aria-label="Goal">
+            {GOAL_OPTIONS.map(([g, l]) => <button key={g} role="radio" aria-checked={draft.goal === g} className={draft.goal === g ? "sel" : ""} onClick={() => set({ goal: g })}>{l}</button>)}
+          </div>
+        </div>
+        {isRace && <>
+          <label className="setrow" htmlFor="raceName">
+            <span>Race name<small>Shows on your Plan</small></span>
+            <input className="txtin" id="raceName" maxLength={40} placeholder="Your race" value={draft.raceName ?? ""} onChange={(e) => set({ raceName: e.target.value })} />
+          </label>
+          <label className="setrow" htmlFor="raceDate">
+            <span>Race date<small>{raceOk ? "Within a year of your start" : "Pick a date at least a week out, within a year of your start"}</small></span>
+            <input className="txtin" id="raceDate" type="date" min={minRace} max={maxRace} value={draft.raceDate ?? ""} onChange={(e) => set({ raceDate: e.target.value })} />
+          </label>
+        </>}
+        <div className="setrow col">
+          <span>Training days<small>{daysOk ? `${draft.days.length} days a week. Your longest session is on the last one.` : "Pick 3 to 6 days."}</small></span>
+          <div className="daypick" role="group" aria-label="Training days">
+            {DAY_LETTERS.map((l, d) => <button key={d} aria-pressed={draft.days.includes(d)} aria-label={["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][d]} className={draft.days.includes(d) ? "on" : ""} onClick={() => toggleDay(d)}>{l}</button>)}
+          </div>
+        </div>
         <div className="setrow">
-          <span>Strength workouts<small>{on ? "About 13 minutes on training days. Tracked on its own, never counted against your week." : "Off. Not scheduled and not shown."}</small></span>
-          <button role="switch" aria-checked={on} aria-label="Strength workouts" className={"switch" + (on ? " on" : "")}
-            onClick={() => update((s) => { if (on) s.settings.strength = false; else delete s.settings.strength; })}><span /></button>
+          <span>I have a bike<small>Indoor or outdoor. Without one, rides become brisk walks.</small></span>
+          <Switch on={draft.hasBike} label="I have a bike" onChange={(v) => set({ hasBike: v })} />
+        </div>
+        <div className="setrow">
+          <span>Easy on the knees<small>Sore knees or joints: more time on the bike before running ramps up.</small></span>
+          <Switch on={draft.impactSensitive} label="Easy on the knees" onChange={(v) => set({ impactSensitive: v })} />
+        </div>
+        {preview?.warnings.map((w) => <p key={w} className="planwarn">{w}</p>)}
+        {dirty && (
+          <div className="plansave">
+            <p>{from <= 1 ? "Your whole plan will be rebuilt." : `${from === 2 ? "Week 1 stays as it is" : `Weeks 1 to ${from - 1} stay as they are`}. Week ${from} on is rebuilt.`}</p>
+            <div className="row2">
+              <button className="btn solid" disabled={!raceOk || !daysOk} onClick={save}>Save changes</button>
+              <button className="btn small" style={{ marginTop: 14 }} onClick={() => setDraft(saved)}>Cancel</button>
+            </div>
+          </div>
+        )}
+        <div className="setrow">
+          <span>Strength workouts<small>{strengthOn ? "About 13 minutes on training days. Tracked on its own, never counted against your week." : "Off. Not scheduled and not shown."}</small></span>
+          <Switch on={strengthOn} label="Strength workouts" onChange={(v) => update((s) => { if (v) delete s.settings.strength; else s.settings.strength = false; })} />
         </div>
       </section>
     </div>

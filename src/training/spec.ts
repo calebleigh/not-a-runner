@@ -8,6 +8,13 @@ import type { State } from "./types";
 export type RaceGoal = "5k" | "10k" | "half" | "full" | "fitness";
 export type StartLevel = "cant_run_mile" | "run_1_mile" | "run_3_miles" | "run_6_plus";
 
+/** The saved plan: the current answers, plus the answers earlier weeks were built from. */
+export interface PlanState {
+  profile: PlanProfile;
+  /** Oldest first. Weeks up to untilWeek follow that profile. */
+  earlier?: { untilWeek: number; profile: PlanProfile }[];
+}
+
 export interface PlanProfile {
   goal: RaceGoal;
   raceName?: string;
@@ -206,8 +213,7 @@ function genericMilestones(canon: number[]): Record<number, string> {
 const cache = new Map<string, PlanSpec>();
 
 /** The spec for a state's profile (the owner profile when none is saved). Cached per profile. */
-export function specOf(state: Pick<State, "plan">): PlanSpec {
-  const profile = state.plan?.profile ?? OWNER_PROFILE;
+function cachedSpec(profile: PlanProfile): PlanSpec {
   const key = JSON.stringify(profile);
   let s = cache.get(key);
   if (!s) {
@@ -215,4 +221,38 @@ export function specOf(state: Pick<State, "plan">): PlanSpec {
     cache.set(key, s);
   }
   return s;
+}
+
+/** The current spec for a state (the owner's plan when no profile is saved). */
+export function specOf(state: Pick<State, "plan">): PlanSpec {
+  return cachedSpec(state.plan?.profile ?? OWNER_PROFILE);
+}
+
+/**
+ * The spec that week n follows. After a plan change, earlier weeks keep the answers they were
+ * built from, so the sessions you already had (and logged) never change.
+ */
+export function specAt(state: Pick<State, "plan">, n: number): PlanSpec {
+  const earlier = state.plan?.earlier?.find((e) => n <= e.untilWeek);
+  return earlier ? cachedSpec(earlier.profile) : specOf(state);
+}
+
+/** The first week a plan change applies to: this week, unless cardio is already logged this week. */
+export function changeWeek(state: State, curWeek: number, rawWeek: number): number {
+  if (rawWeek < 1) return 1;
+  const loggedThisWeek = Object.keys(state.done).some((id) => id.startsWith(`${curWeek}-`) && id.endsWith("-c"));
+  return loggedThisWeek ? curWeek + 1 : curWeek;
+}
+
+/**
+ * Applies new answers from week `from` on: weeks before it keep the profile they followed.
+ * The start date never moves, so week numbers (and logs) stay where they are.
+ */
+export function changePlan(state: State, next: PlanProfile, from: number): PlanState {
+  const current = state.plan?.profile ?? OWNER_PROFILE;
+  const profile: PlanProfile = { ...next, startDate: current.startDate };
+  const earlier = (state.plan?.earlier ?? []).filter((e) => e.untilWeek < from);
+  const lastFrozen = earlier.length ? earlier[earlier.length - 1].untilWeek : 0;
+  if (from - 1 > lastFrozen) earlier.push({ untilWeek: from - 1, profile: current });
+  return earlier.length ? { profile, earlier } : { profile };
 }

@@ -525,3 +525,14 @@ input[type="date"].txtin{width:150px;color-scheme:dark}
 .switch span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:min(11px,var(--rmax));background:var(--muted);transition:transform .2s var(--ease),background .2s}
 .switch.on{background:var(--accent);border-color:var(--accent)}
 .switch.on span{transform:translateX(22px);background:var(--on-accent)}
+/* Your plan form */
+.setrow.col{flex-direction:column;align-items:stretch;gap:10px}
+.goalseg button{font-size:13px;padding:9px 0}
+.daypick{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.daypick button{height:40px;border:1px solid var(--line);background:var(--surface2);border-radius:min(10px,var(--rmax));font:700 15px var(--display);color:var(--muted);cursor:pointer}
+.daypick button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.planwarn{margin:12px 0 0;padding:10px 12px;border-radius:min(12px,var(--rmax));background:var(--bad-soft);color:var(--ink);font-size:14px}
+.plansave{padding:12px 0 14px;border-bottom:1px solid var(--line)}
+.plansave p{margin:0;color:var(--muted);font-size:14px}
+.btn:disabled{opacity:.45;cursor:default}
+.planform .txtin{width:min(200px,48vw)}
