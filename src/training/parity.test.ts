@@ -2,6 +2,9 @@
 import { readFileSync } from "node:fs";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { addDays, dateOf } from "./calendar";
+import { specOf } from "./spec";
+
+const SPEC = specOf({});
 import { GEAR } from "./data";
 import { coachTip, computeModel, encodeBackup, predict, bestFor, stepStats, totals, loggedFootSteps } from "./index";
 import type { Feel, State, SwapKind } from "./types";
@@ -47,7 +50,7 @@ function randomState(seed: number, today: Date, feelBias: [number, number], swap
   if (r() < 0.5) s.settings.startWt = 180 + Math.round(r() * 60);
   for (let w = 1; w <= 52; w++) {
     for (let d = 0; d < 7; d++) {
-      const dt = dateOf(w, d);
+      const dt = dateOf(SPEC, w, d);
       if (dt >= today) continue;
       if (d < 5) {
         if (r() < swapRate) s.swaps[`${w}-${d}-c`] = pick<SwapKind>(["bike", "walk", "run"]);
@@ -144,11 +147,11 @@ describe("calendar", () => {
   it("keeps plan dates on local midnight across DST changes", () => {
     // Prototype added 24h steps, which put Nov to Mar dates at 11pm the day before.
     for (let w = 1; w <= 52; w++) for (let d = 0; d < 7; d++) {
-      const dt = dateOf(w, d);
+      const dt = dateOf(SPEC, w, d);
       expect(dt.getHours()).toBe(0);
       expect((dt.getDay() + 6) % 7).toBe(d);
     }
-    expect(dateOf(5, 0).toDateString()).toBe("Mon Nov 02 2026");
-    expect(addDays(dateOf(52, 5), 0).toDateString()).toBe("Sat Oct 02 2027");
+    expect(dateOf(SPEC, 5, 0).toDateString()).toBe("Mon Nov 02 2026");
+    expect(addDays(dateOf(SPEC, 52, 5), 0).toDateString()).toBe("Sat Oct 02 2027");
   });
 });

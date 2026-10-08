@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, WEEKS, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
+  LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
   dayAt, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -33,13 +33,13 @@ export function Home() {
     const sd = !!state.done[day.ids[1]];
     chips.push(<Chip key="str" ok={sd} ic={<Icon.dumbbell />} big={sd ? "Done" : "Strength"} sub={`${day.st.title}, ${day.st.min} min`} onClick={() => openSheet({ kind: "strength", w: curWeek, d: todayIdx })} />);
   }
-  const st = state.steps[dayKey(today)];
+  const st = state.steps[dayKey(model.spec, today)];
   chips.push(<Chip key="steps" ok={!!st} ic={<Icon.steps />} big={st ? kfmt(st) : "Add"} sub="Steps today" onClick={() => openSheet({ kind: "steps", date: today })} />);
   if (dow === 0 && rawWeek >= 1) {
     const wv = state.weights[curWeek];
     chips.push(<Chip key="wt" ok={!!wv} ic={<Icon.scale />} big={wv ? wv + " lb" : "Weigh in"} sub="Monday check-in" onClick={() => openSheet({ kind: "weigh" })} />);
   }
-  const xs = state.extras[dayKey(today)] || [];
+  const xs = state.extras[dayKey(model.spec, today)] || [];
   const xmi = xs.reduce((a, x) => a + (x.dist || 0), 0);
   chips.push(<Chip key="extra" ok={xs.length > 0} ic={<Icon.plus />} big={xs.length ? xmi.toFixed(1) + " mi" : "Extra"} sub={xs.length ? `${xs.length} extra logged` : "Walk, hike, ride"} onClick={() => openSheet({ kind: "extra", date: today })} />);
 
@@ -65,7 +65,7 @@ export function Home() {
             <h1>{name ? `Ready, ${name}?` : "Ready to move?"}</h1>
           )}
         </div>
-        <div className="wkbadge" style={{ ["--p" as string]: `${Math.round(100 * (curWeek - 1) / WEEKS)}%` }} title={`Week ${curWeek} of ${WEEKS}`}>
+        <div className="wkbadge" style={{ ["--p" as string]: `${Math.round(100 * (curWeek - 1) / model.spec.weeks)}%` }} title={`Week ${curWeek} of ${model.spec.weeks}`}>
           <span>W{curWeek}</span>
         </div>
       </div>
@@ -76,17 +76,17 @@ export function Home() {
         <div className="top"><span className="lbl">This week</span><b>{doneN} / {ids.length} done</b></div>
         <div className="meter">
           <Grow pct={pct} />
-          <div className="mtxt"><span className="num"><Num value={pct} /><span className="unit">%</span></span><em>{phases[phaseOf(curWeek)].name}</em></div>
+          <div className="mtxt"><span className="num"><Num value={pct} /><span className="unit">%</span></span><em>{phases[phaseOf(model.spec, curWeek)].name}</em></div>
         </div>
         <div className="days7">
           {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-            const planned = d < wk.days.length && (d < 5 || (curWeek === WEEKS && d === 5));
+            const planned = d < wk.days.length && (d < 5 || (curWeek === model.spec.weeks && d === 5));
             const f = planned ? dayDoneFrac(model, curWeek, d) : -1;
             const isT = rawWeek >= 1 && d === dow;
             return (
               <button key={d} className={"d7" + (isT ? " today" : "")} aria-label={LONGDAY[d]}
                 onClick={() => openSheet({ kind: "day", w: curWeek, d })}>
-                <span className={"t" + (f < 0 ? " rest" : "")}><Grow dir="h" pct={f > 0 ? Math.round(f * 100) : 0} />{isBirthdayOn(state.settings.birthday, dateOf(curWeek, d)) && <span className="daycake"><Icon.cake /></span>}</span>
+                <span className={"t" + (f < 0 ? " rest" : "")}><Grow dir="h" pct={f > 0 ? Math.round(f * 100) : 0} />{isBirthdayOn(state.settings.birthday, dateOf(model.spec, curWeek, d)) && <span className="daycake"><Icon.cake /></span>}</span>
                 <small>{"MTWTFSS"[d]}</small>
               </button>
             );

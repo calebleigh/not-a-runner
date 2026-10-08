@@ -21,4 +21,4 @@ npm run build      # typecheck + production build with service worker
 
 ## Deploy
 
-Vercel project `half-training-app` (https://half-training-app.vercel.app). `vercel` for a preview, `vercel --prod` for production.
+Vercel project `half-training-app`, live at https://not-a-runner.vercel.app (the original https://half-training-app.vercel.app still works). Deploy with `vercel deploy --prod --scope calebleighs-projects`.

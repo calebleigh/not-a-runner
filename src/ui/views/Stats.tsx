@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  FEEL, GOALS, START, isBirthdayOn, TARGET_PACE, WEEKS, addDays, dayAt, dayKey, hms, idParts, kfmt, mph, pace, pctTxt, phaseOf, predict, bestFor,
+  FEEL, GOALS, isBirthdayOn, TARGET_PACE, addDays, dayAt, dayKey, hms, idParts, kfmt, mph, pace, pctTxt, phaseOf, predict, bestFor,
   runLogs, stepStats, timedCardioLogs, totals, weekFrac, type AdaptKey,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -24,7 +24,7 @@ export function Stats() {
   const mStart = new Date(today.getFullYear(), today.getMonth(), 1), mEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   const inR = range === "month" ? (d: Date) => d >= mStart && d < mEnd : () => true;
   const T = totals(model, inR), S = stepStats(state, inR), mi = T.walk + T.run + T.bike;
-  const wDone = Object.keys(state.done).filter((id) => { const p = idParts(id); return inR(addDays(START, (p.w - 1) * 7 + p.d)); }).length;
+  const wDone = Object.keys(state.done).filter((id) => { const p = idParts(id); return inR(addDays(model.spec.start, (p.w - 1) * 7 + p.d)); }).length;
 
   return (
     // Remount on range change so the big numbers count up again.
@@ -92,10 +92,10 @@ export function Stats() {
   );
 
   function yearChart() {
-    const max = Math.max(...model.weeks.map((w) => w.load)), bw = 520 / WEEKS, H = 90;
+    const max = Math.max(...model.weeks.map((w) => w.load)), bw = 520 / model.spec.weeks, H = 90;
     return (
       <section className="ocard chartc">
-        <div className="ohead"><h3>The year</h3><span>Week {curWeek} of {WEEKS}</span></div>
+        <div className="ohead"><h3>The year</h3><span>Week {curWeek} of {model.spec.weeks}</span></div>
         <svg viewBox={`0 0 520 ${H}`} preserveAspectRatio="none" style={{ height: H }} role="img" aria-label="Planned training load by week, completed portion filled">
           <defs><linearGradient id="og" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent-hi)" }} /><stop offset="1" style={{ stopColor: "var(--accent-lo)" }} /></linearGradient></defs>
           {model.weeks.map((w, i) => {
@@ -116,13 +116,13 @@ export function Stats() {
 
   function stepsStrip(onPick: (d: Date) => void) {
     const days = [6, 5, 4, 3, 2, 1, 0].map((i) => addDays(today, -i));
-    const mx = Math.max(8000, ...days.map((dt) => state.steps[dayKey(dt)] || 0)), SA = stepStats(state);
+    const mx = Math.max(8000, ...days.map((dt) => state.steps[dayKey(model.spec, dt)] || 0)), SA = stepStats(state);
     return (
       <section className="ocard">
         <div className="ohead"><h3>Steps</h3><span>{SA.days ? `${kfmt(SA.avg)} avg a day` : "Tap a day to add"}</span></div>
         <div className="weekstrip">
           {days.map((dt, i) => {
-            const before = dt < START, v = before ? 0 : state.steps[dayKey(dt)] || 0;
+            const before = dt < model.spec.start, v = before ? 0 : state.steps[dayKey(model.spec, dt)] || 0;
             return (
               <button key={i} className={(i === 6 ? "today " : "") + (!v && !before ? "missing" : "")} disabled={before} onClick={() => onPick(dt)}
                 aria-label={`${dt.toLocaleDateString("en-US", { weekday: "long" })}: ${v ? v + " steps" : "not logged"}`}>
@@ -203,7 +203,7 @@ export function Stats() {
     const hrs = runLogs(state).map(([, l]) => l.hr).filter((x): x is number => !!x).slice(-6);
     const notes: string[] = [];
     if (hrs.length) { const avg = Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length); notes.push(`Avg heart rate ${avg} bpm${avg > 150 ? ", high for easy days." : ", a good easy range."}`); }
-    const tp = TARGET_PACE[phaseOf(curWeek)];
+    const tp = TARGET_PACE[phaseOf(model.spec, curWeek)];
     if (tp) notes.push(`Strong pace this phase: ${hms(tp)}/mi.`);
     return (
       <section className="ocard">

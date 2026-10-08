@@ -85,13 +85,13 @@ function Head({ title, cake }: { title: string; cake?: boolean }) {
 
 function SheetContent({ spec }: { spec: SheetSpec }) {
   const { model } = useApp();
-  const dayTitle = (w: number, d: number) => { const dt = dateOf(w, d); return sameDay(dt, model.today) ? "Today" : fmtLong(dt); };
+  const dayTitle = (w: number, d: number) => { const dt = dateOf(model.spec, w, d); return sameDay(dt, model.today) ? "Today" : fmtLong(dt); };
   // Key by spec so forms reset when a different sheet opens.
   const key = JSON.stringify(spec);
   let title: string, body: ReactNode;
   switch (spec.kind) {
     case "day": {
-      const { w, d } = spec, day = dayAt(model, w, d), date = dateOf(w, d);
+      const { w, d } = spec, day = dayAt(model, w, d), date = dateOf(model.spec, w, d);
       title = dayTitle(w, d);
       body = <>
         {d === 0 && <WeighCard week={w} />}
@@ -121,7 +121,7 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
       body = <WeighCard week={model.curWeek} focus />;
       break;
     case "extra": {
-      const [w, d] = parseDayKey(dayKey(spec.date));
+      const [w, d] = parseDayKey(dayKey(model.spec, spec.date));
       title = "Extra activity";
       body = <ExtraSection w={w} d={d} startOpen />;
       break;
@@ -139,7 +139,7 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
       body = <ImportBody />;
       break;
   }
-  const dayOfSheet = "date" in spec ? spec.date : "w" in spec ? dateOf(spec.w, spec.d) : null;
+  const dayOfSheet = "date" in spec ? spec.date : "w" in spec ? dateOf(model.spec, spec.w, spec.d) : null;
   const cake = !!dayOfSheet && isBirthdayOn(model.state.settings.birthday, dayOfSheet);
   return <div key={key}><Head title={title} cake={cake} />{body}</div>;
 }
@@ -160,7 +160,7 @@ function LogTiles() {
       <span><b>{title}</b><span>{sub}</span></span>
     </button>
   );
-  const st = state.steps[dayKey(today)];
+  const st = state.steps[dayKey(model.spec, today)];
   const missed = wk.days.find((x) => x.date < today && !state.done[x.ids[0]]);
   return (
     <div className="lgrid">

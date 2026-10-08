@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  DN, RACE, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac,
+  DN, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac,
   type CardioKind, type Day,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -30,11 +30,11 @@ export function Plan() {
   const stripRef = useRef<HTMLDivElement>(null);
   const [jump, setJump] = useState(0);
 
-  const daysLeft = Math.max(0, daysBetween(today, RACE));
-  const w = model.weeks[planWeek - 1], weekEnd = dateOf(planWeek, 6);
+  const daysLeft = Math.max(0, daysBetween(today, model.spec.race!));
+  const w = model.weeks[planWeek - 1], weekEnd = dateOf(model.spec, planWeek, 6);
   const ids = w.days.flatMap((x) => x.ids), doneN = ids.filter((i) => state.done[i]).length;
   const isCur = planWeek === curWeek;
-  const ph = phaseOf(curWeek), P = phases[ph];
+  const ph = phaseOf(model.spec, curWeek), P = phases[ph];
 
   // Keep the selected week tile in view.
   useLayoutEffect(() => {
@@ -58,7 +58,7 @@ export function Plan() {
   }, [jump]);
 
   const rows = [0, 1, 2, 3, 4, 5, 6].map((d) => {
-    const date = dateOf(planWeek, d), day: Day | undefined = w.days[d];
+    const date = dateOf(model.spec, planWeek, d), day: Day | undefined = w.days[d];
     const isToday = sameDay(date, today);
     if (!day) {
       const xs = extrasFor(state, planWeek, d), mi = xs.reduce((a, x) => a + (x.dist || 0), 0);
@@ -78,7 +78,7 @@ export function Plan() {
     <section className="view stack" aria-label="Plan">
       <div className="greet">
         <div>
-          <div className="lbl">Race day, {RACE.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+          <div className="lbl">Race day, {model.spec.race!.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
           <h1>St. George Half</h1>
         </div>
         <div className="countdown"><span className="num"><Num value={daysLeft} /></span><span className="lbl">days to go</span></div>
@@ -111,7 +111,7 @@ export function Plan() {
                   return (
                     <button key={wk.n} className={"wt" + (wk.n === planWeek ? " sel" : "") + (wk.n === curWeek ? " cur" : "")}
                       aria-label={`Week ${wk.n}`} aria-pressed={wk.n === planWeek} onClick={() => setPlanWeek(wk.n)}>
-                      <span className="t"><Grow dir="h" pct={Math.round(f * 100)} />{[0, 1, 2, 3, 4, 5, 6].some((d) => isBirthdayOn(state.settings.birthday, dateOf(wk.n, d))) && <span className="daycake"><Icon.cake /></span>}</span>
+                      <span className="t"><Grow dir="h" pct={Math.round(f * 100)} />{[0, 1, 2, 3, 4, 5, 6].some((d) => isBirthdayOn(state.settings.birthday, dateOf(model.spec, wk.n, d))) && <span className="daycake"><Icon.cake /></span>}</span>
                       <small>{wk.n}</small>
                     </button>
                   );
@@ -126,7 +126,7 @@ export function Plan() {
         <div className="col">
           <section className="panelc slist" aria-label="Sessions">
             <div className="slhead">
-              <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}, {phases[phaseOf(planWeek)].name}</span></span>
+              <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}, {phases[phaseOf(model.spec, planWeek)].name}</span></span>
               <b>{doneN} / {ids.length} done</b>
             </div>
             {rows.map((r) => (

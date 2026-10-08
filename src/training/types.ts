@@ -44,6 +44,8 @@ export interface State {
   settings: Settings;
   extras: Record<string, Extra[]>;
   steps: Record<string, number>;
+  /** Onboarding answers the plan is generated from. Missing means the owner's original plan. */
+  plan?: { profile: import("./spec").PlanProfile };
 }
 
 export interface Cardio {
@@ -99,6 +101,7 @@ export interface Foot {
 
 export interface Model {
   state: State;
+  spec: import("./spec").PlanSpec;
   today: Date;
   rawWeek: number;
   curWeek: number;

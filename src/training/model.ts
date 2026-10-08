@@ -1,16 +1,18 @@
 import { computeAdapt, computeFoot } from "./adapt";
 import { startOfDay, todayInfo } from "./calendar";
 import { buildWeeks } from "./plan";
+import { specOf } from "./spec";
 import type { Day, Model, State } from "./types";
 
 /** Everything the UI needs, derived from state and today's date. Pure. */
 export function computeModel(state: State, now: Date): Model {
+  const spec = specOf(state);
   const today = startOfDay(now);
-  const info = todayInfo(today);
+  const info = todayInfo(spec, today);
   const foot = computeFoot(state, today, info.curWeek);
   const adapt = computeAdapt(state);
-  const weeks = buildWeeks({ state, curWeek: info.curWeek, adapt, foot });
-  return { state, today, ...info, foot, adapt, weeks };
+  const weeks = buildWeeks({ spec, state, curWeek: info.curWeek, adapt, foot });
+  return { state, spec, today, ...info, foot, adapt, weeks };
 }
 
 export function dayAt(model: Model, w: number, d: number): Day | undefined {

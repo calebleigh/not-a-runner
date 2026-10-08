@@ -11,3 +11,4 @@ export * from "./format";
 export * from "./extras";
 export * from "./profile";
 export * from "./quotes";
+export * from "./spec";

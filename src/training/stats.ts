@@ -2,6 +2,7 @@
 import { effKind, idParts, sortedLogs } from "./adapt";
 import { dateOf, parseDayKey } from "./calendar";
 import { dayAt } from "./model";
+import { specOf } from "./spec";
 import type { Extra, Log, Model, State, Strength, Week } from "./types";
 
 export const DEFAULT_WEIGHT_LB = 195;
@@ -42,7 +43,7 @@ export function totals(model: Model, inR: DateRange = ALL): Totals {
   const t: Totals = { walk: 0, run: 0, bike: 0, cal: 0, secs: 0 };
   for (const [id, l] of Object.entries(state.logs)) {
     const p = idParts(id);
-    if (!inR(dateOf(p.w, p.d))) continue;
+    if (!inR(dateOf(model.spec, p.w, p.d))) continue;
     if (p.t === "s") {
       if (state.done[id]) {
         const st = dayAt(model, p.w, p.d)?.st;
@@ -60,7 +61,7 @@ export function totals(model: Model, inR: DateRange = ALL): Totals {
   }
   for (const [key, arr] of Object.entries(state.extras)) {
     const [w, dd] = parseDayKey(key);
-    if (!inR(dateOf(w, dd))) continue;
+    if (!inR(dateOf(model.spec, w, dd))) continue;
     for (const x of arr) {
       t[x.kind] += x.dist || 0;
       t.secs += x.time || 0;
@@ -85,10 +86,11 @@ export function loggedFootSteps(state: State, n: number, d: number): number {
 }
 
 export function stepStats(state: State, inR: DateRange = ALL) {
+  const spec = specOf(state);
   let sum = 0, days = 0, best = 0;
   for (const [k, v] of Object.entries(state.steps)) {
     const [n, d] = parseDayKey(k);
-    if (!inR(dateOf(n, d))) continue;
+    if (!inR(dateOf(spec, n, d))) continue;
     sum += v;
     days++;
     if (v > best) best = v;

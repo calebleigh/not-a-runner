@@ -1,16 +1,19 @@
-// Builds the 52-week half-marathon plan. Ported from the prototype; output must match it.
-import { WEEKS, clamp, dateOf } from "./calendar";
-import { EX, MILE_TESTS, ROUTINES, STRETCH, intervals, long3, long4, phases } from "./data";
+// Builds the plan from the spec. For the owner's profile this is the prototype's 52-week half-marathon plan
+// and must match it exactly (see parity.test.ts).
+import { clamp, dateOf } from "./calendar";
+import { EX, ROUTINES, STRETCH, intervals, long3, long4 } from "./data";
+import type { PlanSpec } from "./spec";
 import type { Adapt, AdaptKey, Cardio, Day, Exercise, Foot, State, Strength, SwapKind, Week } from "./types";
 
 export interface PlanCtx {
+  spec: PlanSpec;
   state: State;
   curWeek: number;
   adapt: Adapt;
   foot: Foot;
 }
 
-export const phaseOf = (n: number) => phases.findIndex((p) => n >= p.from && n <= p.to);
+export const phaseOf = (spec: Pick<PlanSpec, "phases">, n: number) => spec.phases.findIndex((p) => n >= p.from && n <= p.to);
 const lerp = (a: number, b: number, k: number, n: number) => Math.round(a + (b - a) * k / n);
 const r5 = (m: number) => Math.max(10, Math.round(m / 5) * 5);
 
@@ -23,13 +26,13 @@ export const RUN_SWAP_CAP = 50;
  * Planned cardio for week n, day d. `s` steps running volume (and foundation sessions)
  * in 10% units, `bs` steps biking. Returns undefined for days with no session.
  */
-export function cardio(n: number, d: number, s: number, bs: number): Cardio | undefined {
-  const p = phaseOf(n);
+export function cardio(spec: PlanSpec, n: number, d: number, s: number, bs: number): Cardio | undefined {
+  const p = phaseOf(spec, n);
   if (p < 0) return undefined;
-  const k = n - phases[p].from;
+  const k = n - spec.phases[p].from;
   const sc = (m: number) => Math.max(10, Math.round(m * (1 + 0.1 * s)));
   const easy = "Easy pace: you can talk in full sentences.";
-  if (MILE_TESTS.includes(n) && d === 0) {
+  if (spec.mileTests.includes(n) && d === 0) {
     return { t: "Mile test", d: "Walk 5 min to warm up, then cover 1 mile as fast as you comfortably can. Walking breaks are fine. Log your time.", m: 25, kind: "test" };
   }
   if (p === 0) {
@@ -66,7 +69,7 @@ export function cardio(n: number, d: number, s: number, bs: number): Cardio | un
       { t: `Long walk/run ${L} mi`, d: cut ? "Easier week. Let your legs catch up." : "Walk breaks are part of the plan.", m: L * 13, kind: "long", shoes: true },
     ] as Cardio[])[d];
   }
-  if (n === WEEKS) {
+  if (n === spec.weeks) {
     return ([
       { t: "Walk/run 20 min", d: "Easy, just loosen up.", m: 20, kind: "run", shoes: true },
       { t: "Bike 20 min", d: "Very easy spin.", m: 20, kind: "bike" },
@@ -76,21 +79,21 @@ export function cardio(n: number, d: number, s: number, bs: number): Cardio | un
       { t: "Race day: 13.1 miles", d: "Start slower than you think. Walk the aid stations. Enjoy the finish.", m: 180, kind: "race", shoes: true },
     ] as Cardio[])[d];
   }
-  const taper = n >= 50, ts = taper ? Math.min(0, s) : s;
+  const taper = n >= spec.weeks - 2, ts = taper ? Math.min(0, s) : s;
   const L = Math.round(long4[k] * (1 + 0.1 * ts) * 2) / 2;
   const sh = taper ? 25 : Math.round(lerp(30, 40, k, 9) * (1 + 0.1 * ts) / 5) * 5;
   return ([
     { t: `Walk/run ${sh} min`, d: "Easy pace.", m: sh, kind: "run", shoes: true },
     { t: `Bike ${bk} min`, d: "Easy recovery ride.", m: bk, kind: "bike" },
-    { t: `Walk/run ${sh} min`, d: n >= 42 && !taper ? "Find a hill and include a few minutes of easy downhill running." : "Easy pace.", m: sh, kind: "run", shoes: true },
+    { t: `Walk/run ${sh} min`, d: n >= spec.phases[3].from + 2 && !taper ? "Find a hill and include a few minutes of easy downhill running." : "Easy pace.", m: sh, kind: "run", shoes: true },
     { t: `Bike ${bk} min`, d: "Easy recovery ride.", m: bk, kind: "bike" },
     { t: `Long walk/run ${L} mi`, d: taper ? "Cutting back so you start the race fresh." : [3, 7].includes(k) ? "Easier week." : "Practice race pace, water and snacks.", m: L * 13, kind: "long", shoes: true },
   ] as Cardio[])[d];
 }
 
 /** Running is held or eased back when too many on-foot sessions went to the bike. */
-export function footHold(foot: Foot, curWeek: number): number | null {
-  if (phaseOf(curWeek) === 0) return 0;
+export function footHold(spec: PlanSpec, foot: Foot, curWeek: number): number | null {
+  if (phaseOf(spec, curWeek) === 0) return 0;
   return foot.swapped >= 4 ? -1 : foot.swapped >= 3 ? 0 : null;
 }
 
@@ -99,7 +102,7 @@ export function adaptFor(ctx: PlanCtx, n: number, kind: AdaptKey): number {
   if (n < ctx.curWeek) return 0;
   let v = ctx.adapt[kind];
   if (kind === "run") {
-    const h = footHold(ctx.foot, ctx.curWeek);
+    const h = footHold(ctx.spec, ctx.foot, ctx.curWeek);
     if (h !== null) v = Math.max(-2, Math.min(v, 0) + h);
   }
   return v;
@@ -121,8 +124,8 @@ export function convert(c: Cardio, to: SwapKind): Cardio {
 
 export function cardioFor(ctx: PlanCtx, n: number, d: number): Cardio {
   const bs = adaptFor(ctx, n, "bike");
-  let c = cardio(n, d, adaptFor(ctx, n, "run"), bs)!;
-  if (c.kind === "bike" && phaseOf(n) === 0) c = cardio(n, d, bs, bs)!;
+  let c = cardio(ctx.spec, n, d, adaptFor(ctx, n, "run"), bs)!;
+  if (c.kind === "bike" && phaseOf(ctx.spec, n) === 0) c = cardio(ctx.spec, n, d, bs, bs)!;
   const sw = ctx.state.swaps[`${n}-${d}-c`];
   return sw ? convert(c, sw) : c;
 }
@@ -140,10 +143,10 @@ function swapFor(gear: State["gear"], key: string, lvl: number, wedHips?: boolea
 }
 
 export function strength(ctx: PlanCtx, n: number, d: number): Strength {
-  const p = phaseOf(n), wip = n - phases[p].from, bump = wip >= 6 && p < 3, s = adaptFor(ctx, n, "str");
+  const p = phaseOf(ctx.spec, n), wip = n - ctx.spec.phases[p].from, bump = wip >= 6 && p < 3, s = adaptFor(ctx, n, "str");
   const stretch = (): Exercise[] =>
     ctx.state.gear.roller ? [{ name: "Foam roll calves and quads", amount: 60, unit: " each", seconds: true }, ...STRETCH] : STRETCH;
-  if (n === WEEKS) {
+  if (n === ctx.spec.weeks) {
     return { title: d >= 3 ? "Rest" : "Easy stretch", sets: d >= 3 ? "Stretch only, legs fresh for the race" : "One pass, nothing hard this week", ex: stretch(), min: 6, light: true };
   }
   if (d === 4 && p >= 2) return { title: "Stretch", sets: "One pass after your long session", ex: stretch(), min: 7, light: true };
@@ -164,13 +167,14 @@ export function strength(ctx: PlanCtx, n: number, d: number): Strength {
 
 export function buildWeeks(ctx: PlanCtx): Week[] {
   const W: Week[] = [];
-  for (let n = 1; n <= WEEKS; n++) {
-    const nd = n === WEEKS ? 6 : 5, days: Day[] = [];
+  const { spec } = ctx;
+  for (let n = 1; n <= spec.weeks; n++) {
+    const nd = n === spec.weeks ? spec.raceDay + 1 : 5, days: Day[] = [];
     for (let d = 0; d < nd; d++) {
       const c = cardioFor(ctx, n, d), st = d < 5 ? strength(ctx, n, d) : null;
-      days.push({ d, date: dateOf(n, d), c, st, ids: st ? [`${n}-${d}-c`, `${n}-${d}-s`] : [`${n}-${d}-c`] });
+      days.push({ d, date: dateOf(spec, n, d), c, st, ids: st ? [`${n}-${d}-c`, `${n}-${d}-s`] : [`${n}-${d}-c`] });
     }
-    W.push({ n, s: dateOf(n, 0), days, load: days.reduce((a, x) => a + x.c.m + (x.st ? x.st.min : 0), 0) });
+    W.push({ n, s: dateOf(spec, n, 0), days, load: days.reduce((a, x) => a + x.c.m + (x.st ? x.st.min : 0), 0) });
   }
   return W;
 }

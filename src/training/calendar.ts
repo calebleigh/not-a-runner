@@ -1,8 +1,8 @@
 // Calendar math works in whole local days so daylight saving never shifts a date.
+// Plan dates come from the spec (start date, number of weeks, race day).
+import type { PlanSpec } from "./spec";
 
-export const START = new Date(2026, 9, 5); // Mon Oct 5, 2026
-export const RACE = new Date(2027, 9, 2);
-export const WEEKS = 52;
+type Cal = Pick<PlanSpec, "start" | "weeks" | "raceDay">;
 
 export const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
@@ -24,11 +24,11 @@ export function daysBetween(a: Date, b: Date): number {
 export const sameDay = (a: Date, b: Date) => daysBetween(a, b) === 0;
 
 /** Date of plan week w (1-based), day d (0 = Monday). */
-export const dateOf = (w: number, d: number) => addDays(START, (w - 1) * 7 + d);
+export const dateOf = (spec: Pick<PlanSpec, "start">, w: number, d: number) => addDays(spec.start, (w - 1) * 7 + d);
 
 /** "w-d" key for a calendar date. */
-export function dayKey(dt: Date): string {
-  const off = daysBetween(START, dt);
+export function dayKey(spec: Pick<PlanSpec, "start">, dt: Date): string {
+  const off = daysBetween(spec.start, dt);
   const n = Math.floor(off / 7) + 1;
   return `${n}-${off - (n - 1) * 7}`;
 }
@@ -46,11 +46,11 @@ export interface TodayInfo {
   todayIdx: number;
 }
 
-export function todayInfo(today: Date): TodayInfo {
-  const rawWeek = Math.floor(daysBetween(START, today) / 7) + 1;
-  const curWeek = clamp(rawWeek, 1, WEEKS);
+export function todayInfo(spec: Cal, today: Date): TodayInfo {
+  const rawWeek = Math.floor(daysBetween(spec.start, today) / 7) + 1;
+  const curWeek = clamp(rawWeek, 1, spec.weeks);
   const dow = (today.getDay() + 6) % 7;
-  const isWeekend = dow > 4 && !(curWeek === WEEKS && dow === 5);
-  const todayIdx = rawWeek < 1 ? 0 : Math.min(dow, curWeek === WEEKS ? 5 : 4);
+  const isWeekend = dow > 4 && !(curWeek === spec.weeks && dow === spec.raceDay);
+  const todayIdx = rawWeek < 1 ? 0 : Math.min(dow, curWeek === spec.weeks ? Math.max(4, spec.raceDay) : 4);
   return { rawWeek, curWeek, dow, isWeekend, todayIdx };
 }

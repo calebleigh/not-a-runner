@@ -1,6 +1,7 @@
 // Adaptive rules: the plan steps up or eases back from how logged sessions went.
-import { WEEKS, addDays, dateOf } from "./calendar";
+import { addDays, dateOf } from "./calendar";
 import { cardio, phaseOf } from "./plan";
+import { specOf } from "./spec";
 import type { Adapt, AdaptKey, CardioKind, Foot, Log, State } from "./types";
 
 export const TARGET_PACE: (number | null)[] = [null, 16 * 60, 14 * 60 + 30, 13 * 60 + 15]; // sec per mile by phase
@@ -21,8 +22,9 @@ export function sortedLogs(state: State): [string, Log][] {
 
 /** The kind a cardio session actually is after any swap. */
 export function effKind(state: State, n: number, d: number): { kind: CardioKind; base: CardioKind; swapped: boolean } | null {
-  if (!(n >= 1 && n <= WEEKS)) return null;
-  const b = cardio(n, d, 0, 0);
+  const spec = specOf(state);
+  if (!(n >= 1 && n <= spec.weeks)) return null;
+  const b = cardio(spec, n, d, 0, 0);
   if (!b) return null;
   const sw = state.swaps[`${n}-${d}-c`];
   if (!sw) return { kind: b.kind, base: b.kind, swapped: false };
@@ -31,11 +33,12 @@ export function effKind(state: State, n: number, d: number): { kind: CardioKind;
 
 /** On-foot sessions in the last two weeks, and how many went to the bike. */
 export function computeFoot(state: State, today: Date, curWeek: number): Foot {
-  const from = addDays(today, -13), to = dateOf(curWeek, 6);
+  const spec = specOf(state);
+  const from = addDays(today, -13), to = dateOf(spec, curWeek, 6);
   let swapped = 0, planned = 0;
   for (let n = Math.max(1, curWeek - 2); n <= curWeek; n++) {
     for (let d = 0; d < 5; d++) {
-      const dt = dateOf(n, d);
+      const dt = dateOf(spec, n, d);
       if (dt < from || dt > to) continue;
       const e = effKind(state, n, d);
       if (!e || !FOOTK.includes(e.base)) continue;
@@ -70,7 +73,7 @@ export function computeAdapt(state: State): Adapt {
     if (!kind || !lg.feel) continue;
     let score = lg.feel === "easy" ? 1 : lg.feel === "hard" ? -1 : 0;
     if (kind === "run" && p.t !== "s" && paceOK && (lg.dist ?? 0) >= 1 && lg.time) {
-      const pace = lg.time / lg.dist!, tgt = TARGET_PACE[phaseOf(p.w)];
+      const pace = lg.time / lg.dist!, tgt = TARGET_PACE[phaseOf(specOf(state), p.w)];
       if (tgt) {
         if (pace <= tgt && lg.feel !== "hard") score += 1;
         else if (pace > tgt * 1.12) score -= 1;

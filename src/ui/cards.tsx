@@ -104,7 +104,7 @@ export function CardioCard({ w, d, startOpen = false, fromExtra }: { w: number; 
   const [from] = useState<FromExtra | undefined>(extra && { w, d, index: fromExtra!, extra });
   const [formOpen, setFormOpen] = useState<boolean>(startOpen && !isDone);
   const swapOpts: [("bike" | "walk" | "run"), string][] = [["bike", "Bike"], ["walk", "Walk"]];
-  if (phaseOf(w) >= 1) swapOpts.push(["run", "Walk/run"]);
+  if (phaseOf(model.spec, w) >= 1) swapOpts.push(["run", "Walk/run"]);
   const kind = statKind(c.kind);
 
   return (
@@ -204,7 +204,7 @@ export function WeighCard({ week, focus = false }: { week: number; focus?: boole
 
 export function StepsCard({ date }: { date: Date }) {
   const { model, state, update } = useApp();
-  const key = dayKey(date), [n, d] = parseDayKey(key), cur = state.steps[key];
+  const key = dayKey(model.spec, date), [n, d] = parseDayKey(key), cur = state.steps[key];
   const [v, setV] = useState(cur ? String(cur) : "");
   const fs = loggedFootSteps(state, n, d);
   const label = sameDay(date, model.today) ? "Today's steps" : fmtLong(date) + " steps";
@@ -223,8 +223,8 @@ export function StepsCard({ date }: { date: Date }) {
 
 /** Quick steps entry used from Home, the log sheet and the steps chart. */
 export function StepsEntry({ date, onDone }: { date: Date; onDone: () => void }) {
-  const { state, update } = useApp();
-  const key = dayKey(date), cur = state.steps[key];
+  const { model, state, update } = useApp();
+  const key = dayKey(model.spec, date), cur = state.steps[key];
   const [v, setV] = useState(cur ? String(cur) : "");
   const ref = useSheetFocus<HTMLDivElement>(true);
   const save = () => { const x = parseInt(v); update((s) => { if (x > 0 && x <= 100000) s.steps[key] = x; else delete s.steps[key]; }); onDone(); };

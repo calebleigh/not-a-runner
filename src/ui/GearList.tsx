@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GEAR, START, addDays, fmtShort } from "../training";
+import { GEAR, addDays, fmtShort } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 
@@ -17,7 +17,7 @@ export function GearList() {
         <b>{owned} / {list.length} owned</b>
       </div>
       {shown.map((g) => {
-        const due = addDays(START, (g.wk - 1) * 7), have = !!state.gear[g.k], over = !have && g.wk < model.curWeek, soon = !have && !over && g.wk <= model.curWeek + 2;
+        const due = addDays(model.spec.start, (g.wk - 1) * 7), have = !!state.gear[g.k], over = !have && g.wk < model.curWeek, soon = !have && !over && g.wk <= model.curWeek + 2;
         return (
           <div className="gitem" key={g.k}>
             <div className={"grow" + (have ? " owned" : "") + (over ? " overdue" : "") + (soon ? " soon" : "")}>

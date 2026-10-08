@@ -3,7 +3,7 @@ import { emptyState } from "./types";
 import type { State } from "./types";
 
 export const BACKUP_PREFIX = "SGH1.";
-export const STATE_KEYS = ["done", "logs", "gear", "swaps", "weights", "settings", "extras", "steps"] as const;
+export const STATE_KEYS = ["done", "logs", "gear", "swaps", "weights", "settings", "extras", "steps", "plan"] as const;
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
@@ -57,6 +57,10 @@ export function mergeState(base: State, incoming: State): State {
         extras[d] = [...have, ...arr.filter((x) => !seen.has(JSON.stringify(x)))];
       }
       out.extras = extras;
+    } else if (k === "plan") {
+      // The plan profile is replaced as a whole, never merged field by field.
+      const plan = incoming.plan ?? base.plan;
+      if (plan) out.plan = plan; else delete out.plan;
     } else {
       (out as unknown as Record<string, unknown>)[k] = { ...base[k], ...incoming[k] };
     }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adaptFor, convert, BIKE_SWAP_CAP, RUN_SWAP_CAP, WALK_SWAP_CAP, MILE_TESTS, computeModel, dateOf, emptyState, computeAdapt } from "./index";
+import { specOf } from "./spec";
 import type { Log, State } from "./types";
 
 const NOW = new Date(2027, 2, 10, 9); // week 23
@@ -86,7 +87,7 @@ describe("adaptation", () => {
     for (const id of ["22-1-c", "22-3-c", "23-1-c", "23-3-c"]) s.swaps[id] = "bike";
     const m = computeModel(s, new Date(2027, 2, 12)); // Fri of week 23
     expect(m.foot.swapped).toBe(4);
-    const ctx = { state: s, curWeek: m.curWeek, adapt: m.adapt, foot: m.foot };
+    const ctx = { spec: m.spec, state: s, curWeek: m.curWeek, adapt: m.adapt, foot: m.foot };
     expect(adaptFor(ctx, m.curWeek, "run")).toBe(-1);
   });
 
@@ -100,6 +101,6 @@ describe("adaptation", () => {
   });
 
   it("dates match the plan calendar", () => {
-    expect(dateOf(1, 0).toDateString()).toBe("Mon Oct 05 2026");
+    expect(dateOf(specOf({}), 1, 0).toDateString()).toBe("Mon Oct 05 2026");
   });
 });
