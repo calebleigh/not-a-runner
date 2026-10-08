@@ -5,6 +5,7 @@ import {
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
+import { useMirroredState } from "../mirror";
 import { Grow, Num } from "../motion";
 
 const RANGE_KEY = "sgOvRange";
@@ -16,7 +17,7 @@ function loadRange(): Range {
 export function Stats() {
   const { model, state, openSheet } = useApp();
   const { today, curWeek } = model;
-  const [range, setRangeRaw] = useState<Range>(loadRange);
+  const [range, setRangeRaw] = useMirroredState<Range>("statsRange", loadRange);
   const [showAll, setShowAll] = useState(false);
   const setRange = (r: Range) => { setRangeRaw(r); try { localStorage.setItem(RANGE_KEY, r); } catch { /* per-device preference only */ } };
 
@@ -28,12 +29,15 @@ export function Stats() {
   return (
     // Remount on range change so the big numbers count up again.
     <section className="view stack" aria-label="Stats" key={range}>
+      <div className="pagehead">
       <h1 className="pagetitle">Stats</h1>
       <div className="seg" role="group" aria-label="Range">
         <button className={range === "month" ? "sel" : ""} aria-pressed={range === "month"} onClick={() => setRange("month")}>{today.toLocaleDateString("en-US", { month: "long" })}</button>
         <button className={range === "all" ? "sel" : ""} aria-pressed={range === "all"} onClick={() => setRange("all")}>All time</button>
       </div>
+      </div>
 
+      <div className="cols">
       <section className="panelc bigstat">
         <span className="lbl">Total distance</span>
         <div><span className="num"><Num value={mi} dec={1} /></span><span className="unit">mi</span></div>
@@ -46,12 +50,19 @@ export function Stats() {
         <div className="tile"><span className="ti"><Icon.bolt /></span><span className="lbl">Workouts</span><span className="num"><Num value={wDone} /></span></div>
         <div className="tile"><span className="ti"><Icon.steps /></span><span className="lbl">Steps</span><span className="num"><Num value={S.sum} k /></span></div>
       </div>
+      </div>
 
       {yearChart()}
-      {stepsStrip((dt) => openSheet({ kind: "steps", date: dt }))}
-      {goals()}
-      {weight()}
-      {adjustments()}
+      <div className="cols">
+        <div className="col">
+          {stepsStrip((dt) => openSheet({ kind: "steps", date: dt }))}
+          {goals()}
+        </div>
+        <div className="col">
+          {weight()}
+          {adjustments()}
+        </div>
+      </div>
 
       {(() => {
         const all = timedCardioLogs(state).reverse();

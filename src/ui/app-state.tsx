@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createStorage } from "../storage/store";
+import { mirrorSend, onMirror } from "./mirror";
 import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
 
 export type Tab = "home" | "plan" | "stats" | "settings";
@@ -83,6 +84,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     stateRef.current = next;
     setState(next);
     storage.save(next).catch(() => toast("Couldn't save. Export a backup."));
+    mirrorSend("data", next);
     const nd = Object.keys(next.done).length;
     if (nd > prevDone && prevDone) toast(nd % 5 === 0 ? `${nd} workouts. Keep stacking them.` : "Logged. Nice work.");
   }, [toast]);
@@ -98,12 +100,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (stateRef.current) commit(mergeState(stateRef.current, incoming));
   }, [commit]);
 
-  const setTab = useCallback((t: Tab) => {
+  const showTab = useCallback((t: Tab) => {
     setTabRaw(t);
     window.scrollTo(0, 0);
     try { sessionStorage.setItem(TAB_KEY, t); } catch { /* private mode */ }
   }, []);
-  const closeSheet = useCallback(() => setSheet(null), []);
+  const setTab = useCallback((t: Tab) => { showTab(t); mirrorSend("tab", t); }, [showTab]);
+  const openSheet = useCallback((s: SheetSpec) => { setSheet(s); mirrorSend("sheet", s); }, []);
+  const closeSheet = useCallback(() => { setSheet(null); mirrorSend("sheet", null); }, []);
+
+  // Fold preview: follow the other screen (already saved there, so don't save or toast again).
+  useEffect(() => {
+    const offs = [
+      onMirror<Tab>("tab", showTab),
+      onMirror<SheetSpec | null>("sheet", setSheet),
+      onMirror<State>("data", (s) => { stateRef.current = s; setState(s); }),
+    ];
+    return () => offs.forEach((off) => off());
+  }, [showTab]);
 
   // Recompute the plan when state changes or the date rolls over (not every minute).
   const dayMs = startOfDay(now).getTime();
@@ -111,7 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (!state || !model) return null;
   return (
-    <Ctx.Provider value={{ model, state, update, importState, tab, setTab, sheet, openSheet: setSheet, closeSheet, toast, toastMsg, now }}>
+    <Ctx.Provider value={{ model, state, update, importState, tab, setTab, sheet, openSheet, closeSheet, toast, toastMsg, now }}>
       {children}
     </Ctx.Provider>
   );

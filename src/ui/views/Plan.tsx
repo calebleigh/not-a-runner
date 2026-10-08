@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DN, RACE, WEEKS, daysBetween, fmtShort, hms, phaseOf, phases, totals, weekFrac, type CardioKind } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
+import { useMirroredState } from "../mirror";
 import { Grow, Num, reducedMotion } from "../motion";
 
 const KC: Record<CardioKind, string> = { bike: "#FFA35C", walk: "#9A958F", run: "#FF6A13", long: "#FF6A13", test: "#FFD08A", race: "#FFD08A", rest: "#33302D" };
@@ -9,7 +10,7 @@ const KC: Record<CardioKind, string> = { bike: "#FFA35C", walk: "#9A958F", run: 
 export function Plan() {
   const { model, state, openSheet } = useApp();
   const { curWeek, todayIdx, isWeekend, today } = model;
-  const [planWeek, setPlanWeek] = useState(curWeek);
+  const [planWeek, setPlanWeek] = useMirroredState("planWeek", curWeek);
   const pillsRef = useRef<HTMLDivElement>(null);
   const [jump, setJump] = useState(0);
 
@@ -69,6 +70,7 @@ export function Plan() {
         <button className="todaybtn" onClick={() => { setPlanWeek(curWeek); setJump((j) => j + 1); }}>Today</button>
       </div>
 
+      <div className="sessgrid">
       {w.days.map((x) => {
         const c = x.c, lg = state.logs[x.ids[0]], cd = !!state.done[x.ids[0]], sd = x.ids[1] ? !!state.done[x.ids[1]] : true, all = cd && sd;
         const isT = planWeek === curWeek && x.d === todayIdx && !isWeekend && model.rawWeek >= 1;
@@ -87,6 +89,7 @@ export function Plan() {
           </button>
         );
       })}
+      </div>
     </section>
   );
 }

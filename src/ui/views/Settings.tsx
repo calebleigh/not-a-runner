@@ -83,6 +83,8 @@ export function Settings() {
   return (
     <section className="view stack" aria-label="Settings">
       <h1 className="pagetitle">Settings</h1>
+      <div className="setgrid">
+      <div className="area-main">
       <section className="card group">
         <label className="setrow" htmlFor="pName">
           <span>Name<small>For your greeting</small></span>
@@ -104,11 +106,15 @@ export function Settings() {
         </div>
         <VersionRow />
       </section>
-      <GearList />
+      </div>
+      <div className="area-gear"><GearList /></div>
+      <div className="area-how">
       <div className="sechead"><h3 style={{ fontSize: 24 }}>How it works</h3></div>
       <section className="card group" style={{ marginTop: 10 }}>
         {HOWTO.map(([t, d]) => <details className="acc" key={t}><summary>{t}</summary><p>{d}</p></details>)}
       </section>
+      </div>
+      </div>
     </section>
   );
 }

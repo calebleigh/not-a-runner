@@ -103,6 +103,8 @@ export function Home() {
         </div>
       </div>
 
+      <div className="cols">
+      <div className="col">
       <section className="panelc vol">
         <div className="top"><span className="lbl">This week</span><b>{doneN} / {ids.length} done</b></div>
         <div className="meter">
@@ -126,7 +128,9 @@ export function Home() {
       </section>
 
       {hero}
+      </div>
 
+      <div className="col">
       <div className="chips" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
 
       {tip && (
@@ -158,6 +162,8 @@ export function Home() {
           </section>
         </>;
       })()}
+      </div>
+      </div>
     </section>
   );
 }

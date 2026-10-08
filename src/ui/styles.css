@@ -107,7 +107,7 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 .prog .bar{flex:1;height:6px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden}
 .prog .bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:6px;transition:width 1s var(--ease)}
 .prog b{font:700 14px var(--body)}
-.wpills{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:4px 16px 6px;scrollbar-width:none;scroll-behavior:smooth}
+.wpills{display:flex;gap:8px;overflow-x:auto;margin:0 calc(-1 * var(--gutter));padding:4px var(--gutter) 6px;scrollbar-width:none;scroll-behavior:smooth}
 .wpills::-webkit-scrollbar{display:none}
 .wp{flex:none;width:52px;height:74px;border-radius:26px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer;color:var(--muted);font:700 14px var(--display);transition:transform .18s var(--ease),background .2s}
 .wp:active{transform:scale(.94)}
@@ -328,3 +328,49 @@ html,body{overscroll-behavior-y:none}
 .update-toast .dot2{margin-top:0}
 .chip.solid{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .chip:disabled{opacity:.6;cursor:default}
+
+/* ---------- Responsive layout ----------
+   Phone: bottom nav, one column (unchanged).
+   700px+ (Fold open, tablets): side rail nav, sheets become a right-hand panel.
+   900px+: content splits into two columns.
+   1200px+ (desktop): wider rail with labels. */
+:root{--rail:0px;--gutter:16px}
+.cols,.col,.pagehead,.setgrid,.area-main,.area-gear,.area-how,.sessgrid{display:flex;flex-direction:column;gap:14px;min-width:0}
+.logtxt{display:none}
+
+@media (min-width:700px){
+  :root{--rail:92px;--gutter:28px}
+  .wrap{max-width:none;margin:0 0 0 var(--rail);padding:24px var(--gutter) 40px}
+  .wrap>main{max-width:640px;margin:0 auto}
+  .bnav{top:0;bottom:0;right:auto;width:var(--rail);max-width:none;margin:0;grid-template-columns:1fr;grid-auto-rows:min-content;align-content:start;gap:4px;padding:20px 10px;border-top:0;border-right:1px solid var(--line)}
+  .bnav button{padding:10px 0;border-radius:14px}
+  .bnav button.sel{background:var(--accent-soft)}
+  .bnav button.sel svg{transform:none}
+  .bnav .logbtn{order:-1;width:56px;height:56px;margin:0 auto 16px;padding:0;box-shadow:0 10px 24px -6px rgba(255,106,19,.6)}
+  .toast,.update-toast{left:calc(50% + var(--rail) / 2);bottom:28px}
+
+  .sheet{align-items:stretch;justify-content:flex-end}
+  .sheet-body{max-width:min(460px,100%);max-height:none;height:100%;border-radius:0;border-top:0;border-left:1px solid var(--line);padding:16px 20px 28px;transform:translateX(105%)}
+  .sheet.open .sheet-body{transform:none}
+  .sheet .grabber{display:none}
+  .sheet-head{top:-16px;margin:0 -20px 12px;padding:8px 20px 10px}
+}
+
+@media (min-width:900px){
+  .wrap>main{max-width:1180px}
+  .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+  .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
+  .pagehead .seg{flex:0 1 320px}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"main gear" "how gear";gap:18px;align-items:start}
+  .area-main{grid-area:main}.area-gear{grid-area:gear}.area-how{grid-area:how}
+  .sessgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+}
+
+@media (min-width:1200px){
+  :root{--rail:220px;--gutter:36px}
+  .bnav{padding:24px 14px}
+  .bnav button{flex-direction:row;justify-content:flex-start;gap:14px;padding:12px 16px;font-size:15px}
+  .bnav .logbtn{width:auto;height:52px;border-radius:16px;margin:0 0 20px;padding:0 18px;justify-content:center;gap:10px}
+  .bnav .logbtn svg{width:24px;height:24px}
+  .logtxt{display:inline;font:700 16px var(--body)}
+}

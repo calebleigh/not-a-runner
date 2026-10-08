@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { dayAt, dayKey, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
 import { CardioCard, ExtraSection, StepsCard, StepsEntry, StrengthCard, WeighCard } from "./cards";
 import { Icon } from "./icons";
+import { useMirroredScroll } from "./mirror";
 
 export function SheetHost() {
   const { sheet, closeSheet } = useApp();
@@ -11,6 +12,7 @@ export function SheetHost() {
   const [open, setOpen] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
+  useMirroredScroll("sheet", useCallback(() => bodyRef.current, []));
 
   useEffect(() => {
     if (sheet) {
@@ -39,7 +41,8 @@ export function SheetHost() {
     const S = bodyRef.current;
     if (!S) return;
     let y0: number | null = null;
-    const start = (e: TouchEvent) => { if (S.scrollTop <= 0) y0 = e.touches[0].clientY; };
+    const sidePanel = matchMedia("(min-width: 700px)");
+    const start = (e: TouchEvent) => { if (S.scrollTop <= 0 && !sidePanel.matches) y0 = e.touches[0].clientY; };
     const move = (e: TouchEvent) => {
       if (y0 == null) return;
       const dy = e.touches[0].clientY - y0;

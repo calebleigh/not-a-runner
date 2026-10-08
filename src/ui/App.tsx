@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppProvider, useApp, type Tab } from "./app-state";
 import { Icon } from "./icons";
+import { useMirroredScroll } from "./mirror";
 import { SheetHost } from "./sheets";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Home } from "./views/Home";
@@ -29,6 +30,7 @@ function Toast() {
 
 function Shell() {
   const { tab, setTab, openSheet } = useApp();
+  useMirroredScroll("page", useCallback(() => null, []));
   const navBtn = ({ tab: t, label, icon: I }: (typeof TABS)[number]) => (
     <button key={t} className={tab === t ? "sel" : ""} aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}>
       <I /><span>{label}</span>
@@ -45,7 +47,7 @@ function Shell() {
     </div>
     <nav className="bnav" aria-label="Main">
       {TABS.slice(0, 2).map(navBtn)}
-      <button className="logbtn" aria-label="Log a workout" onClick={() => openSheet({ kind: "log" })}><Icon.bigPlus /></button>
+      <button className="logbtn" aria-label="Log a workout" onClick={() => openSheet({ kind: "log" })}><Icon.bigPlus /><span className="logtxt">Log workout</span></button>
       {TABS.slice(2).map(navBtn)}
     </nav>
     <SheetHost />
