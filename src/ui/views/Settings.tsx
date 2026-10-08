@@ -7,6 +7,7 @@ import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Preset, type Shape } from "../theme";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
+import { APP_VERSION, IS_NATIVE } from "../apk";
 
 const HOWTO: [string, string][] = [
   ["Every weekday", "Cardio and strength. The Home screen shows today's session; the Plan tab shows the whole year and your gear list. Weekends are rest or a make-up day."],
@@ -28,17 +29,18 @@ const CHECK_TEXT: Record<CheckResult, string> = {
   error: "Couldn't check. Try again later.",
   unsupported: "Updates install automatically in the installed app.",
 };
+const APK_READY = "New version ready. Tap Download, then install it.";
 
 function VersionRow() {
   const [status, setStatus] = useState<"idle" | "checking" | CheckResult>("idle");
   const ready = useUpdateReady() || status === "ready";
   const built = BUILT_AT.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", " + BUILT_AT.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  const note = ready ? CHECK_TEXT.ready : status === "checking" ? "Checking for updates" : status === "idle" ? `Built ${built}` : CHECK_TEXT[status];
+  const note = ready ? (IS_NATIVE ? APK_READY : CHECK_TEXT.ready) : status === "checking" ? "Checking for updates" : status === "idle" ? (IS_NATIVE ? `Version ${APP_VERSION}` : `Built ${built}`) : CHECK_TEXT[status];
   return (
     <div className="setrow">
       <span>App version<small aria-live="polite">{note}</small></span>
       {ready ? (
-        <button className="chip solid" onClick={() => applyUpdate()}>Refresh</button>
+        <button className="chip solid" onClick={() => applyUpdate()}>{IS_NATIVE ? "Download" : "Refresh"}</button>
       ) : (
         <button className="chip" disabled={status === "checking"} onClick={async () => { setStatus("checking"); setStatus(await checkForUpdate()); }}>
           {status === "checking" ? "Checking" : "Check"}

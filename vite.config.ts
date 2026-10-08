@@ -6,6 +6,9 @@ export default defineConfig({
   define: {
     // Shown in Profile so you can tell which version is running.
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    // Set by CI for Android builds so the app can tell when a newer APK is out.
+    __APP_CODE__: JSON.stringify(process.env.APP_VERSION_CODE || "0"),
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION_NAME || "dev"),
   },
   plugins: [
     react(),

@@ -8,6 +8,8 @@ import { Onboarding } from "./Onboarding";
 import { Splash } from "./Splash";
 import { SheetHost } from "./sheets";
 import { UpdatePrompt } from "./UpdatePrompt";
+import { ApkUpdatePrompt } from "./ApkUpdatePrompt";
+import { IS_NATIVE } from "./apk";
 import { Home } from "./views/Home";
 import { Plan } from "./views/Plan";
 import { Settings } from "./views/Settings";
@@ -57,7 +59,7 @@ function Shell() {
     </nav>
     <SheetHost />
     <Toast />
-    <UpdatePrompt />
+    {IS_NATIVE ? <ApkUpdatePrompt /> : <UpdatePrompt />}
   </>;
 }
 

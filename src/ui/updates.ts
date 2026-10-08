@@ -2,6 +2,7 @@ import { playSplashNextLoad } from "./Splash";
 // Shared app-update state: the service worker registration, whether a new version is waiting,
 // and a manual check used by Settings. The update bar (UpdatePrompt) keeps this in sync.
 import { useSyncExternalStore } from "react";
+import { APP_CODE, IS_NATIVE, latestRelease, openOutside } from "./apk";
 
 export type CheckResult = "ready" | "current" | "offline" | "error" | "unsupported";
 
@@ -25,6 +26,7 @@ export const useUpdateReady = () =>
  * does, and reloads anyway after a moment so the button never does nothing.
  */
 export function applyUpdate(fallbackMs = 1500) {
+  if (IS_NATIVE) { apply?.(); return; }
   let done = false;
   const reload = () => { if (!done) { done = true; playSplashNextLoad(); window.location.reload(); } };
   navigator.serviceWorker?.addEventListener("controllerchange", reload, { once: true });
@@ -41,6 +43,7 @@ export function checkQuietly() { if (navigator.onLine) registration?.update().ca
 export async function checkForUpdate(timeoutMs = 20000): Promise<CheckResult> {
   if (ready) return "ready";
   if (!navigator.onLine) return "offline";
+  if (IS_NATIVE) return checkApk();
   const r = registration;
   if (!r) return "unsupported";
   try {
@@ -61,3 +64,17 @@ export async function checkForUpdate(timeoutMs = 20000): Promise<CheckResult> {
 
 /** When this build was made, for the version row. */
 export const BUILT_AT = new Date(__BUILD_TIME__);
+
+let lastApkCheck = 0;
+/** Android app: is there a newer APK on GitHub? Marks the update ready (tap downloads it). */
+export async function checkApk(force = true): Promise<CheckResult> {
+  if (!force && Date.now() - lastApkCheck < 30 * 60 * 1000) return ready ? "ready" : "current";
+  lastApkCheck = Date.now();
+  try {
+    const r = await latestRelease();
+    if (r && r.code > APP_CODE) { setUpdateReady(true, () => { openOutside(r.url).catch(() => {}); }); return "ready"; }
+    return r ? "current" : "error";
+  } catch {
+    return navigator.onLine ? "error" : "offline";
+  }
+}

@@ -33,3 +33,23 @@ out("icon-maskable-512.png", iconSvg(512, { radius: 0, scale: 0.56 }), 512);
 // Favicon: a bigger mark so it reads at 16 to 32px.
 writeFileSync(new URL("../public/favicon.svg", import.meta.url), iconSvg(64, { scale: 0.78 }));
 console.log("wrote favicon.svg");
+
+// Android app (Capacitor): adaptive icon layers and a launch screen, in assets/ for
+// `npx @capacitor/assets generate --android`.
+import { mkdirSync } from "node:fs";
+mkdirSync(new URL("../assets", import.meta.url), { recursive: true });
+const asset = (name, svg, size) => {
+  writeFileSync(new URL(`../assets/${name}`, import.meta.url), new Resvg(svg, { fitTo: { mode: "width", value: size } }).render().asPng());
+  console.log("wrote assets/" + name);
+};
+const S = 1024;
+// The launcher masks the icon to its own shape; the mark stays inside the middle 60% safe zone.
+asset("icon-background.png", `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}"><defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A3D"/><stop offset="1" stop-color="#E5540A"/></linearGradient></defs><rect width="${S}" height="${S}" fill="url(#t)"/></svg>`, S);
+const fg = S * 0.42, fo = (S - fg) / 2;
+asset("icon-foreground.png", `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}"><svg x="${fo}" y="${fo}" width="${fg}" height="${fg}" viewBox="${VIEWBOX}">${inner.replace(/url\(#nr-grad\)/g, INK)}</svg></svg>`, S);
+asset("icon-only.png", iconSvg(S, { radius: 0, scale: 0.56 }), S);
+// Launch screen: the orange mark on the app's dark paper.
+const L = 2732, lm = 520, lo = (L - lm) / 2;
+const splash = `<svg xmlns="http://www.w3.org/2000/svg" width="${L}" height="${L}"><defs><linearGradient id="nr-grad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#E5540A"/><stop offset="1" stop-color="#FF8A3D"/></linearGradient></defs><rect width="${L}" height="${L}" fill="#111110"/><svg x="${lo}" y="${lo}" width="${lm}" height="${lm}" viewBox="${VIEWBOX}">${inner}</svg></svg>`;
+asset("splash.png", splash, L);
+asset("splash-dark.png", splash, L);
