@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { DN, addDays, buildSpec, fmtLong, onboardingStart, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { DN, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
 import { useApp } from "./app-state";
 import { Logo } from "./Logo";
 
@@ -19,6 +19,7 @@ const LEVELS: [StartLevel, string, string][] = [
   ["run_3_miles", "I can run 3 miles", "Slowly counts."],
   ["run_6_plus", "I can run 6 miles or more", "You'll start further in."],
 ];
+const WHY_IDEAS = ["Finish my first race", "Lose weight", "Keep up with my kids", "Feel better day to day", "Prove I can"];
 const GEAR_OPTIONS: [string, string][] = [
   ["shoes", "Running shoes"], ["mat", "Exercise mat"], ["bands", "Resistance bands"],
   ["kettlebell", "Kettlebell"], ["roller", "Foam roller"], ["fitband", "Heart rate band"],
@@ -33,7 +34,10 @@ interface Draft {
   hasBike: boolean;
   impactSensitive: boolean;
   name: string;
+  birthday: string;
   weight: string;
+  goalWeight: string;
+  why: string;
   gear: string[];
 }
 
@@ -62,7 +66,7 @@ export function Onboarding() {
   const { model, update, openSheet, setTab } = useApp();
   const start = onboardingStart(model.today);
   const [step, setStep] = useState(0);
-  const [d, setD] = useState<Draft>({ goal: null, raceName: "", raceDate: "", startLevel: null, days: [0, 1, 2, 3, 4], hasBike: true, impactSensitive: false, name: "", weight: "", gear: [] });
+  const [d, setD] = useState<Draft>({ goal: null, raceName: "", raceDate: "", startLevel: null, days: [0, 1, 2, 3, 4], hasBike: true, impactSensitive: false, name: "", birthday: "", weight: "", goalWeight: "", why: "", gear: [] });
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
   const isRace = d.goal !== null && d.goal !== "fitness";
   const minRace = ymd(addDays(model.today, 14)), maxRace = ymd(addDays(start, 52 * 7 - 1));
@@ -75,7 +79,7 @@ export function Onboarding() {
     ? buildSpec({ goal: d.goal, raceDate: d.raceDate, startDate: ymd(start), startLevel: d.startLevel, days: d.days, hasBike: d.hasBike, impactSensitive: d.impactSensitive })
     : null;
 
-  const steps = ["welcome", "goal", "level", ...(isRace ? ["race"] : []), "days", "body", "you", "gear", "done"] as const;
+  const steps = ["welcome", "goal", "level", ...(isRace ? ["race"] : []), "days", "body", "you", "weight", "why", "gear", "done"] as const;
   const at = steps[Math.min(step, steps.length - 1)];
   const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
@@ -84,9 +88,12 @@ export function Onboarding() {
     if (!profile) return;
     update((s) => {
       s.plan = { profile };
-      const n = d.name.trim(), w = parseFloat(d.weight);
+      const n = d.name.trim(), w = parseFloat(d.weight), gw = parseFloat(d.goalWeight), why = d.why.trim();
       if (n) s.settings.name = n;
+      if (parseBirthday(d.birthday)) s.settings.birthday = d.birthday;
       if (w > 50 && w < 600) s.settings.startWt = Math.round(w * 10) / 10;
+      if (gw > 50 && gw < 600) s.settings.goalWt = Math.round(gw * 10) / 10;
+      if (why) s.settings.why = why;
       for (const g of d.gear) s.gear[g] = 1;
     });
     setTab("home");
@@ -148,11 +155,28 @@ export function Onboarding() {
       break;
     case "you":
       title = "What should we call you?";
-      sub = "Both are optional. Weight is only used to estimate calories.";
+      sub = "Both are optional. We'll have cake on your birthday.";
       body = <>
         <label className="onbfield">Name<input className="xt" maxLength={20} placeholder="Your name" value={d.name} onChange={(e) => set({ name: e.target.value })} /></label>
-        <label className="onbfield">Weight (lb)<input className="xt" type="number" inputMode="decimal" min="80" max="500" placeholder="195" value={d.weight} onChange={(e) => set({ weight: e.target.value })} /></label>
+        <label className="onbfield">Birthday<input className="xt" type="date" max={ymd(model.today)} value={d.birthday} onChange={(e) => set({ birthday: e.target.value })} /></label>
       </>;
+      break;
+    case "weight":
+      title = "Your weight";
+      sub = "Both are optional. Weight is only used to estimate calories; the goal shows as a line on your weight chart.";
+      body = <>
+        <label className="onbfield">Weight now (lb)<input className="xt" type="number" inputMode="decimal" min="80" max="500" placeholder="195" value={d.weight} onChange={(e) => set({ weight: e.target.value })} /></label>
+        <label className="onbfield">Goal weight (lb)<input className="xt" type="number" inputMode="decimal" min="80" max="500" placeholder="optional" value={d.goalWeight} onChange={(e) => set({ goalWeight: e.target.value })} /></label>
+      </>;
+      break;
+    case "why":
+      title = "Why are you doing this?";
+      sub = "Optional. It shows on Home on days without a tip, for the mornings you need it.";
+      body = <>
+        <div className="onbchips">{WHY_IDEAS.map((w) => <button key={w} aria-pressed={d.why === w} className={d.why === w ? "on" : ""} onClick={() => set({ why: w })}>{w}</button>)}</div>
+        <label className="onbfield">Or in your own words<input className="xt" maxLength={80} placeholder="Finish a half before I turn 40" value={d.why} onChange={(e) => set({ why: e.target.value })} /></label>
+      </>;
+      cta = d.why.trim() ? "Next" : "Skip";
       break;
     case "gear":
       title = "Got any of these?";
