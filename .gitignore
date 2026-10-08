@@ -9,3 +9,6 @@ dev-dist
 .vercel
 .env*
 *.tsbuildinfo
+
+# Other apps' designs kept for reference only; not ours to publish.
+reference/design/
