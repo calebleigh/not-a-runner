@@ -335,7 +335,7 @@ html,body{overscroll-behavior-y:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-main,.area-gear,.area-how,.sessgrid{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-gear,.area-how,.sessgrid{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -363,8 +363,16 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"main gear" "how gear";gap:18px;align-items:start}
-  .area-main{grid-area:main}.area-gear{grid-area:gear}.area-how{grid-area:how}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you data" "gear gear" "how how";gap:22px 18px}
+  .area-you{grid-area:you}.area-data{grid-area:data}.area-gear{grid-area:gear}.area-how{grid-area:how}
+  /* Top two cards match heights. */
+  .area-you>.card,.area-data>.card{flex:1}
+  /* Gear and How it works run in two columns across the full width. */
+  .gearlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+  .gearlist .more,.gearlist .setnote{grid-column:1/-1}
+  .howlist{columns:2;column-gap:32px}
+  .howlist .acc{break-inside:avoid}
+  .howlist .acc:last-child{border-bottom:1px solid var(--line)}
   .sessgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 }
 
@@ -376,3 +384,9 @@ html,body{overscroll-behavior-y:none}
   .bnav .logbtn svg{width:24px;height:24px}
   .logtxt{display:inline;font:700 16px var(--body)}
 }
+
+/* Settings sections */
+.sectitle{font-size:24px}
+.setgrid .sechead{margin-bottom:-4px}
+.gitem{border-bottom:1px solid var(--line)}
+.gitem .grow,.gitem .gwhy{border-bottom:0}

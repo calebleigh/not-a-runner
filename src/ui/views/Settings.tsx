@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { GEAR, START, addDays, fmtShort } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -49,14 +49,14 @@ function GearList() {
   const [showAll, setShowAll] = useState(false);
   const [openK, setOpenK] = useState<string | null>(null);
   const list = [...GEAR].sort((a, b) => a.wk - b.wk), owned = list.filter((g) => state.gear[g.k]).length;
-  const shown = showAll ? list : list.filter((g) => !state.gear[g.k]).slice(0, 5);
+  const shown = showAll ? list : list.filter((g) => !state.gear[g.k]).slice(0, 6);
   return <>
-    <div className="sechead"><h3 style={{ fontSize: 24 }}>Gear</h3><span className="lbl">{owned} of {list.length} owned</span></div>
-    <section className="card group" style={{ marginTop: 10 }}>
+    <div className="sechead"><h3 className="sectitle">Gear</h3><span className="lbl">{owned} of {list.length} owned</span></div>
+    <section className="card group gearlist">
       {shown.map((g) => {
         const due = addDays(START, (g.wk - 1) * 7), have = !!state.gear[g.k], over = !have && g.wk < model.curWeek, soon = !have && !over && g.wk <= model.curWeek + 2;
         return (
-          <Fragment key={g.k}>
+          <div className="gitem" key={g.k}>
             <div className={"grow" + (have ? " owned" : "") + (over ? " overdue" : "") + (soon ? " soon" : "")}>
               <span className="gcheck">
                 <input type="checkbox" checked={have} aria-label={g.name} onChange={(e) => { const on = e.target.checked; update((s) => { if (on) s.gear[g.k] = 1; else delete s.gear[g.k]; }); }} />
@@ -67,7 +67,7 @@ function GearList() {
               <button className="ibtn" aria-label={`Why ${g.name}`} aria-expanded={openK === g.k} onClick={() => setOpenK(openK === g.k ? null : g.k)}>i</button>
             </div>
             {openK === g.k && <div className="gwhy">{g.why}{g.mp ? " Facebook Marketplace is fine for this one." : ""}</div>}
-          </Fragment>
+          </div>
         );
       })}
       {!shown.length && <p className="setnote" style={{ padding: "14px 0" }}>You have everything on the list.</p>}
@@ -84,7 +84,8 @@ export function Settings() {
     <section className="view stack" aria-label="Settings">
       <h1 className="pagetitle">Settings</h1>
       <div className="setgrid">
-      <div className="area-main">
+      <div className="area-you">
+      <div className="sechead"><h3 className="sectitle">About you</h3></div>
       <section className="card group">
         <label className="setrow" htmlFor="pName">
           <span>Name<small>For your greeting</small></span>
@@ -99,9 +100,13 @@ export function Settings() {
             <em>lb</em>
           </span>
         </label>
-        <div className="setrow"><span>Storage<small>Saved on this phone, works offline. Export a backup now and then.</small></span><span className="dot on" /></div>
+      </section>
+      </div>
+      <div className="area-data">
+      <div className="sechead"><h3 className="sectitle">App and data</h3></div>
+      <section className="card group">
         <div className="setrow">
-          <span>Backup<small>Move progress between devices</small></span>
+          <span>Backup<small>Saved on this phone. Export a copy now and then.</small></span>
           <span className="btnpair"><button className="chip" onClick={() => openSheet({ kind: "export" })}>Export</button><button className="chip" onClick={() => openSheet({ kind: "import" })}>Import</button></span>
         </div>
         <VersionRow />
@@ -109,8 +114,8 @@ export function Settings() {
       </div>
       <div className="area-gear"><GearList /></div>
       <div className="area-how">
-      <div className="sechead"><h3 style={{ fontSize: 24 }}>How it works</h3></div>
-      <section className="card group" style={{ marginTop: 10 }}>
+      <div className="sechead"><h3 className="sectitle">How it works</h3></div>
+      <section className="card group howlist">
         {HOWTO.map(([t, d]) => <details className="acc" key={t}><summary>{t}</summary><p>{d}</p></details>)}
       </section>
       </div>
