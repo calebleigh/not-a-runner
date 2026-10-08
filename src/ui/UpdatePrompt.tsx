@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { checkQuietly, setRegistration, setUpdateReady } from "./updates";
+import { applyUpdate, checkQuietly, setRegistration, setUpdateReady } from "./updates";
 
 const CHECK_EVERY_MS = 60 * 60 * 1000;
 
@@ -23,7 +23,7 @@ export function UpdatePrompt() {
 
   return (
     <button className={"update-toast" + (needRefresh ? " show" : "")} aria-hidden={!needRefresh} tabIndex={needRefresh ? 0 : -1}
-      onClick={() => updateServiceWorker(true)}>
+      onClick={() => applyUpdate()}>
       <span className="dot2" />Update ready. Tap to refresh.
     </button>
   );

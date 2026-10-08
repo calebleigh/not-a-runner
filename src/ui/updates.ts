@@ -19,8 +19,19 @@ export function setUpdateReady(isReady: boolean, applyFn: () => void) {
 export const useUpdateReady = () =>
   useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => ready);
 
-/** Switches to the waiting version and reloads. */
-export function applyUpdate() { apply?.(); }
+/**
+ * Switches to the new version and reloads. Tells a waiting version to take over, reloads as soon as it
+ * does, and reloads anyway after a moment so the button never does nothing.
+ */
+export function applyUpdate(fallbackMs = 1500) {
+  let done = false;
+  const reload = () => { if (!done) { done = true; window.location.reload(); } };
+  navigator.serviceWorker?.addEventListener("controllerchange", reload, { once: true });
+  const waiting = registration?.waiting;
+  if (waiting) waiting.postMessage({ type: "SKIP_WAITING" });
+  else apply?.();
+  window.setTimeout(reload, waiting ? fallbackMs : 300);
+}
 
 /** Quiet background check (when the app comes back, and hourly). */
 export function checkQuietly() { if (navigator.onLine) registration?.update().catch(() => {}); }

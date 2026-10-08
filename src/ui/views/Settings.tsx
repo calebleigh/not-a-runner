@@ -36,7 +36,7 @@ function VersionRow() {
     <div className="setrow">
       <span>App version<small aria-live="polite">{note}</small></span>
       {ready ? (
-        <button className="chip solid" onClick={applyUpdate}>Refresh</button>
+        <button className="chip solid" onClick={() => applyUpdate()}>Refresh</button>
       ) : (
         <button className="chip" disabled={status === "checking"} onClick={async () => { setStatus("checking"); setStatus(await checkForUpdate()); }}>
           {status === "checking" ? "Checking" : "Check"}

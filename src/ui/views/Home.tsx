@@ -29,10 +29,6 @@ export function Home() {
   const day = todayDay(model);
 
   const chips: ReactNode[] = [];
-  if (day?.st) {
-    const sd = !!state.done[day.ids[1]];
-    chips.push(<Chip key="str" ok={sd} ic={<Icon.dumbbell />} big={sd ? "Done" : "Strength"} sub={`${day.st.title}, ${day.st.min} min`} onClick={() => openSheet({ kind: "strength", w: curWeek, d: todayIdx })} />);
-  }
   const st = state.steps[dayKey(model.spec, today)];
   chips.push(<Chip key="steps" ok={!!st} ic={<Icon.steps />} big={st ? kfmt(st) : "Add"} sub="Steps today" onClick={() => openSheet({ kind: "steps", date: today })} />);
   if (dow === 0 && rawWeek >= 1) {
@@ -42,6 +38,11 @@ export function Home() {
   const xs = state.extras[dayKey(model.spec, today)] || [];
   const xmi = xs.reduce((a, x) => a + (x.dist || 0), 0);
   chips.push(<Chip key="extra" ok={xs.length > 0} ic={<Icon.plus />} big={xs.length ? xmi.toFixed(1) + " mi" : "Extra"} sub={xs.length ? `${xs.length} extra logged` : "Walk, hike, ride"} onClick={() => openSheet({ kind: "extra", date: today })} />);
+  // Strength sits last, on the far right.
+  if (day?.st) {
+    const sd = !!state.done[day.ids[1]];
+    chips.push(<Chip key="str" ok={sd} ic={<Icon.dumbbell />} big={sd ? "Done" : "Strength"} sub={`${day.st.title}, ${day.st.min} min`} onClick={() => openSheet({ kind: "strength", w: curWeek, d: todayIdx })} />);
+  }
 
   const tip = coachTip(model, now.getHours());
   const bday = birthdayInfo(state.settings.birthday, now);

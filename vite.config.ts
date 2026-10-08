@@ -20,6 +20,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
         cleanupOutdatedCaches: true,
+        // Once the user taps to update and the new version activates, it takes over open pages,
+        // including ones opened before any version was in control. The waiting step stays (no skipWaiting).
+        clientsClaim: true,
       },
       manifest: {
         name: "Not a Runner",
