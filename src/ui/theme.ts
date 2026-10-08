@@ -42,6 +42,19 @@ export function luminance(hex: string): number {
   });
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
+/** Hue in degrees (0 to 360). */
+export function hue(hex: string): number {
+  const [r, g, b] = toRgb(hex).map((v) => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  if (!d) return 0;
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return (h * 60 + 360) % 360;
+}
+
+/** Red accents would hide red warnings, so those themes warn in amber instead. */
+const WARN_AMBER = { bad: "#FFB020", soft: "#3A2B0E" };
+export const isReddish = (hex: string) => { const h = hue(hex); return h <= 12 || h >= 340; };
+
 export const contrast = (a: string, b: string) => {
   const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
   return (x + 0.05) / (y + 0.05);
@@ -64,6 +77,7 @@ export function themeVars(a: Accent | undefined): Record<string, string> {
     "--sky": a.hi,
     "--sky-soft": mix(PAPER, mid, 0.09),
     "--on-accent": on,
+    ...(isReddish(mid) ? { "--bad": WARN_AMBER.bad, "--bad-soft": WARN_AMBER.soft } : {}),
   };
 }
 
@@ -77,7 +91,7 @@ export function applyShape(shape: Shape | undefined, root: HTMLElement = documen
   else { root.style.removeProperty("--rmax"); root.style.removeProperty("--rc"); }
 }
 
-const KEYS = ["--accent", "--accent-hi", "--accent-lo", "--accent-soft", "--accent-rgb", "--sky", "--sky-soft", "--on-accent"];
+const KEYS = ["--accent", "--accent-hi", "--accent-lo", "--accent-soft", "--accent-rgb", "--sky", "--sky-soft", "--on-accent", "--bad", "--bad-soft"];
 
 export function applyAccent(a: Accent | undefined, root: HTMLElement = document.documentElement) {
   const vars = themeVars(a);

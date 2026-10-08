@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PRESETS, contrast, isHex, mix, themeVars, toHex, toRgb } from "./theme";
+import { PRESETS, contrast, hue, isHex, mix, themeVars, toHex, toRgb } from "./theme";
 
 describe("theme", () => {
   it("round-trips hex colors", () => {
@@ -25,6 +25,13 @@ describe("theme", () => {
   it("uses a preset's own middle color", () => {
     const blue = PRESETS.find((p) => p.name === "Ocean")!;
     expect(themeVars(blue)["--accent"]).toBe(blue.mid);
+  });
+
+  it("warns in amber when the accent is red, and in red otherwise", () => {
+    const blaze = PRESETS.find((p) => p.name === "Blaze")!;
+    expect(themeVars(blaze)["--bad"]).toBe("#FFB020");
+    for (const p of PRESETS.filter((x) => x.name !== "Blaze" && x.name !== "Ember")) expect(themeVars(p)["--bad"]).toBeUndefined();
+    expect(Math.round(hue("#00FF00"))).toBe(120);
   });
 
   it("keeps text on the accent readable for every preset and for dark custom colors", () => {
