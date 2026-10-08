@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { DN, dayAt, fmtShort, hms, intervalAt, saveTrack, trackResult, trackStats, type Feel, type TrackKind } from "../training";
+import { DN, dayAt, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
+import { canCountSteps } from "../native/steps";
 import { newId } from "../sync/engine";
 import { useApp } from "./app-state";
 import { ConfirmButton, FeelPicker } from "./cards";
 import { Icon } from "./icons";
 import {
-  closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setVoice, startTracking, useTracker,
+  closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
 
 const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Walk/run"], ["bike", "Bike"]];
@@ -19,6 +20,8 @@ export function TrackerScreen() {
   const [, tick] = useState(0);
   const [feel, setFeel] = useState<Feel | undefined>();
   const [saveAsExtra, setSaveAsExtra] = useState(false);
+  // Distance typed on the summary (e.g. from a treadmill); empty means use the measured one.
+  const [typed, setTyped] = useState("");
 
   // The clock moves every second while recording; GPS fixes don't arrive on a beat.
   useEffect(() => {
@@ -27,7 +30,7 @@ export function TrackerScreen() {
     return () => clearInterval(id);
   }, [t?.status]);
   useEffect(() => { resumeAfterReload(); }, []);
-  useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setSaveAsExtra(false); } }, [t?.status]);
+  useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setSaveAsExtra(false); setTyped(""); } }, [t?.status]);
 
   if (!t) return null;
   const day = t.target ? dayAt(model, t.target.w, t.target.d) : undefined;
@@ -35,13 +38,21 @@ export function TrackerScreen() {
   const where = day ? `${DN[t.target!.d]} ${fmtShort(day.date)}: ${t.target!.title}` : "Extra activity, today";
   const now = t.finishedAt ?? Date.now();
   const s = t.track ? trackStats(t.track, now) : null;
-  const bike = t.kind === "bike";
-  const waiting = t.status === "recording" && !t.simulate && (!t.lastFixAt || Date.now() - t.lastFixAt > 15_000);
+  const bike = t.kind === "bike", indoor = t.mode === "indoor";
+  const waiting = !indoor && t.status === "recording" && !t.simulate && (!t.lastFixAt || Date.now() - t.lastFixAt > 15_000);
+  const typedMiles = typed.trim() === "" ? undefined : Math.max(0, parseFloat(typed) || 0);
+  const extras = { indoor, steps: t.steps, miles: typedMiles };
+  const live = t.track ? trackResult(state, t.track, now, { indoor, steps: t.steps }) : null;
+  // Indoors, the numbers come from steps (or just time); outdoors, from GPS.
+  const miles = indoor ? live?.dist ?? 0 : s?.miles ?? 0;
+  const paceS = indoor ? (miles >= 0.05 && s ? Math.round(s.elapsedS / miles) : null) : s?.paceS ?? null;
+  const mph = indoor ? (s && s.elapsedS ? miles / (s.elapsedS / 3600) : 0) : s?.mph ?? 0;
+  const stride = strideFor(state, t.kind === "run" ? "run" : "walk");
 
   const save = () => {
     if (!t.track || !t.finishedAt) return;
     const target = saveAsExtra || !t.target ? null : t.target;
-    update((draft) => { saveTrack(draft, model, { track: t.track!, finishedAt: t.finishedAt!, feel, target, date: new Date(t.track!.startedAt), newId }); });
+    update((draft) => { saveTrack(draft, model, { track: t.track!, finishedAt: t.finishedAt!, feel, target, date: new Date(t.track!.startedAt), newId, ...extras }); });
     toast(target && day ? "Saved to your plan. Nice work." : "Saved as an extra activity.");
     closeTracker();
   };
@@ -61,7 +72,21 @@ export function TrackerScreen() {
           <div className="seg" role="radiogroup" aria-label="Activity">
             {KINDS.map(([k, l]) => <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}>{l}</button>)}
           </div>
-          <p className="setnote">{canTrackInBackground ? "Keeps recording with your screen off. Android shows a notice while it does." : "On the website, keep this screen open while you go. The Android app records with the screen off."}</p>
+          <div className="trk-modes" role="radiogroup" aria-label="Where">
+            <button role="radio" aria-checked={!indoor} className={!indoor ? "sel" : ""} onClick={() => setTrackMode("gps")}>
+              <b>Outdoors</b><small>GPS: distance, pace and route</small>
+            </button>
+            <button role="radio" aria-checked={indoor} className={indoor ? "sel" : ""} onClick={() => setTrackMode("indoor")}>
+              <b>Indoors or in place</b><small>{bike ? "Trainer: time, type the distance after" : canCountSteps ? "Treadmill, pacing: counts steps, no GPS" : "Treadmill, pacing: time, type the distance after"}</small>
+            </button>
+          </div>
+          <p className="setnote">
+            {indoor
+              ? bike || !canCountSteps ? "No GPS. You can type the distance from the machine when you finish."
+                : stride.learned ? `Distance comes from your steps (your stride: ${Math.round(stride.meters * 100)} cm, learned from your outdoor walks). You can correct it at the end.`
+                  : "Distance comes from your steps, using an average stride until a couple of outdoor walks teach the app yours. You can correct it at the end."
+              : canTrackInBackground ? "Keeps recording with your screen off. Android shows a notice while it does." : "On the website, keep this screen open while you go. The Android app records with the screen off."}
+          </p>
           {t.intervals && (
             <div className="trk-ivinfo">
               <b>Interval coaching on</b>
@@ -69,7 +94,7 @@ export function TrackerScreen() {
               <label><input type="checkbox" checked={t.voice} onChange={(e) => setVoice(e.target.checked)} /> Voice cues</label>
             </div>
           )}
-          {import.meta.env.DEV && <label className="trk-sim"><input type="checkbox" checked={t.simulate} onChange={(e) => setSimulate(e.target.checked)} /> Simulated walk (testing)</label>}
+          {import.meta.env.DEV && !indoor && <label className="trk-sim"><input type="checkbox" checked={t.simulate} onChange={(e) => setSimulate(e.target.checked)} /> Simulated walk (testing)</label>}
           <button className="trk-go" onClick={() => startTracking()}><Icon.play /><span>Start</span></button>
         </div>
       ) : (
@@ -87,11 +112,12 @@ export function TrackerScreen() {
           })()}
           <div className="trk-time">
             <span className="num">{hms(s?.elapsedS ?? 0)}</span>
-            <small>{s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</small>
+            <small>{!indoor && s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</small>
           </div>
-          <div className="trk-nums">
-            <div><span className="num">{(s?.miles ?? 0).toFixed(2)}</span><small>Miles</small></div>
-            <div><span className="num">{bike ? (s?.mph ?? 0).toFixed(1) : pace(s?.paceS ?? null)}</span><small>{bike ? "Avg mph" : "Avg pace /mi"}</small></div>
+          <div className={"trk-nums" + (indoor && !bike && canCountSteps ? " three" : "")}>
+            {indoor && !bike && canCountSteps && <div><span className="num">{t.steps.toLocaleString("en-US")}</span><small>Steps</small></div>}
+            <div><span className="num">{miles.toFixed(2)}</span><small>{indoor && miles > 0 ? "Miles (est.)" : "Miles"}</small></div>
+            <div><span className="num">{bike ? mph.toFixed(1) : pace(paceS)}</span><small>{bike ? "Avg mph" : "Avg pace /mi"}</small></div>
           </div>
           {t.error === "denied" ? (
             <div className="trk-msg bad">
@@ -109,6 +135,10 @@ export function TrackerScreen() {
 
           {t.status === "done" ? (
             <div className="trk-save">
+              <label className="trk-dist">
+                <span>{indoor ? "Distance" : "Distance (GPS)"}<small>{indoor && !bike && canCountSteps ? "Estimated from your steps. Type the treadmill's number if you have it." : indoor ? "Type it from the machine, or leave it empty." : "Change it if the GPS got it wrong."}</small></span>
+                <span className="unitin"><input type="number" inputMode="decimal" min="0" max="200" step="0.01" placeholder={trackResult(state, t.track!, now, { indoor, steps: t.steps }).dist.toFixed(2)} value={typed} onChange={(e) => setTyped(e.target.value)} /><em>mi</em></span>
+              </label>
               <span className="lbl">How did it feel?</span>
               <FeelPicker value={feel} onPick={setFeel} />
               {day && (
@@ -118,7 +148,7 @@ export function TrackerScreen() {
               <button className="btn solid" onClick={save}>
                 {saveAsExtra || !day ? "Save as extra activity" : already ? "Replace the log" : "Save to your plan"}
               </button>
-              <p className="setnote">Saving logs {trackResult(t.track!, now).dist ? `${trackResult(t.track!, now).dist} mi in ` : ""}{hms(trackResult(t.track!, now).time)}.</p>
+              {(() => { const r = trackResult(state, t.track!, now, extras); return <p className="setnote">Saving logs {r.dist ? `${r.dist} mi in ` : ""}{hms(r.time)}{t.steps ? `, ${t.steps.toLocaleString("en-US")} steps` : ""}.</p>; })()}
               <ConfirmButton className="btn small" label="Discard" confirmLabel="Discard this workout?" onConfirm={() => closeTracker()} />
             </div>
           ) : (

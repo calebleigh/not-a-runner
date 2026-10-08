@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { watchLocation, type LocationError, type LocationFeed } from "../native/location";
 import { cue } from "../native/cues";
+import { watchSteps, type StepFeed } from "../native/steps";
 import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
 import { addFix, newTrack, pause, resume, trackStats, type Track, type TrackKind } from "../training/track";
 
@@ -10,9 +11,15 @@ import { addFix, newTrack, pause, resume, trackStats, type Track, type TrackKind
 export interface TrackTarget { w: number; d: number; title: string; /** The session's instructions (for intervals). */ instructions?: string }
 
 export type TrackStatus = "ready" | "recording" | "paused" | "done";
+/** Outdoors with GPS, or indoors / in place (treadmill, pacing a small area) by steps and time. */
+export type TrackMode = "gps" | "indoor";
 
 export interface ActiveTrack {
   status: TrackStatus;
+  mode: TrackMode;
+  /** Steps counted so far (the phone's counter restarts with the app, so earlier counts add in). */
+  steps: number;
+  stepBase: number;
   kind: TrackKind;
   target: TrackTarget | null;
   track: Track | null;
@@ -34,12 +41,13 @@ export interface ActiveTrack {
 const KEY = "activeTrack";
 let active: ActiveTrack | null = load();
 let feed: LocationFeed | null = null;
+let stepFeed: StepFeed | null = null;
 let lastSaved = 0;
 let wake: { release(): Promise<void> } | null = null;
 const subs = new Set<() => void>();
 
 function load(): ActiveTrack | null {
-  try { const s = localStorage.getItem(KEY); return s ? { intervals: null, voice: true, cuedIndex: -1, ...JSON.parse(s) } : null; } catch { return null; }
+  try { const s = localStorage.getItem(KEY); return s ? { intervals: null, voice: true, cuedIndex: -1, mode: "gps", steps: 0, stepBase: 0, ...JSON.parse(s) } : null; } catch { return null; }
 }
 function persist(force = false) {
   if (!force && Date.now() - lastSaved < 5000) return;
@@ -57,10 +65,15 @@ export const useTracker = () => useSyncExternalStore((f) => { subs.add(f); retur
 /** Opens the tracker, ready to start. */
 export function openTracker(kind: TrackKind, target: TrackTarget | null, simulate = false) {
   if (active && active.status !== "ready") return; // something is already being tracked
-  set({ status: "ready", kind, target, track: null, simulate, error: null, lastFixAt: null, intervals: plansFor(kind, target), voice: voicePref(), cuedIndex: -1 });
+  set({ status: "ready", mode: modePref(), steps: 0, stepBase: 0, kind, target, track: null, simulate, error: null, lastFixAt: null, intervals: plansFor(kind, target), voice: voicePref(), cuedIndex: -1 });
 }
 
 const plansFor = (kind: TrackKind, target: TrackTarget | null) => (kind === "run" && target?.instructions ? intervalPlan(target.instructions) : null);
+function modePref(): TrackMode { try { return localStorage.getItem("trackMode") === "indoor" ? "indoor" : "gps"; } catch { return "gps"; } }
+export function setTrackMode(mode: TrackMode) {
+  try { localStorage.setItem("trackMode", mode); } catch { /* blocked */ }
+  if (active?.status === "ready") set({ ...active, mode });
+}
 function voicePref() { try { return localStorage.getItem("voiceCues") !== "off"; } catch { return true; } }
 export function setVoice(on: boolean) {
   try { localStorage.setItem("voiceCues", on ? "on" : "off"); } catch { /* blocked */ }
@@ -89,6 +102,18 @@ export async function startTracking() {
 async function startFeed() {
   if (!active) return;
   await feed?.stop();
+  feed = null;
+  await stepFeed?.stop();
+  // Steps count in both modes (indoors they're the distance; outdoors they teach the app your stride).
+  if (active.kind !== "bike") {
+    set({ ...active, stepBase: active.steps });
+    stepFeed = await watchSteps((n) => {
+      if (!active || active.status === "done") return;
+      if (active.status === "paused") { set({ ...active, stepBase: active.steps - n }, false); return; }
+      set({ ...active, steps: active.stepBase + n }, false);
+    });
+  }
+  if (active.mode === "indoor") { startClock(); return; }
   feed = await watchLocation({
     kind: active.kind,
     simulate: active.simulate,
@@ -99,6 +124,10 @@ async function startFeed() {
     },
     onError: (e) => { if (active) set({ ...active, error: e }); },
   });
+  startClock();
+}
+
+function startClock() {
   keepAwake(true);
   clearInterval(cueTimer);
   cueTimer = window.setInterval(checkCue, 1000);
@@ -122,6 +151,8 @@ export async function finishTracking() {
   set({ ...active, status: "done", track: track.pausedAt != null ? resume(track, now) : track, finishedAt: now });
   await feed?.stop();
   feed = null;
+  await stepFeed?.stop();
+  stepFeed = null;
   clearInterval(cueTimer);
   keepAwake(false);
 }
@@ -130,6 +161,8 @@ export async function finishTracking() {
 export async function closeTracker() {
   await feed?.stop();
   feed = null;
+  await stepFeed?.stop();
+  stepFeed = null;
   clearInterval(cueTimer);
   keepAwake(false);
   set(null);

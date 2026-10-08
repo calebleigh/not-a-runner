@@ -15,6 +15,12 @@ export interface Log {
   /** GPS route from the tracker, as an encoded polyline (see encodeRoute). Text, because the sync
    *  database can't hold lists of lists. */
   route?: string;
+  /** Steps counted during a tracked workout. */
+  steps?: number;
+  /** What was tracked ("walk", "run" for walk/run, "bike"), for learning stride length. */
+  kind?: "walk" | "run" | "bike";
+  /** Tracked indoors (steps or time) rather than with GPS. */
+  indoor?: boolean;
 }
 
 export interface Extra {
@@ -30,6 +36,8 @@ export interface Extra {
   /** GPS route from the tracker, as an encoded polyline (see encodeRoute). Text, because the sync
    *  database can't hold lists of lists. */
   route?: string;
+  /** Tracked indoors (steps or time) rather than with GPS. */
+  indoor?: boolean;
 }
 
 export interface Todo {

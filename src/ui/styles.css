@@ -831,3 +831,16 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-voice{flex:none;padding:6px 10px;border-radius:min(10px,var(--rmax));border:1px solid currentColor;background:none;color:inherit;font:700 12px var(--body);opacity:.75;cursor:pointer}
 .routeshape{flex:none;display:block;border-radius:min(10px,var(--rmax));background:var(--surface2)}
 .logged .routeshape{float:right;margin-left:12px}
+
+/* Tracker: outdoors or indoors */
+.trk-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trk-modes button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:14px;border:1px solid var(--line);background:var(--surface);border-radius:min(16px,var(--rmax));color:var(--ink);cursor:pointer}
+.trk-modes b{font:800 18px var(--display)}
+.trk-modes small{color:var(--muted);font-size:13px}
+.trk-modes button.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.trk-nums.three{grid-template-columns:repeat(3,1fr)}
+.trk-nums.three .num{font-size:clamp(28px,8vw,44px)}
+.trk-dist{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax))}
+.trk-dist>span:first-child{display:flex;flex-direction:column;font-weight:600}
+.trk-dist small{color:var(--muted);font-size:13px;font-weight:400}
+.trk-dist input{width:90px}

@@ -33,10 +33,36 @@ describe("saving a tracked workout", () => {
     expect(x.route).toBeTypeOf("string");
   });
 
-  it("keeps the full time for a session without GPS distance (indoors)", () => {
+  it("keeps the full time for a session without GPS distance", () => {
     const tr = newTrack("bike", T0);
-    const r = trackResult(tr, T0 + 30 * 60_000);
+    const r = trackResult(emptyState(), tr, T0 + 30 * 60_000);
     expect(r.dist).toBe(0);
     expect(r.time).toBe(1800);
+  });
+
+  it("indoors: distance from steps times your stride, full time, no route", () => {
+    const s = emptyState(), m = computeModel(s, NOW);
+    const tr = newTrack("walk", T0);
+    const r = trackResult(s, tr, T0 + 1_200_000, { indoor: true, steps: 2235 });
+    expect(r.dist).toBeCloseTo(1, 1);
+    expect(r.estimated).toBe(true);
+    expect(r.time).toBe(1200);
+    saveTrack(s, m, { track: tr, finishedAt: T0 + 1_200_000, target: null, date: NOW, newId: () => "i", indoor: true, steps: 2235 });
+    expect(s.extras["1-3"][0]).toMatchObject({ indoor: true, steps: 2235, time: 1200 });
+    expect(s.extras["1-3"][0].route).toBeUndefined();
+  });
+
+  it("a typed distance (treadmill) wins over steps and GPS", () => {
+    const s = emptyState();
+    const r = trackResult(s, walked(1200, 1.34), T0 + 1_200_000, { indoor: true, steps: 2000, miles: 1.5 });
+    expect(r.dist).toBe(1.5);
+    expect(r.estimated).toBe(false);
+  });
+
+  it("records steps and the activity on GPS workouts, so the app can learn your stride", () => {
+    const s = emptyState(), m = computeModel(s, NOW);
+    saveTrack(s, m, { track: walked(1200, 1.34), finishedAt: T0 + 1_200_000, target: { w: 1, d: 3 }, date: NOW, newId: () => "x", steps: 2300 });
+    expect(s.logs["1-3-c"]).toMatchObject({ steps: 2300, kind: "walk" });
+    expect(s.logs["1-3-c"].indoor).toBeUndefined();
   });
 });
