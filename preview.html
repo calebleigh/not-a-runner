@@ -39,8 +39,8 @@
     <button data-orient="portrait">Inner portrait</button>
   </div>
   <div class="seg" role="group" aria-label="Corners">
-    <button data-corners="1" class="on">Rounded</button>
-    <button data-corners="0.35">Squared</button>
+    <button data-corners="round" class="on">Rounded</button>
+    <button data-corners="square">Squared</button>
   </div>
   <div class="seg" role="group" aria-label="Logo">
     <button data-logo="square" class="on">Square logo</button>
@@ -101,13 +101,14 @@
     layout();
   });
   // Style comparisons, applied inside both app frames (and again whenever a frame reloads).
-  const look = { corners: "1", logo: "square" };
+  const look = { corners: "round", logo: "square" };
   function applyLook() {
     for (const f of document.querySelectorAll("iframe")) {
       const r = f.contentDocument?.documentElement;
       if (!r) continue;
-      r.style.setProperty("--rk", look.corners);
-      r.style.setProperty("--rc", look.corners === "1" ? "50%" : "14px");
+      // Squared: one 6px corner on every element, buttons included.
+      r.style.setProperty("--rmax", look.corners === "round" ? "999px" : "6px");
+      r.style.setProperty("--rc", look.corners === "round" ? "50%" : "6px");
       r.dataset.logo = look.logo;
     }
   }

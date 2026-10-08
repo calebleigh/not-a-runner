@@ -61,14 +61,14 @@ function SquareLogo({ size, className }: { size: number; className?: string }) {
           <stop offset="0" style={{ stopColor: "var(--accent-lo)" }} />
           <stop offset="1" style={{ stopColor: "var(--accent-hi)" }} />
         </linearGradient>
-        <clipPath id={square}><rect width="1531" height="1531" /></clipPath>
+        <clipPath id={square}><rect width="1531" height="1531" rx="180" /></clipPath>
         <mask id={cut} maskUnits="userSpaceOnUse" {...box}>
           <rect {...box} fill="#fff" />
           <line x1="0" y1="19" x2="1512" y2="1531" stroke="#000" strokeWidth="229" />
         </mask>
         <mask id={shape} maskUnits="userSpaceOnUse" {...box}>
           <g fill="none" stroke="#fff" clipPath={`url(#${square})`}>
-            <rect x="58" y="58" width="1415" height="1415" strokeWidth="116" />
+            <rect x="58" y="58" width="1415" height="1415" rx="122" strokeWidth="116" />
             <line x1="0" y1="19" x2="1512" y2="1531" strokeWidth="109" />
           </g>
           <g mask={`url(#${cut})`}>

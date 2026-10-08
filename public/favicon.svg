@@ -9,14 +9,14 @@
     <linearGradient id="nr-grad" x1="0" y1="1531" x2="1531" y2="0" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#E5540A"/><stop offset="1" stop-color="#FF8A3D"/>
     </linearGradient>
-    <clipPath id="nr-square"><rect width="1531" height="1531"/></clipPath>
+    <clipPath id="nr-square"><rect width="1531" height="1531" rx="180"/></clipPath>
     <mask id="nr-cut" maskUnits="userSpaceOnUse" x="-60" y="-60" width="1651" height="1651">
       <rect x="-60" y="-60" width="1651" height="1651" fill="#fff"/>
       <line x1="0" y1="19" x2="1512" y2="1531" stroke="#000" stroke-width="229"/>
     </mask>
     <mask id="nr-shape" maskUnits="userSpaceOnUse" x="-60" y="-60" width="1651" height="1651">
       <g fill="none" stroke="#fff" clip-path="url(#nr-square)">
-        <rect x="58" y="58" width="1415" height="1415" stroke-width="116"/>
+        <rect x="58" y="58" width="1415" height="1415" rx="122" stroke-width="116"/>
         <line x1="0" y1="19" x2="1512" y2="1531" stroke-width="109"/>
       </g>
       <g mask="url(#nr-cut)">
