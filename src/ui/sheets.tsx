@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { dayAt, dayKey, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
+import { dateOf, dayAt, dayKey, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
 import { CardioCard, ExtraSection, StepsCard, StepsEntry, StrengthCard, WeighCard } from "./cards";
 import { Icon } from "./icons";
@@ -85,20 +85,22 @@ function Head({ title }: { title: string }) {
 
 function SheetContent({ spec }: { spec: SheetSpec }) {
   const { model } = useApp();
-  const dayTitle = (w: number, d: number) => { const dt = dayAt(model, w, d)!.date; return sameDay(dt, model.today) ? "Today" : fmtLong(dt); };
+  const dayTitle = (w: number, d: number) => { const dt = dateOf(w, d); return sameDay(dt, model.today) ? "Today" : fmtLong(dt); };
   // Key by spec so forms reset when a different sheet opens.
   const key = JSON.stringify(spec);
   let title: string, body: ReactNode;
   switch (spec.kind) {
     case "day": {
-      const { w, d } = spec, day = dayAt(model, w, d)!;
+      const { w, d } = spec, day = dayAt(model, w, d), date = dateOf(w, d);
       title = dayTitle(w, d);
       body = <>
         {d === 0 && <WeighCard week={w} />}
-        <CardioCard w={w} d={d} />
-        {day.st && <StrengthCard w={w} d={d} />}
+        {day ? <CardioCard w={w} d={d} /> : (
+          <section className="card"><h2>Rest day</h2><h3>Nothing planned</h3><p>Went for a walk, hike or ride anyway? Log it below. It counts toward your totals.</p></section>
+        )}
+        {day?.st && <StrengthCard w={w} d={d} />}
         <ExtraSection w={w} d={d} />
-        {day.date <= model.today && <StepsCard date={day.date} />}
+        {date <= model.today && <StepsCard date={date} />}
       </>;
       break;
     }
