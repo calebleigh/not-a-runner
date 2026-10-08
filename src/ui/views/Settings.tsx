@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { WHY_IDEAS, addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
-import { replaySplash } from "../Splash";
+import { TapLogo } from "../Splash";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
-import { Logo } from "../Logo";
 import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Preset, type Shape } from "../theme";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 
@@ -83,10 +82,6 @@ function LookPicker() {
           })}
         </div>
         <p className="setnote">Changes the whole app, logo included. The home screen icon stays as it is.</p>
-        <div className="setrow">
-          <span>Launch animation<small>Plays when the app opens</small></span>
-          <button className="chip" onClick={replaySplash}>Replay</button>
-        </div>
       </section>
     </div>
   );
@@ -273,7 +268,7 @@ export function Settings() {
       </div>
       </div>
       <section className="about">
-        <Logo size={64} />
+        <TapLogo size={64} />
         <h3>Not a Runner</h3>
         <p>Train for a race even if you hate running.</p>
       </section>

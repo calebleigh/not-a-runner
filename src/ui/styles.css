@@ -604,3 +604,9 @@ input[type="date"].xt{color-scheme:dark}
 .whyadd{display:flex;gap:8px}
 .whyadd .whyin{flex:1}
 .whyideas{display:flex;flex-wrap:wrap;gap:6px}
+.taplogo{display:inline-grid;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.taplogo .sp-shake{width:100%;height:100%}
+.taplogo .sp-mark{width:100%;height:100%}
+@media (prefers-reduced-motion: reduce){.taplogo *{animation:none!important;opacity:1}}
+.taplogo .sp-shake{animation-name:sp-shake-sm}
+@keyframes sp-shake-sm{0%,100%{transform:none}20%{transform:translate(-3px,2px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,1px)}80%{transform:translate(1px,0)}}

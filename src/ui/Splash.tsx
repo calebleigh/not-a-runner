@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 
-const REPLAY = "splash-replay";
-/** Plays the launch animation again (the Replay button in Settings). */
-export const replaySplash = () => window.dispatchEvent(new Event(REPLAY));
+import { Logo } from "./Logo";
 
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LENGTH = REDUCED ? 700 : 1850;
@@ -56,11 +54,6 @@ function Mark({ round }: { round: boolean }) {
 export function Splash() {
   const [run, setRun] = useState(1);
   useEffect(() => {
-    const again = () => setRun((n) => n + 1);
-    window.addEventListener(REPLAY, again);
-    return () => window.removeEventListener(REPLAY, again);
-  }, []);
-  useEffect(() => {
     if (!run) return;
     const t = setTimeout(() => setRun(0), LENGTH);
     return () => clearTimeout(t);
@@ -74,5 +67,20 @@ export function Splash() {
       </div>
       <div className="sp-name">Not a Runner</div>
     </div>
+  );
+}
+
+/** The logo at a given size; tapping it plays the launch animation right there. */
+export function TapLogo({ size }: { size: number }) {
+  const [n, setN] = useState(0);
+  return (
+    <button className="taplogo" style={{ width: size, height: size }} aria-label="Play the logo animation" onClick={() => setN((x) => x + 1)}>
+      {n === 0 ? <Logo size={size} /> : (
+        <span key={n} className="sp-shake">
+          <Mark round={false} />
+          <Mark round />
+        </span>
+      )}
+    </button>
   );
 }
