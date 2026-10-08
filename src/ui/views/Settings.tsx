@@ -67,7 +67,7 @@ function LookPicker() {
       <div className="sechead"><h3 className="sectitle">Look</h3><span className="lbl">{mode === "light" ? "Light" : mode === "system" ? "Auto" : "Dark"}, {shape === "square" ? "Squared" : "Rounded"}, {(preset ?? DEFAULT_PRESET).name}</span></div>
       <section className="card lookcard">
         <div className="seg modeseg" role="radiogroup" aria-label="Light or dark">
-          {([["dark", "Dark"], ["light", "Light"], ["system", "Match phone"]] as const).map(([v, l]) => (
+          {([["dark", "Dark"], ["light", "Light"], ["system", "Match system"]] as const).map(([v, l]) => (
             <button key={v} role="radio" aria-checked={mode === v} className={mode === v ? "sel" : ""} onClick={() => setMode(v)}>{l}</button>
           ))}
         </div>
