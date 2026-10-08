@@ -87,7 +87,7 @@ export function Home() {
         </div>
         <div className="days7">
           {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-            const planned = d < wk.days.length && (d < 5 || (curWeek === model.spec.weeks && d === 5));
+            const planned = !!dayAt(model, curWeek, d);
             const f = planned ? dayDoneFrac(model, curWeek, d) : -1;
             const isT = rawWeek >= 1 && d === dow;
             return (

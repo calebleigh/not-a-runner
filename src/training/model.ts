@@ -16,10 +16,10 @@ export function computeModel(state: State, now: Date): Model {
 }
 
 export function dayAt(model: Model, w: number, d: number): Day | undefined {
-  return model.weeks[w - 1]?.days[d];
+  return model.weeks[w - 1]?.days.find((x) => x.d === d);
 }
 
 /** Today's planned day, or null on weekends and before the plan starts. */
 export function todayDay(model: Model): Day | null {
-  return model.rawWeek >= 1 && !model.isWeekend ? model.weeks[model.curWeek - 1].days[model.todayIdx] : null;
+  return model.rawWeek >= 1 && !model.isWeekend ? dayAt(model, model.curWeek, model.todayIdx) ?? null : null;
 }

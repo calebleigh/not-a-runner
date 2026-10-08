@@ -10,7 +10,7 @@ import { Grow, Num, reducedMotion } from "../motion";
 import { GearList } from "../GearList";
 
 const KC: Record<CardioKind, string> = { bike: "var(--accent-hi)", walk: "#9A958F", run: "var(--accent)", long: "var(--accent)", test: "#FFD08A", race: "#FFD08A", rest: "#33302D" };
-const DAY_SHORT = [...DN, "Sun"].map((d) => d.toUpperCase());
+const DAY_SHORT = DN.map((d) => d.toUpperCase());
 
 type Status = "done" | "part" | "today" | "missed" | "up" | "rest";
 
@@ -30,7 +30,8 @@ export function Plan() {
   const stripRef = useRef<HTMLDivElement>(null);
   const [jump, setJump] = useState(0);
 
-  const daysLeft = Math.max(0, daysBetween(today, model.spec.race!));
+  const race = model.spec.race;
+  const daysLeft = race ? Math.max(0, daysBetween(today, race)) : 0;
   const w = model.weeks[planWeek - 1], weekEnd = dateOf(model.spec, planWeek, 6);
   const prog = weekProgress(state, w);
   const isCur = planWeek === curWeek;
@@ -58,7 +59,7 @@ export function Plan() {
   }, [jump]);
 
   const rows = [0, 1, 2, 3, 4, 5, 6].map((d) => {
-    const date = dateOf(model.spec, planWeek, d), day: Day | undefined = w.days[d];
+    const date = dateOf(model.spec, planWeek, d), day: Day | undefined = w.days.find((x) => x.d === d);
     const isToday = sameDay(date, today);
     if (!day) {
       const xs = extrasFor(state, planWeek, d), mi = xs.reduce((a, x) => a + (x.dist || 0), 0);
@@ -78,10 +79,14 @@ export function Plan() {
     <section className="view stack" aria-label="Plan">
       <div className="greet">
         <div>
-          <div className="lbl">Race day, {model.spec.race!.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
-          <h1>St. George Half</h1>
+          <div className="lbl">{race ? `Race day, ${race.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}` : `${model.spec.weeks}-week fitness plan`}</div>
+          <h1>{model.spec.raceName}</h1>
         </div>
-        <div className="countdown"><span className="num"><Num value={daysLeft} /></span><span className="lbl">days to go</span></div>
+        <div className="countdown">
+          {race
+            ? <><span className="num"><Num value={daysLeft} /></span><span className="lbl">days to go</span></>
+            : <><span className="num"><Num value={model.spec.weeks - curWeek + 1} /></span><span className="lbl">weeks left</span></>}
+        </div>
       </div>
 
       <section className="panelc phasep">

@@ -2,7 +2,7 @@
 // Plan dates come from the spec (start date, number of weeks, race day).
 import type { PlanSpec } from "./spec";
 
-type Cal = Pick<PlanSpec, "start" | "weeks" | "raceDay">;
+type Cal = Pick<PlanSpec, "start" | "weeks" | "slots">;
 
 export const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
@@ -50,7 +50,9 @@ export function todayInfo(spec: Cal, today: Date): TodayInfo {
   const rawWeek = Math.floor(daysBetween(spec.start, today) / 7) + 1;
   const curWeek = clamp(rawWeek, 1, spec.weeks);
   const dow = (today.getDay() + 6) % 7;
-  const isWeekend = dow > 4 && !(curWeek === spec.weeks && dow === spec.raceDay);
-  const todayIdx = rawWeek < 1 ? 0 : Math.min(dow, curWeek === spec.weeks ? Math.max(4, spec.raceDay) : 4);
+  const week = spec.slots[curWeek - 1] ?? [];
+  // "Weekend" means no session scheduled today (any day of the week, not only Sat and Sun).
+  const isWeekend = !week.some((x) => x.d === dow);
+  const todayIdx = rawWeek < 1 ? (week[0]?.d ?? 0) : dow;
   return { rawWeek, curWeek, dow, isWeekend, todayIdx };
 }

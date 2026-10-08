@@ -30,4 +30,13 @@ describe("plan spec", () => {
     expect(mergeState(base, emptyState()).plan).toEqual(base.plan);
     expect(mergeState(emptyState(), emptyState()).plan).toBeUndefined();
   });
+
+  it("maps the owner's plan one-to-one onto the template", () => {
+    const s = specOf(emptyState());
+    expect(s.canon).toEqual(Array.from({ length: 52 }, (_, i) => i + 1));
+    expect(s.phases.map((p) => [p.from, p.to])).toEqual([[1, 13], [14, 26], [27, 39], [40, 52]]);
+    for (let n = 1; n <= 51; n++) expect(s.slots[n - 1]).toEqual([0, 1, 2, 3, 4].map((d) => ({ d, role: d })));
+    expect(s.slots[51]).toEqual([...[0, 1, 2, 3, 4].map((d) => ({ d, role: d })), { d: 5, role: -1 }]);
+    expect(s.warnings).toEqual([]);
+  });
 });

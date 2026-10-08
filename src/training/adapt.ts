@@ -37,7 +37,7 @@ export function computeFoot(state: State, today: Date, curWeek: number): Foot {
   const from = addDays(today, -13), to = dateOf(spec, curWeek, 6);
   let swapped = 0, planned = 0;
   for (let n = Math.max(1, curWeek - 2); n <= curWeek; n++) {
-    for (let d = 0; d < 5; d++) {
+    for (const { d } of spec.slots[n - 1] ?? []) {
       const dt = dateOf(spec, n, d);
       if (dt < from || dt > to) continue;
       const e = effKind(state, n, d);

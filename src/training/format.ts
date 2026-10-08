@@ -10,5 +10,5 @@ export const fmtShort = (d: Date) => d.toLocaleDateString("en-US", { month: "sho
 export const fmtLong = (d: Date) => d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
 export const FEEL = { easy: "Easy", ok: "Just right", hard: "Too hard" } as const;
-export const DN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const DN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export const LONGDAY = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];

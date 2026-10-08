@@ -20,7 +20,7 @@ export function TodayHero() {
     const missed = wk.days.filter((x) => x.date < today && !state.done[x.ids[0]]);
     return (
       <button className="hero rest tap" onClick={() => { if (missed[0]) openSheet({ kind: "day", w: curWeek, d: missed[0].d }); }}>
-        <span className="lbl">{rawWeek < 1 ? "Starting soon" : "Weekend"}</span>
+        <span className="lbl">{rawWeek < 1 ? "Starting soon" : model.dow > 4 ? "Weekend" : "Day off"}</span>
         <div className="ht">Rest day</div>
         <p>{missed.length ? `${missed.length} session${missed.length > 1 ? "s" : ""} left this week. Tap to make one up.` : "Week complete. Recover, hydrate, sleep."}</p>
         <span className="go"><Icon.check /></span>
