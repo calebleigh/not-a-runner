@@ -816,3 +816,16 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-save{display:flex;flex-direction:column;gap:12px;margin-top:auto}
 .trk-extra{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
 .btn svg{width:18px;height:18px;vertical-align:-3px}
+
+/* Interval coaching */
+.trk-ivinfo{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:min(16px,var(--rmax));background:var(--accent-soft);font-size:14px}
+.trk-ivinfo b{font:800 18px var(--display)}
+.trk-ivinfo label{display:flex;gap:8px;align-items:center;font-weight:600;margin-top:4px}
+.trk-iv{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:min(18px,var(--rmax));background:var(--surface);border:1px solid var(--line)}
+.trk-iv>div{flex:1;display:flex;flex-direction:column}
+.trk-iv b{font:800 30px/1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.trk-iv small{color:var(--muted);font-size:13px;margin-top:4px}
+.trk-iv .num{font:800 34px/1 var(--display)}
+.trk-iv.jog{background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border:0;color:var(--on-accent)}
+.trk-iv.jog small{color:inherit;opacity:.8}
+.trk-voice{flex:none;padding:6px 10px;border-radius:min(10px,var(--rmax));border:1px solid currentColor;background:none;color:inherit;font:700 12px var(--body);opacity:.75;cursor:pointer}

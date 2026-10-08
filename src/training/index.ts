@@ -18,3 +18,4 @@ export * from "./notify";
 export * from "./streak";
 export * from "./track";
 export * from "./trackSave";
+export * from "./intervals";

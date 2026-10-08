@@ -197,7 +197,7 @@ function LogTiles() {
       <Tile wide onClick={() => {
         closeSheet();
         const open = day && day.c.kind !== "rest" && day.c.kind !== "race" && !state.done[day.ids[0]];
-        openTracker(open ? trackKindFor(day.c.kind) : "walk", open ? { w: curWeek, d: todayIdx, title: day.c.t } : null);
+        openTracker(open ? trackKindFor(day.c.kind) : "walk", open ? { w: curWeek, d: todayIdx, title: day.c.t, instructions: day.c.d } : null);
       }} ic={<Icon.play />} title="Track a workout" sub={day && !state.done[day.ids[0]] && day.c.kind !== "rest" ? `GPS: ${day.c.t}` : "GPS: time, distance, pace"} />
       <Tile onClick={() => openSheet({ kind: "steps", date: today })} ic={<Icon.steps />} title={st ? kfmt(st) + " steps" : "Steps"} sub={st ? "Tap to update" : "From Samsung Health"} ok={!!st} />
       <Tile onClick={() => openSheet({ kind: "extra", date: today })} ic={<Icon.plus />} title="Extra activity" sub="Walk, hike, ride" />

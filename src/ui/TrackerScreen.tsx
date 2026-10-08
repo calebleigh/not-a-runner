@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { DN, dayAt, fmtShort, hms, saveTrack, trackResult, trackStats, type Feel, type TrackKind } from "../training";
+import { DN, dayAt, fmtShort, hms, intervalAt, saveTrack, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
 import { newId } from "../sync/engine";
 import { useApp } from "./app-state";
 import { ConfirmButton, FeelPicker } from "./cards";
 import { Icon } from "./icons";
 import {
-  closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, startTracking, useTracker,
+  closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setVoice, startTracking, useTracker,
 } from "./tracker";
 
 const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Walk/run"], ["bike", "Bike"]];
@@ -62,11 +62,29 @@ export function TrackerScreen() {
             {KINDS.map(([k, l]) => <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}>{l}</button>)}
           </div>
           <p className="setnote">{canTrackInBackground ? "Keeps recording with your screen off. Android shows a notice while it does." : "On the website, keep this screen open while you go. The Android app records with the screen off."}</p>
+          {t.intervals && (
+            <div className="trk-ivinfo">
+              <b>Interval coaching on</b>
+              <span>{t.intervals.rounds} rounds. You'll hear "Jog now" and "Walk now" and feel a buzz at each switch, so you never need to look.</span>
+              <label><input type="checkbox" checked={t.voice} onChange={(e) => setVoice(e.target.checked)} /> Voice cues</label>
+            </div>
+          )}
           {import.meta.env.DEV && <label className="trk-sim"><input type="checkbox" checked={t.simulate} onChange={(e) => setSimulate(e.target.checked)} /> Simulated walk (testing)</label>}
           <button className="trk-go" onClick={() => startTracking()}><Icon.play /><span>Start</span></button>
         </div>
       ) : (
         <>
+          {t.intervals && s && t.status !== "done" && (() => {
+            const at = intervalAt(t.intervals, s.elapsedS), seg = at.segment;
+            const label = { warmup: "Warm-up walk", jog: "Jog", walk: "Walk", cooldown: "Cool down" }[seg.kind];
+            return (
+              <div className={"trk-iv " + seg.kind}>
+                <div><b>{label}</b><small>{seg.round ? `Round ${seg.round} of ${t.intervals.rounds}` : seg.kind === "cooldown" ? "Intervals done. Finish when you're ready." : "Then the intervals start"}</small></div>
+                {at.left != null && <span className="num">{hms(Math.ceil(at.left))}</span>}
+                <button className="trk-voice" aria-pressed={t.voice} aria-label={t.voice ? "Voice cues on" : "Voice cues off"} onClick={() => setVoice(!t.voice)}>{t.voice ? "Voice on" : "Voice off"}</button>
+              </div>
+            );
+          })()}
           <div className="trk-time">
             <span className="num">{hms(s?.elapsedS ?? 0)}</span>
             <small>{s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</small>

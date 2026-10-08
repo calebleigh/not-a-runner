@@ -2,10 +2,12 @@
 // is saved to the device every few seconds so a closed or reloaded app picks up where it left off.
 import { useSyncExternalStore } from "react";
 import { watchLocation, type LocationError, type LocationFeed } from "../native/location";
-import { addFix, newTrack, pause, resume, type Track, type TrackKind } from "../training/track";
+import { cue } from "../native/cues";
+import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
+import { addFix, newTrack, pause, resume, trackStats, type Track, type TrackKind } from "../training/track";
 
 /** Where a finished workout gets saved: a planned session, or an extra activity for today. */
-export interface TrackTarget { w: number; d: number; title: string }
+export interface TrackTarget { w: number; d: number; title: string; /** The session's instructions (for intervals). */ instructions?: string }
 
 export type TrackStatus = "ready" | "recording" | "paused" | "done";
 
@@ -21,6 +23,12 @@ export interface ActiveTrack {
   lastFixAt: number | null;
   /** When Finish was tapped; the summary's numbers stop here. */
   finishedAt?: number;
+  /** Walk/run interval schedule from the session, coached with voice and vibration. */
+  intervals: IntervalPlan | null;
+  /** Speak the cues (vibration happens either way). */
+  voice: boolean;
+  /** The last interval segment announced. */
+  cuedIndex: number;
 }
 
 const KEY = "activeTrack";
@@ -31,7 +39,7 @@ let wake: { release(): Promise<void> } | null = null;
 const subs = new Set<() => void>();
 
 function load(): ActiveTrack | null {
-  try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+  try { const s = localStorage.getItem(KEY); return s ? { intervals: null, voice: true, cuedIndex: -1, ...JSON.parse(s) } : null; } catch { return null; }
 }
 function persist(force = false) {
   if (!force && Date.now() - lastSaved < 5000) return;
@@ -49,10 +57,27 @@ export const useTracker = () => useSyncExternalStore((f) => { subs.add(f); retur
 /** Opens the tracker, ready to start. */
 export function openTracker(kind: TrackKind, target: TrackTarget | null, simulate = false) {
   if (active && active.status !== "ready") return; // something is already being tracked
-  set({ status: "ready", kind, target, track: null, simulate, error: null, lastFixAt: null });
+  set({ status: "ready", kind, target, track: null, simulate, error: null, lastFixAt: null, intervals: plansFor(kind, target), voice: voicePref(), cuedIndex: -1 });
 }
 
-export function setTrackKind(kind: TrackKind) { if (active?.status === "ready") set({ ...active, kind }); }
+const plansFor = (kind: TrackKind, target: TrackTarget | null) => (kind === "run" && target?.instructions ? intervalPlan(target.instructions) : null);
+function voicePref() { try { return localStorage.getItem("voiceCues") !== "off"; } catch { return true; } }
+export function setVoice(on: boolean) {
+  try { localStorage.setItem("voiceCues", on ? "on" : "off"); } catch { /* blocked */ }
+  if (active) set({ ...active, voice: on });
+}
+
+/** Announces the interval segment when it changes. Runs every second and on every GPS fix. */
+function checkCue() {
+  if (!active?.intervals || active.status !== "recording" || !active.track) return;
+  const at = intervalAt(active.intervals, trackStats(active.track, Date.now()).elapsedS);
+  if (at.index === active.cuedIndex) return;
+  set({ ...active, cuedIndex: at.index });
+  cue(intervalCue(active.intervals, at.segment), { voice: active.voice });
+}
+let cueTimer: number | undefined;
+
+export function setTrackKind(kind: TrackKind) { if (active?.status === "ready") set({ ...active, kind, intervals: plansFor(kind, active.target) }); }
 export function setSimulate(simulate: boolean) { if (active?.status === "ready") set({ ...active, simulate }); }
 
 export async function startTracking() {
@@ -70,10 +95,14 @@ async function startFeed() {
     onFix: (f) => {
       if (!active?.track || active.status === "done") return;
       set({ ...active, track: addFix(active.track, f), lastFixAt: Date.now(), error: null }, false);
+      checkCue();
     },
     onError: (e) => { if (active) set({ ...active, error: e }); },
   });
   keepAwake(true);
+  clearInterval(cueTimer);
+  cueTimer = window.setInterval(checkCue, 1000);
+  checkCue();
 }
 
 export function pauseTracking() {
@@ -93,6 +122,7 @@ export async function finishTracking() {
   set({ ...active, status: "done", track: track.pausedAt != null ? resume(track, now) : track, finishedAt: now });
   await feed?.stop();
   feed = null;
+  clearInterval(cueTimer);
   keepAwake(false);
 }
 
@@ -100,6 +130,7 @@ export async function finishTracking() {
 export async function closeTracker() {
   await feed?.stop();
   feed = null;
+  clearInterval(cueTimer);
   keepAwake(false);
   set(null);
 }
