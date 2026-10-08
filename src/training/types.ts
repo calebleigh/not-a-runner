@@ -24,6 +24,8 @@ export interface Extra {
 export interface Settings {
   name?: string;
   startWt?: number;
+  /** Accent gradient, light end and dark end as #RRGGBB. Missing means the default orange. */
+  accent?: { hi: string; lo: string };
 }
 
 export interface State {

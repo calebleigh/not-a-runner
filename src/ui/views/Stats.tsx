@@ -97,7 +97,7 @@ export function Stats() {
       <section className="ocard chartc">
         <div className="ohead"><h3>The year</h3><span>Week {curWeek} of {WEEKS}</span></div>
         <svg viewBox={`0 0 520 ${H}`} preserveAspectRatio="none" style={{ height: H }} role="img" aria-label="Planned training load by week, completed portion filled">
-          <defs><linearGradient id="og" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FF8A3D" /><stop offset="1" stopColor="#E5540A" /></linearGradient></defs>
+          <defs><linearGradient id="og" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent-hi)" }} /><stop offset="1" style={{ stopColor: "var(--accent-lo)" }} /></linearGradient></defs>
           {model.weeks.map((w, i) => {
             const hh = 8 + (H - 14) * w.load / max, x = i * bw + 1, f = weekFrac(state, w);
             return (
@@ -175,7 +175,7 @@ export function Stats() {
         chart = (
           <svg viewBox="0 0 520 110" preserveAspectRatio="none" style={{ width: "100%", height: 100, marginTop: 8 }} role="img" aria-label="Weight by week">
             <line x1={10} x2={510} y1={Y(start)} y2={Y(start)} stroke="#2E2B28" strokeDasharray="4 4" />
-            <polyline points={ws.map(([w, v]) => `${X(w).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")} fill="none" stroke="#FF6A13" strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
+            <polyline points={ws.map(([w, v]) => `${X(w).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")} fill="none" style={{ stroke: "var(--accent)" }} strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
           </svg>
         );
       }

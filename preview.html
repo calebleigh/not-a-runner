@@ -38,6 +38,14 @@
     <button data-orient="landscape" class="on">Inner landscape</button>
     <button data-orient="portrait">Inner portrait</button>
   </div>
+  <div class="seg" role="group" aria-label="Corners">
+    <button data-corners="1" class="on">Rounded</button>
+    <button data-corners="0.35">Squared</button>
+  </div>
+  <div class="seg" role="group" aria-label="Logo">
+    <button data-logo="square" class="on">Square logo</button>
+    <button data-logo="round">Round logo</button>
+  </div>
   <label>Display size
     <select id="dpr">
       <option value="3">Smaller (3x)</option>
@@ -92,6 +100,25 @@
     document.querySelectorAll("[data-orient]").forEach((x) => x.classList.toggle("on", x === b));
     layout();
   });
+  // Style comparisons, applied inside both app frames (and again whenever a frame reloads).
+  const look = { corners: "1", logo: "square" };
+  function applyLook() {
+    for (const f of document.querySelectorAll("iframe")) {
+      const r = f.contentDocument?.documentElement;
+      if (!r) continue;
+      r.style.setProperty("--rk", look.corners);
+      r.style.setProperty("--rc", look.corners === "1" ? "50%" : "14px");
+      r.dataset.logo = look.logo;
+    }
+  }
+  document.querySelectorAll("iframe").forEach((f) => f.addEventListener("load", applyLook));
+  for (const key of ["corners", "logo"]) {
+    document.querySelectorAll(`[data-${key}]`).forEach((b) => b.onclick = () => {
+      look[key] = b.dataset[key];
+      document.querySelectorAll(`[data-${key}]`).forEach((x) => x.classList.toggle("on", x === b));
+      applyLook();
+    });
+  }
   $("#dpr").onchange = (e) => { state.dpr = +e.target.value; layout(); };
   $("#reload").onclick = () => document.querySelectorAll("iframe").forEach((f) => f.contentWindow.location.reload());
   addEventListener("resize", layout);

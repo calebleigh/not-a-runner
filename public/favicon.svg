@@ -1,20 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
   <defs><linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A3D"/><stop offset="1" stop-color="#E5540A"/></linearGradient></defs>
   <rect width="64" height="64" rx="14.08" fill="url(#tile)"/>
-  <svg x="9.600000000000001" y="9.600000000000001" width="44.8" height="44.8" viewBox="-41 -135 1110 1110">
-  <!-- Not a Runner mark: running man drawn by the owner (runningman.png), as vector. 45 degree strokes, 109 units wide. -->
+  <svg x="7.039999999999999" y="7.039999999999999" width="49.92" height="49.92" viewBox="-60 -60 1651 1651">
+  <!-- Not a Runner mark: the owner's running man inside a square frame, cut by a 45 degree slash
+       (from norunning.png and runningman.png). The shape is a mask, so one gradient runs across the whole mark.
+       Gradient stops are the default theme's accent-lo and accent-hi colors. -->
   <defs>
-    <linearGradient id="mark-grad" x1="0" y1="841" x2="1028" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#E95C14"/><stop offset="1" stop-color="#FA8A3C"/>
+    <linearGradient id="nr-grad" x1="0" y1="1531" x2="1531" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E5540A"/><stop offset="1" stop-color="#FF8A3D"/>
     </linearGradient>
+    <clipPath id="nr-square"><rect width="1531" height="1531"/></clipPath>
+    <mask id="nr-cut" maskUnits="userSpaceOnUse" x="-60" y="-60" width="1651" height="1651">
+      <rect x="-60" y="-60" width="1651" height="1651" fill="#fff"/>
+      <line x1="0" y1="19" x2="1512" y2="1531" stroke="#000" stroke-width="229"/>
+    </mask>
+    <mask id="nr-shape" maskUnits="userSpaceOnUse" x="-60" y="-60" width="1651" height="1651">
+      <g fill="none" stroke="#fff" clip-path="url(#nr-square)">
+        <rect x="58" y="58" width="1415" height="1415" stroke-width="116"/>
+        <line x1="0" y1="19" x2="1512" y2="1531" stroke-width="109"/>
+      </g>
+      <g mask="url(#nr-cut)">
+        <g transform="translate(288.08 375.39) scale(0.92883)" fill="#fff" stroke="#fff">
+          <polygon points="786,0 939,153 787,305 634,152" stroke="none"/>
+          <g fill="none" stroke-width="109" stroke-linejoin="miter" stroke-miterlimit="10">
+            <polyline points="190.5,329 390,130 789,528.5 988.5,329"/>
+            <polyline points="345,403 544.5,603 345,803"/>
+            <polyline points="38,803 275.5,565"/>
+          </g>
+        </g>
+      </g>
+    </mask>
   </defs>
-  <g fill="#141210" stroke="#141210">
-    <polygon points="786,0 939,153 787,305 634,152" stroke="none"/>
-    <g fill="none" stroke-width="109" stroke-linejoin="miter" stroke-miterlimit="10" stroke-linecap="butt">
-      <polyline points="190.5,329 390,130 789,528.5 988.5,329"/>
-      <polyline points="345,403 544.5,603 345,803"/>
-      <polyline points="38,803 275.5,565"/>
-    </g>
-  </g>
+  <rect x="-60" y="-60" width="1651" height="1651" fill="#141210" mask="url(#nr-shape)"/>
 </svg>
 </svg>

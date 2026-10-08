@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../app-state";
 import { Logo } from "../Logo";
+import { DEFAULT_PRESET, PRESETS, applyAccent, presetFor, sameAccent, type Accent } from "../theme";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 
 const HOWTO: [string, string][] = [
@@ -43,6 +44,55 @@ function VersionRow() {
   );
 }
 
+/** Accent gradient: presets, or a custom light and dark end. Recolors the whole app. */
+function ColorPicker() {
+  const { state, update } = useApp();
+  const cur: Accent = state.settings.accent ?? DEFAULT_PRESET;
+  const preset = presetFor(cur);
+  const [custom, setCustom] = useState<Accent>({ hi: cur.hi, lo: cur.lo });
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => { setCustom({ hi: cur.hi, lo: cur.lo }); }, [cur.hi, cur.lo]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const save = (a: Accent) => update((s) => {
+    if (sameAccent(a, DEFAULT_PRESET)) delete s.settings.accent;
+    else s.settings.accent = { hi: a.hi.toUpperCase(), lo: a.lo.toUpperCase() };
+  });
+  // Dragging a color picker fires constantly: recolor live, save once it settles.
+  const pickCustom = (a: Accent) => {
+    setCustom(a);
+    applyAccent(a);
+    clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => save(a), 400);
+  };
+
+  return (
+    <div className="area-look">
+      <div className="sechead"><h3 className="sectitle">Color</h3><span className="lbl">{preset ? preset.name : "Custom"}</span></div>
+      <section className="card lookcard">
+        <div className="swatches" role="radiogroup" aria-label="Accent gradient">
+          {PRESETS.map((p) => {
+            const sel = preset === p;
+            return (
+              <button key={p.name} role="radio" aria-checked={sel} className={"swatch" + (sel ? " sel" : "")} onClick={() => save(p)}
+                style={{ ["--a" as string]: p.hi, ["--b" as string]: p.lo }}>
+                <span className="sw" /><small>{p.name}</small>
+              </button>
+            );
+          })}
+        </div>
+        <div className="custom">
+          <span className="cprev" style={{ background: `linear-gradient(135deg, ${custom.hi}, ${custom.lo})` }} />
+          <span className="lbl">Custom</span>
+          <label className="cpick"><input type="color" value={custom.hi.toLowerCase()} onChange={(e) => pickCustom({ ...custom, hi: e.target.value })} /><small>Light</small></label>
+          <label className="cpick"><input type="color" value={custom.lo.toLowerCase()} onChange={(e) => pickCustom({ ...custom, lo: e.target.value })} /><small>Dark</small></label>
+        </div>
+        <p className="setnote">Recolors the whole app, logo included. The home screen icon stays orange.</p>
+      </section>
+    </div>
+  );
+}
+
 export function Settings() {
   const { state, update, openSheet } = useApp();
   const [name, setName] = useState(state.settings.name || "");
@@ -79,6 +129,7 @@ export function Settings() {
         <VersionRow />
       </section>
       </div>
+      <ColorPicker />
       <div className="area-how">
       <div className="sechead"><h3 className="sectitle">How it works</h3></div>
       <section className="card group howlist">

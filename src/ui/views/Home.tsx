@@ -111,7 +111,7 @@ export function Home() {
         return <>
           <div className="sechead"><span className="lbl">Last session</span><button onClick={() => setTab("stats")}>History ›</button></div>
           <section className="panelc last">
-            <svg className="route" viewBox="0 0 100 100" aria-hidden="true"><path d="M10 80 L30 55 L22 40 L48 30 L62 12 L70 40 L88 52 L72 78 L50 70 Z" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" /></svg>
+            <svg className="route" viewBox="0 0 100 100" aria-hidden="true"><path d="M10 80 L30 55 L22 40 L48 30 L62 12 L70 40 L88 52 L72 78 L50 70 Z" fill="none" style={{ stroke: "var(--accent)" }} strokeWidth="2.5" strokeLinejoin="round" /></svg>
             <span className="tag">{whenTxt}, {b.t}</span>
             <div className="row">
               <div><div className="lbl">Distance</div><div className="num">{l.dist ? <Num value={l.dist} dec={2} /> : "0"}<span className="unit">mi</span></div></div>

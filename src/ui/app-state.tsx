@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createStorage } from "../storage/store";
 import { mirrorSend, onMirror } from "./mirror";
+import { applyAccent } from "./theme";
 import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
 
 export type Tab = "home" | "plan" | "stats" | "settings";
@@ -118,6 +119,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ];
     return () => offs.forEach((off) => off());
   }, [showTab]);
+
+  // Accent colors follow the saved theme.
+  const accent = state?.settings.accent;
+  useEffect(() => { applyAccent(accent); }, [accent?.hi, accent?.lo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recompute the plan when state changes or the date rolls over (not every minute).
   const dayMs = startOfDay(now).getTime();
