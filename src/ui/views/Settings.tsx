@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../app-state";
+import { Logo } from "../Logo";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 
 const HOWTO: [string, string][] = [
@@ -85,6 +86,11 @@ export function Settings() {
       </section>
       </div>
       </div>
+      <section className="about">
+        <Logo size={64} />
+        <h3>Not a Runner</h3>
+        <p>Train for a race even if you hate running.</p>
+      </section>
     </section>
   );
 }

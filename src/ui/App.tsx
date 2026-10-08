@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppProvider, useApp, type Tab } from "./app-state";
 import { Icon } from "./icons";
+import { Wordmark } from "./Logo";
 import { useMirroredScroll } from "./mirror";
 import { SheetHost } from "./sheets";
 import { UpdatePrompt } from "./UpdatePrompt";
@@ -46,6 +47,7 @@ function Shell() {
       </main>
     </div>
     <nav className="bnav" aria-label="Main">
+      <div className="railbrand"><Wordmark size={34} /></div>
       {TABS.slice(0, 2).map(navBtn)}
       <button className="logbtn" aria-label="Log a workout" onClick={() => openSheet({ kind: "log" })}><Icon.bigPlus /><span className="logtxt">Log workout</span></button>
       {TABS.slice(2).map(navBtn)}

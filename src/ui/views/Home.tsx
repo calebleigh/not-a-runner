@@ -5,6 +5,7 @@ import {
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
+import { Wordmark } from "../Logo";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
 
@@ -52,6 +53,7 @@ export function Home() {
 
   return (
     <section className="view stack" aria-label="Home">
+      <div className="brandbar"><Wordmark size={22} /></div>
       <div className="greet">
         <div>
           <div className="lbl">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div>
