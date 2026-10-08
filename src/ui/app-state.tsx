@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createStorage } from "../storage/store";
 import { mirrorSend, onMirror } from "./mirror";
-import { applyAccent } from "./theme";
+import { applyAccent, applyShape, type Shape } from "./theme";
 import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
 
 export type Tab = "home" | "plan" | "stats" | "settings";
@@ -116,13 +116,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       onMirror<Tab>("tab", showTab),
       onMirror<SheetSpec | null>("sheet", setSheet),
       onMirror<State>("data", (s) => { stateRef.current = s; setState(s); }),
+      // The Fold preview's Rounded/Squared toggle changes the real setting.
+      onMirror<Shape>("shape", (v) => update((s) => { if (v === "round") s.settings.shape = v; else delete s.settings.shape; })),
     ];
     return () => offs.forEach((off) => off());
-  }, [showTab]);
+  }, [showTab, update]);
 
   // Accent colors follow the saved theme.
   const accent = state?.settings.accent;
   useEffect(() => { applyAccent(accent); }, [accent?.hi, accent?.lo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shape = state?.settings.shape;
+  useEffect(() => { applyShape(shape); }, [shape]);
 
   // Recompute the plan when state changes or the date rolls over (not every minute).
   const dayMs = startOfDay(now).getTime();

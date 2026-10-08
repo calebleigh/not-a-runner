@@ -38,13 +38,9 @@
     <button data-orient="landscape" class="on">Inner landscape</button>
     <button data-orient="portrait">Inner portrait</button>
   </div>
-  <div class="seg" role="group" aria-label="Corners">
-    <button data-corners="round" class="on">Rounded</button>
-    <button data-corners="square">Squared</button>
-  </div>
-  <div class="seg" role="group" aria-label="Logo">
-    <button data-logo="square" class="on">Square logo</button>
-    <button data-logo="round">Round logo</button>
+  <div class="seg" role="group" aria-label="Shape">
+    <button data-shape="square">Squared</button>
+    <button data-shape="round">Rounded</button>
   </div>
   <label>Display size
     <select id="dpr">
@@ -100,26 +96,17 @@
     document.querySelectorAll("[data-orient]").forEach((x) => x.classList.toggle("on", x === b));
     layout();
   });
-  // Style comparisons, applied inside both app frames (and again whenever a frame reloads).
-  const look = { corners: "round", logo: "square" };
-  function applyLook() {
-    for (const f of document.querySelectorAll("iframe")) {
-      const r = f.contentDocument?.documentElement;
-      if (!r) continue;
-      // Squared: one 6px corner on every element, buttons included.
-      r.style.setProperty("--rmax", look.corners === "round" ? "999px" : "6px");
-      r.style.setProperty("--rc", look.corners === "round" ? "50%" : "6px");
-      r.dataset.logo = look.logo;
-    }
-  }
-  document.querySelectorAll("iframe").forEach((f) => f.addEventListener("load", applyLook));
-  for (const key of ["corners", "logo"]) {
-    document.querySelectorAll(`[data-${key}]`).forEach((b) => b.onclick = () => {
-      look[key] = b.dataset[key];
-      document.querySelectorAll(`[data-${key}]`).forEach((x) => x.classList.toggle("on", x === b));
-      applyLook();
-    });
-  }
+  // Rounded/Squared changes the app's own Shape setting (same as Settings > Look), through the mirror channel.
+  const mirror = new BroadcastChannel("fold-preview-mirror");
+  const showShape = () => {
+    const cur = document.querySelector("#cover iframe").contentDocument?.documentElement.dataset.shape || "square";
+    document.querySelectorAll("[data-shape]").forEach((x) => x.classList.toggle("on", x.dataset.shape === cur));
+  };
+  document.querySelectorAll("[data-shape]").forEach((b) => b.onclick = () => {
+    mirror.postMessage({ from: "preview", type: "shape", payload: b.dataset.shape });
+    setTimeout(showShape, 150);
+  });
+  document.querySelectorAll("iframe").forEach((f) => f.addEventListener("load", () => setTimeout(showShape, 800)));
   $("#dpr").onchange = (e) => { state.dpr = +e.target.value; layout(); };
   $("#reload").onclick = () => document.querySelectorAll("iframe").forEach((f) => f.contentWindow.location.reload());
   addEventListener("resize", layout);

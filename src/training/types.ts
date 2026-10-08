@@ -26,6 +26,8 @@ export interface Settings {
   startWt?: number;
   /** Accent gradient, light end and dark end as #RRGGBB. Missing means the default orange. */
   accent?: { hi: string; lo: string };
+  /** Corner style; also picks the matching logo. Missing means squared. */
+  shape?: "round" | "square";
 }
 
 export interface State {

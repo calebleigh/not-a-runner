@@ -4,8 +4,8 @@
   --paper:#111110; --surface:#1B1A19; --surface2:#252321; --ink:#F4F1EC; --muted:#9A958F; --line:#2E2B28;
   --accent:#FF6A13; --accent-hi:#FF8A3D; --accent-lo:#E5540A; --accent-soft:#33200F; --sky:#FFA35C; --sky-soft:#24201B; --bar:#33302D;
   --accent-rgb:255,106,19;
-  --rmax:999px; /* corner radius cap: squared mode sets one value for every corner */
-  --rc:50%; /* round buttons; squared mode gives them the same corner as everything else */
+  --rmax:6px; /* corner radius cap: squared (default) uses one 6px corner everywhere; rounded lifts the cap */
+  --rc:6px; /* corner for the + and play buttons; rounded makes them circles */
   --on-accent:#141210; --bad:#FF5A4F; --bad-soft:#3A1A17; --good:#7BD88F;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -452,21 +452,24 @@ html,body{overscroll-behavior-y:none}
 
 /* Color picker */
 .lookcard{padding:16px}
-.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:12px 8px}
+.swatches{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px 4px}
 .swatch{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;color:var(--muted)}
-.swatch .sw{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b));transition:transform .18s var(--ease)}
+.swatch .sw{width:min(44px,100%);aspect-ratio:1;height:auto;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b));transition:transform .18s var(--ease)}
 .swatch:active .sw{transform:scale(.92)}
 .swatch.sel .sw{outline:3px solid var(--ink);outline-offset:3px}
 .swatch.sel small{color:var(--ink);font-weight:700}
 .swatch small{font-size:12px}
-.custom{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
-.custom .lbl{margin-right:auto}
-.cprev{width:32px;height:32px;border-radius:50%;flex:none}
-.cpick{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;cursor:pointer}
-.cpick input{width:40px;height:32px;padding:0;border:1px solid var(--line);border-radius:min(8px,var(--rmax));background:var(--surface2);cursor:pointer}
 .lookcard .setnote{margin-top:12px}
 
-/* Logo variants while comparing: square by default, round with data-logo="round" on <html>. */
+/* Logo follows the shape setting: square logo with squared corners (default), round logo with rounded. */
 .logo-rd{display:none}
-:root[data-logo="round"] .logo-sq{display:none}
-:root[data-logo="round"] .logo-rd{display:inline}
+:root[data-shape="round"] .logo-rd{display:inline}
+:root[data-shape="round"] .logo-sq{display:none}
+
+/* Shape picker: each option previews its own corner */
+.shapes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.shapebtn{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:600 15px var(--body);cursor:pointer;border-radius:min(14px,var(--rmax))}
+.shapebtn.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.shapeprev{flex:none;width:30px;height:30px;border:3px solid var(--accent);background:var(--accent-soft)}
+.shapebtn.round .shapeprev{border-radius:10px}
+.shapebtn.square .shapeprev{border-radius:4px}

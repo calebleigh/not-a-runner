@@ -6,16 +6,15 @@ export interface Accent { hi: string; lo: string }
 export interface Preset extends Accent { name: string; mid: string }
 
 export const PRESETS: Preset[] = [
+  { name: "Blaze", hi: "#FF7B7B", mid: "#F24848", lo: "#C92A2A" },
   { name: "Ember", hi: "#FF8A3D", mid: "#FF6A13", lo: "#E5540A" },
-  { name: "Sunrise", hi: "#FFC94A", mid: "#FFA21F", lo: "#F07C0F" },
-  { name: "Blaze", hi: "#FF7A59", mid: "#F2483A", lo: "#C9252F" },
-  { name: "Rose", hi: "#FF8FC0", mid: "#FF5C9E", lo: "#E0357A" },
-  { name: "Violet", hi: "#B9A2FF", mid: "#8E6BFF", lo: "#6A3FE8" },
-  { name: "Ocean", hi: "#6FD0FF", mid: "#36A3F5", lo: "#1F6FE0" },
-  { name: "Mint", hi: "#7EF5C8", mid: "#3FDDA6", lo: "#16B387" },
-  { name: "Lime", hi: "#D4F53C", mid: "#B3E12A", lo: "#7FB81E" },
+  { name: "Sunrise", hi: "#FFE066", mid: "#FCC419", lo: "#F08C00" },
+  { name: "Lime", hi: "#8CE99A", mid: "#40C057", lo: "#2B8A3E" },
+  { name: "Ocean", hi: "#74C0FC", mid: "#339AF0", lo: "#1971C2" },
+  { name: "Violet", hi: "#D6B0FF", mid: "#AB7BFF", lo: "#7B3FE0" },
+  { name: "Steel", hi: "#FFFFFF", mid: "#D6D1C9", lo: "#8F8A84" },
 ];
-export const DEFAULT_PRESET = PRESETS[0];
+export const DEFAULT_PRESET = PRESETS[1];
 
 const PAPER = "#111110", INK = "#F4F1EC", DARK_TEXT = "#141210";
 
@@ -66,6 +65,16 @@ export function themeVars(a: Accent | undefined): Record<string, string> {
     "--sky-soft": mix(PAPER, mid, 0.09),
     "--on-accent": on,
   };
+}
+
+export type Shape = "round" | "square";
+
+/** Squared (the default) caps every corner at one radius and uses the square logo; rounded uses full corners and the round logo. */
+export function applyShape(shape: Shape | undefined, root: HTMLElement = document.documentElement) {
+  const round = shape === "round";
+  root.dataset.shape = round ? "round" : "square";
+  if (round) { root.style.setProperty("--rmax", "999px"); root.style.setProperty("--rc", "50%"); }
+  else { root.style.removeProperty("--rmax"); root.style.removeProperty("--rc"); }
 }
 
 const KEYS = ["--accent", "--accent-hi", "--accent-lo", "--accent-soft", "--accent-rgb", "--sky", "--sky-soft", "--on-accent"];
