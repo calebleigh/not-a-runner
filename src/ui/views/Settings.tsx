@@ -169,7 +169,7 @@ function YourPlan() {
   const raceOk = !isRace || (!!draft.raceDate && draft.raceDate >= minRace && draft.raceDate <= maxRace);
   const daysOk = draft.days.length >= 3 && draft.days.length <= 6;
   const preview = dirty && raceOk && daysOk ? buildSpec({ ...draft, startDate: saved.startDate }) : null;
-  const toggleDay = (d: number) => set({ days: draft.days.includes(d) ? draft.days.filter((x) => x !== d) : [...draft.days, d].sort((a, b) => a - b) });
+  const toggleDay = (d: number) => setDraft((x) => ({ ...x, days: x.days.includes(d) ? x.days.filter((y) => y !== d) : [...x.days, d].sort((a, b) => a - b) }));
   const strengthOn = state.settings.strength !== false;
   const save = () => {
     update((s) => { s.plan = changePlan(s, draft, from); });

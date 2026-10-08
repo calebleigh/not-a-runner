@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { OWNER_PROFILE, buildSpec, decodeBackup, emptyState, encodeBackup, mergeState, specOf } from "./index";
+import { OWNER_PROFILE, buildSpec, decodeBackup, emptyState, encodeBackup, mergeState, needsOnboarding, onboardingStart, specOf } from "./index";
 
 describe("plan spec", () => {
   it("uses the owner's plan when no profile is saved", () => {
@@ -38,5 +38,23 @@ describe("plan spec", () => {
     for (let n = 1; n <= 51; n++) expect(s.slots[n - 1]).toEqual([0, 1, 2, 3, 4].map((d) => ({ d, role: d })));
     expect(s.slots[51]).toEqual([...[0, 1, 2, 3, 4].map((d) => ({ d, role: d })), { d: 5, role: -1 }]);
     expect(s.warnings).toEqual([]);
+  });
+});
+
+describe("onboarding helpers", () => {
+  it("starts this week on Monday or Tuesday, otherwise next Monday", () => {
+    expect(onboardingStart(new Date(2026, 9, 6)).toDateString()).toBe("Mon Oct 05 2026");
+    expect(onboardingStart(new Date(2026, 9, 7)).toDateString()).toBe("Mon Oct 12 2026");
+    expect(onboardingStart(new Date(2026, 9, 11)).toDateString()).toBe("Mon Oct 12 2026");
+  });
+
+  it("only onboards brand-new users", () => {
+    const s = emptyState();
+    expect(needsOnboarding(s)).toBe(true);
+    s.steps["1-0"] = 5000;
+    expect(needsOnboarding(s)).toBe(false);
+    const t = emptyState();
+    t.plan = { profile: OWNER_PROFILE };
+    expect(needsOnboarding(t)).toBe(false);
   });
 });

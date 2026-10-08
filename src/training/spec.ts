@@ -2,7 +2,7 @@
 // The spec holds everything that used to be a fixed constant: start and race dates, number of weeks,
 // phase boundaries and mile test weeks. Step 1 of Stage 2 supports the owner's profile shape exactly;
 // the generator generalizes buildSpec next.
-import { MILE_TESTS, milestones, phases, type Phase } from "./data";
+import { GEAR, MILE_TESTS, milestones, phases, type GearItem, type Phase } from "./data";
 import type { State } from "./types";
 
 export type RaceGoal = "5k" | "10k" | "half" | "full" | "fitness";
@@ -255,4 +255,31 @@ export function changePlan(state: State, next: PlanProfile, from: number): PlanS
   const lastFrozen = earlier.length ? earlier[earlier.length - 1].untilWeek : 0;
   if (from - 1 > lastFrozen) earlier.push({ untilWeek: from - 1, profile: current });
   return earlier.length ? { profile, earlier } : { profile };
+}
+
+/** Plan start for a new user: this week's Monday on a Monday or Tuesday, otherwise next Monday. */
+export function onboardingStart(today: Date): Date {
+  const dow = (today.getDay() + 6) % 7, monday = mondayOf(today);
+  return dow <= 1 ? monday : new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7);
+}
+
+/** A brand-new user: no plan and nothing logged yet. Existing data without a plan is the owner's. */
+export function needsOnboarding(state: State): boolean {
+  if (state.plan) return false;
+  return ![state.done, state.logs, state.extras, state.steps, state.weights, state.gear].some((o) => Object.keys(o).length);
+}
+
+const BIKE_GEAR = ["helmet", "tuneup", "lights"];
+
+/**
+ * The gear list for this plan: bike gear only with a bike, and each item due in the plan week
+ * that reaches its template week (the owner's plan keeps the original weeks).
+ */
+export function gearFor(spec: PlanSpec): (GearItem & { week: number })[] {
+  return GEAR.filter((g) => spec.profile.hasBike || !BIKE_GEAR.includes(g.k))
+    .map((g) => {
+      const i = spec.canon.findIndex((c) => c >= g.wk);
+      return { ...g, week: i < 0 ? spec.weeks : i + 1 };
+    })
+    .sort((a, b) => a.week - b.week);
 }

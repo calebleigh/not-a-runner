@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GEAR, addDays, fmtShort } from "../training";
+import { addDays, fmtShort, gearFor } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 
@@ -8,7 +8,7 @@ export function GearList() {
   const { model, state, update } = useApp();
   const [showAll, setShowAll] = useState(false);
   const [openK, setOpenK] = useState<string | null>(null);
-  const list = [...GEAR].sort((a, b) => a.wk - b.wk), owned = list.filter((g) => state.gear[g.k]).length;
+  const list = gearFor(model.spec), owned = list.filter((g) => state.gear[g.k]).length;
   const shown = showAll ? list : list.filter((g) => !state.gear[g.k]).slice(0, 6);
   return (
     <section className="panelc slist gearp" aria-label="Gear">
@@ -17,7 +17,7 @@ export function GearList() {
         <b>{owned} / {list.length} owned</b>
       </div>
       {shown.map((g) => {
-        const due = addDays(model.spec.start, (g.wk - 1) * 7), have = !!state.gear[g.k], over = !have && g.wk < model.curWeek, soon = !have && !over && g.wk <= model.curWeek + 2;
+        const due = addDays(model.spec.start, (g.week - 1) * 7), have = !!state.gear[g.k], over = !have && g.week < model.curWeek, soon = !have && !over && g.week <= model.curWeek + 2;
         return (
           <div className="gitem" key={g.k}>
             <div className={"grow" + (have ? " owned" : "") + (over ? " overdue" : "") + (soon ? " soon" : "")}>

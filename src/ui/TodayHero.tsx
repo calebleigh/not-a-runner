@@ -16,6 +16,18 @@ export function TodayHero() {
   const wk = model.weeks[curWeek - 1];
   const day = todayDay(model);
 
+  if (!day && rawWeek < 1) {
+    // Before the plan starts: when it starts and what comes first.
+    const first = model.weeks[0]?.days[0];
+    return (
+      <button className="hero rest tap" onClick={() => { if (first) openSheet({ kind: "day", w: 1, d: first.d }); }}>
+        <span className="lbl">Starting soon</span>
+        <div className="ht">Starts {model.spec.start.toLocaleDateString("en-US", { weekday: "long" })}</div>
+        <p>{first ? `First up: ${first.c.t}, ${first.date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}.` : "Your plan is ready."}</p>
+        <span className="go"><Icon.play /></span>
+      </button>
+    );
+  }
   if (!day) {
     const missed = wk.days.filter((x) => x.date < today && !state.done[x.ids[0]]);
     return (

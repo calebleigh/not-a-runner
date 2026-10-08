@@ -3,6 +3,8 @@ import { AppProvider, useApp, type Tab } from "./app-state";
 import { Icon } from "./icons";
 import { Wordmark } from "./Logo";
 import { useMirroredScroll } from "./mirror";
+import { needsOnboarding } from "../training";
+import { Onboarding } from "./Onboarding";
 import { SheetHost } from "./sheets";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Home } from "./views/Home";
@@ -58,6 +60,13 @@ function Shell() {
   </>;
 }
 
+/** New users answer a few questions first; everyone else goes straight to the app. */
+function Root() {
+  const { state } = useApp();
+  if (needsOnboarding(state)) return <><Onboarding /><SheetHost /><Toast /></>;
+  return <Shell />;
+}
+
 export function App() {
-  return <AppProvider><Shell /></AppProvider>;
+  return <AppProvider><Root /></AppProvider>;
 }
