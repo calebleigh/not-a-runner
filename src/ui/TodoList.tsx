@@ -71,11 +71,10 @@ export function TodoCard() {
   );
 }
 
-/** Plan tab: the whole list, with gear coming up later and finished items. */
+/** Plan tab: open items and the add box. Later and done items open in a sheet. */
 export function TodoList() {
-  const { model } = useApp();
+  const { model, openSheet } = useApp();
   const { now, later, done } = todoLists(model);
-  const [show, setShow] = useState<"later" | "done" | null>(null);
   return (
     <section className="panelc slist todop" aria-label="To do">
       <div className="slhead">
@@ -85,10 +84,25 @@ export function TodoList() {
       <AddTodo />
       {now.map((it) => <Row key={it.key} it={it} full />)}
       {!now.length && <p className="setnote" style={{ padding: "12px 16px" }}>All caught up.</p>}
-      {later.length > 0 && <button className="more" aria-expanded={show === "later"} onClick={() => setShow(show === "later" ? null : "later")}>{show === "later" ? "Hide later" : `Later (${later.length})`}</button>}
-      {show === "later" && later.map((it) => <Row key={it.key} it={it} full />)}
-      {done.length > 0 && <button className="more" aria-expanded={show === "done"} onClick={() => setShow(show === "done" ? null : "done")}>{show === "done" ? "Hide done" : `Done (${done.length})`}</button>}
-      {show === "done" && done.map((it) => <Row key={it.key} it={it} full />)}
+      {(later.length > 0 || done.length > 0) && (
+        <div className="todomore">
+          {later.length > 0 && <button className="more" onClick={() => openSheet({ kind: "todos", which: "later" })}>Later ({later.length}) &rsaquo;</button>}
+          {done.length > 0 && <button className="more" onClick={() => openSheet({ kind: "todos", which: "done" })}>Done ({done.length}) &rsaquo;</button>}
+        </div>
+      )}
     </section>
+  );
+}
+
+/** Sheet: gear and items due later, or everything finished. */
+export function TodoSheetBody({ which }: { which: "later" | "done" }) {
+  const { model } = useApp();
+  const list = todoLists(model)[which];
+  return (
+    <div className="todop todosheet">
+      <p className="setnote">{which === "later" ? "Due more than two weeks out. They move up to the list as they get close." : "Checked off. Uncheck one to put it back on the list."}</p>
+      {list.map((it) => <Row key={it.key} it={it} full />)}
+      {!list.length && <p className="setnote">Nothing here.</p>}
+    </div>
   );
 }

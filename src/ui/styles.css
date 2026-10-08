@@ -708,8 +708,15 @@ input[type="date"].txtin{width:150px}
   .statgrid>.ocard{display:flex;flex-direction:column}
   .statgrid>.ocard>.foot:last-child{margin-top:auto}
   .goals .goal:last-of-type{margin-bottom:auto}
-  /* Plan: To do takes This week's height and scrolls inside when it has more. */
+  /* Plan: This week and To do match heights; To do's links sit at its bottom. */
   .plancols{align-items:stretch}
-  .plancols>.col:last-child{contain:size;min-height:320px}
-  .plancols>.col:last-child>.todop{height:100%;overflow-y:auto;overscroll-behavior:contain}
+  .plancols>.col>.panelc{flex:1 1 auto}
+  .plancols .todop{display:flex;flex-direction:column}
+  .plancols .todomore{margin-top:auto}
 }
+
+.todomore{display:flex;border-top:1px solid var(--line)}
+.todomore .more{flex:1;border-top:0;width:auto}
+.todomore .more+.more{border-left:1px solid var(--line)}
+.todosheet .gitem{padding:0}
+.todosheet .setnote{margin:0 0 6px}
