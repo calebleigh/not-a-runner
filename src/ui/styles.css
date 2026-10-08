@@ -784,4 +784,6 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 
 /* Page name in the top bar (Home shows the logo instead) */
 .apphead-title{margin:0;font:800 30px/1 var(--display);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (min-width:900px){.apphead-title{font-size:34px}}
+.apphead-title{display:flex;align-items:center;gap:10px}
+.apphead-logo{display:flex;flex:none}
+@media (min-width:900px){.apphead-title{font-size:34px}.apphead-logo{display:none}}

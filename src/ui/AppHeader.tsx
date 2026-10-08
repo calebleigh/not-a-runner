@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { notifications, streakOf, type Note } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
+import { Logo } from "./Logo";
 import { useSync } from "./SyncSection";
 import { applyUpdate, useUpdateReady } from "./updates";
 
@@ -45,9 +46,8 @@ export function AppHeader() {
   const goSync = () => { setTab("settings"); window.setTimeout(() => document.querySelector(".area-sync")?.scrollIntoView({ block: "start" }), 60); };
   return (
     <header className="apphead">
-      {tab === "home"
-        ? <h1 className="apphead-title">Not a Runner</h1>
-        : <h1 className="apphead-title">{TITLES[tab]}</h1>}
+      {/* The logo shows on phones; on wide screens the side rail already has it. */}
+      <h1 className="apphead-title"><span className="apphead-logo"><Logo size={26} /></span>{tab === "home" ? "Not a Runner" : TITLES[tab]}</h1>
       <span className="apphead-acts">
         <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
           <Icon.flame /><b>{streak.current}</b>
