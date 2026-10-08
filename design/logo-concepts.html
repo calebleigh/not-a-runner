@@ -18,6 +18,7 @@
   .row{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
   .tile{display:grid;place-items:center;border-radius:22%;overflow:hidden}
   .tile svg{width:78%;height:78%}
+  .f .t-orange svg{width:60%;height:60%}
   .t-dark{background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
   .t-orange{background:linear-gradient(145deg,#FF8A3D,#E5540A)}
   .t-white{background:#F4F1EC}
@@ -120,6 +121,7 @@
   };
   for (const [id, name, note] of CONCEPTS) {
     const n = document.getElementById("concept").content.cloneNode(true);
+    n.querySelector(".concept").classList.add(id);
     n.querySelector("h2").textContent = name;
     n.querySelector("small").textContent = note;
     n.querySelector(".row").innerHTML = (id === "f" ? `<div class="tile t-white big"><img src="/runningman.png" alt="Original PNG" style="width:78%"></div>` : "") + `
