@@ -129,7 +129,7 @@ export function Plan() {
               <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}, {phases[phaseOf(model.spec, planWeek)].name}</span></span>
               <span className="wkcounts">
                 <b>{prog.cardioDone} / {prog.cardioTotal} cardio</b>
-                {prog.strengthTotal > 0 && <small>Strength {prog.strengthDone} / {prog.strengthTotal}</small>}
+                {prog.strengthTotal > 0 && <small>{prog.strengthDone} / {prog.strengthTotal} strength</small>}
               </span>
             </div>
             {rows.map((r) => (

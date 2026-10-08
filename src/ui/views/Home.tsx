@@ -78,7 +78,7 @@ export function Home() {
           <span className="lbl">This week</span>
           <span className="wkcounts">
             <b>{prog.cardioDone} / {prog.cardioTotal} cardio</b>
-            {prog.strengthTotal > 0 && <small>Strength {prog.strengthDone} / {prog.strengthTotal}</small>}
+            {prog.strengthTotal > 0 && <small>{prog.strengthDone} / {prog.strengthTotal} strength</small>}
           </span>
         </div>
         <div className="meter">
