@@ -2,7 +2,6 @@ import { useSyncExternalStore } from "react";
 import { notifications, streakOf, type Note } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
-import { Wordmark } from "./Logo";
 import { useSync } from "./SyncSection";
 import { applyUpdate, useUpdateReady } from "./updates";
 
@@ -47,7 +46,7 @@ export function AppHeader() {
   return (
     <header className="apphead">
       {tab === "home"
-        ? <span className="apphead-brand"><Wordmark size={24} /></span>
+        ? <h1 className="apphead-title">Not a Runner</h1>
         : <h1 className="apphead-title">{TITLES[tab]}</h1>}
       <span className="apphead-acts">
         <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>

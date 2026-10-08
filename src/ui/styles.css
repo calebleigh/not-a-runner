@@ -752,7 +752,6 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 @media (min-width:900px){
   /* The side rail has the logo; the bar keeps just the icons, over the content column. */
   .apphead{max-width:1180px;margin-left:calc(var(--rail) + max(0px,(100vw - var(--rail) - 1180px) / 2));padding-left:20px;padding-right:20px}
-  .apphead-brand{visibility:hidden}
 }
 @media (prefers-reduced-motion: reduce){.hicon svg{animation:none!important}}
 
