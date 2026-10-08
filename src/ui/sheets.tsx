@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { WhyEditor } from "./WhyEditor";
 import { dateOf, dayAt, dayKey, isBirthdayOn, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
 import { CardioCard, ExtraSection, StepsCard, StepsEntry, StrengthCard, WeighCard } from "./cards";
@@ -140,6 +141,10 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "import":
       title = "Import backup";
       body = <ImportBody />;
+      break;
+    case "why":
+      title = "Your why";
+      body = <WhyEditor />;
       break;
   }
   const dayOfSheet = "date" in spec ? spec.date : "w" in spec ? dateOf(model.spec, spec.w, spec.d) : null;

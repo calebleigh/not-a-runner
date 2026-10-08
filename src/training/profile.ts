@@ -42,7 +42,7 @@ export function isBirthdayOn(birthday: string | undefined, date: Date): boolean 
 
 /** The user's reasons for training. Older saves kept one comma-separated line in `why`. */
 export function whyList(settings: Settings): string[] {
-  if (Array.isArray(settings.whys)) return settings.whys.map((w) => w.trim()).filter(Boolean).slice(0, MAX_WHYS);
+  if (Array.isArray(settings.whys)) return settings.whys.map((w) => w.trim()).filter(Boolean);
   return (settings.why || "").split(/[,\n]/).map((w) => w.trim()).filter(Boolean);
 }
 
@@ -64,6 +64,3 @@ export function whyForDay(settings: Settings, today: Date): string | null {
 
 /** Suggested reasons, offered in onboarding and Settings. */
 export const WHY_IDEAS = ["Finish my first race", "Lose weight", "Keep up with my kids", "Feel better day to day", "Prove I can"];
-
-/** Most reasons a person can keep, so the list stays short enough to read. */
-export const MAX_WHYS = 8;

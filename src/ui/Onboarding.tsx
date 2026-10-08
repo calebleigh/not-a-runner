@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { DN, MAX_WHYS, WHY_IDEAS, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { DN, WHY_IDEAS, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
 import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
 import { Logo } from "./Logo";
@@ -178,7 +178,7 @@ export function Onboarding() {
       sub = "Pick as many as you like. It shows on Home on days without a tip, for the mornings you need it.";
       body = <>
         <div className="onbchips">{WHY_IDEAS.map((w) => <button key={w} aria-pressed={d.whys.includes(w)} className={d.whys.includes(w) ? "on" : ""}
-          onClick={() => setD((x) => ({ ...x, whys: x.whys.includes(w) ? x.whys.filter((y) => y !== w) : [...x.whys, w].slice(0, MAX_WHYS - 1) }))}>{w}</button>)}</div>
+          onClick={() => setD((x) => ({ ...x, whys: x.whys.includes(w) ? x.whys.filter((y) => y !== w) : [...x.whys, w] }))}>{w}</button>)}</div>
         <label className="onbfield">Anything else, in your own words<input className="xt" maxLength={80} placeholder="Finish a half before I turn 40" value={d.whyText} onChange={(e) => set({ whyText: e.target.value })} /></label>
       </>;
       cta = d.whys.length || d.whyText.trim() ? "Next" : "Skip";

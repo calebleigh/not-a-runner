@@ -597,12 +597,14 @@ input[type="date"].xt{color-scheme:dark}
 .splash.still{animation:sp-out .3s ease-in .4s forwards}
 .splash.still *{animation:none!important;opacity:1}
 @media (prefers-reduced-motion: reduce){.splash *{animation:none!important;opacity:1}}
-.whyrow{flex-direction:column;align-items:stretch;gap:10px}
-.whylist{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
-.whylist li{display:inline-flex;align-items:center;gap:2px;max-width:100%;padding:0 0 0 12px;border-radius:min(18px,var(--rmax));background:var(--accent-soft);border:1px solid rgba(var(--accent-rgb),.35)}
-.whylist li span{font-weight:600;font-size:14px;overflow-wrap:anywhere;padding:6px 0}
-.whylist li button{flex:none;width:32px;height:32px;border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer;border-radius:50%}
-.whylist li button:hover{color:var(--ink)}
+.whybtn{width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.whybtn small{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.whybtn .chip{flex:none}
+.whyedit{display:flex;flex-direction:column;gap:12px}
+.whyedit .setnote{margin:0}
+.whylist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.whylist li{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;border-radius:min(12px,var(--rmax));background:var(--surface2)}
+.whylist li span{flex:1;font-weight:600;overflow-wrap:anywhere}
 .whyadd{display:flex;gap:8px}
 .whyadd .whyin{flex:1}
 .whyideas{display:flex;flex-wrap:wrap;gap:6px}
@@ -612,3 +614,5 @@ input[type="date"].xt{color-scheme:dark}
 @media (prefers-reduced-motion: reduce){.taplogo *{animation:none!important;opacity:1}}
 .taplogo .sp-shake{animation-name:sp-shake-sm}
 @keyframes sp-shake-sm{0%,100%{transform:none}20%{transform:translate(-3px,2px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,1px)}80%{transform:translate(1px,0)}}
+.whyadd .whyin{flex:1;min-width:0;width:auto;text-align:left}
+.whyadd .btn{flex:none;width:auto;padding-left:20px;padding-right:20px}
