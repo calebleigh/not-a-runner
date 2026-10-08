@@ -27,3 +27,22 @@ export async function openOutside(url: string) {
   const { AppLauncher } = await import("@capacitor/app-launcher");
   await AppLauncher.openUrl({ url });
 }
+
+/**
+ * Downloads an APK into the app's cache and hands it to Android's installer, which asks before
+ * installing. The first time, Android also asks to allow installs from this app.
+ */
+export async function installApk(url: string, onProgress?: (pct: number) => void): Promise<void> {
+  const { Filesystem, Directory } = await import("@capacitor/filesystem");
+  const { FileOpener } = await import("@capacitor-community/file-opener");
+  const sub = onProgress
+    ? await Filesystem.addListener("progress", (p) => onProgress(p.contentLength ? Math.round((100 * p.bytes) / p.contentLength) : 0))
+    : null;
+  try {
+    const r = await Filesystem.downloadFile({ url, path: "update.apk", directory: Directory.Cache, progress: !!onProgress });
+    if (!r.path) throw new Error("Download failed");
+    await FileOpener.open({ filePath: r.path, contentType: "application/vnd.android.package-archive" });
+  } finally {
+    await sub?.remove();
+  }
+}

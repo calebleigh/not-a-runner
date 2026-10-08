@@ -162,5 +162,8 @@ function message(e: unknown): string {
   if (code.includes("network") || code === "unavailable") return "No connection. Changes will sync later.";
   if (code === "auth/unauthorized-domain") return "Sign-in isn't set up for this address yet.";
   if (code === "auth/operation-not-allowed") return "That sign-in option isn't turned on yet.";
-  return "Something went wrong with sync. Your data is safe on this device.";
+  // Keep the real cause visible (short) so problems can be tracked down.
+  const raw = code || (e as Error)?.message || String(e);
+  const detail = raw.replace(/\s+/g, " ").slice(0, 120);
+  return `Something went wrong with sync. Your data is safe on this device. (${detail})`;
 }

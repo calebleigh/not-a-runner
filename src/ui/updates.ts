@@ -2,7 +2,7 @@ import { playSplashNextLoad } from "./Splash";
 // Shared app-update state: the service worker registration, whether a new version is waiting,
 // and a manual check used by Settings. The update bar (UpdatePrompt) keeps this in sync.
 import { useSyncExternalStore } from "react";
-import { APP_CODE, IS_NATIVE, latestRelease, openOutside } from "./apk";
+import { APP_CODE, IS_NATIVE, installApk, latestRelease, openOutside } from "./apk";
 
 export type CheckResult = "ready" | "current" | "offline" | "error" | "unsupported";
 
@@ -72,9 +72,28 @@ export async function checkApk(force = true): Promise<CheckResult> {
   lastApkCheck = Date.now();
   try {
     const r = await latestRelease();
-    if (r && r.code > APP_CODE) { setUpdateReady(true, () => { openOutside(r.url).catch(() => {}); }); return "ready"; }
+    if (r && r.code > APP_CODE) { setUpdateReady(true, () => { downloadAndInstall(r.url); }); return "ready"; }
     return r ? "current" : "error";
   } catch {
     return navigator.onLine ? "error" : "offline";
+  }
+}
+
+// Android app: download progress for the update bar (null when not downloading).
+let downloadPct: number | null = null;
+const dlSubs = new Set<() => void>();
+const setDownload = (v: number | null) => { downloadPct = v; dlSubs.forEach((f) => f()); };
+export const useDownloadPct = () => useSyncExternalStore((f) => { dlSubs.add(f); return () => dlSubs.delete(f); }, () => downloadPct);
+
+/** Downloads the new APK in the app and opens Android's installer; falls back to the browser. */
+async function downloadAndInstall(url: string) {
+  if (downloadPct !== null) return;
+  setDownload(0);
+  try {
+    await installApk(url, (p) => setDownload(p));
+  } catch {
+    openOutside(url).catch(() => {});
+  } finally {
+    setDownload(null);
   }
 }

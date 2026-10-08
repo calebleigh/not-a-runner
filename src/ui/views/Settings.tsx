@@ -29,7 +29,7 @@ const CHECK_TEXT: Record<CheckResult, string> = {
   error: "Couldn't check. Try again later.",
   unsupported: "Updates install automatically in the installed app.",
 };
-const APK_READY = "New version ready. Tap Download, then install it.";
+const APK_READY = "New version ready. Tap Update, then Install.";
 
 function VersionRow() {
   const [status, setStatus] = useState<"idle" | "checking" | CheckResult>("idle");
@@ -40,7 +40,7 @@ function VersionRow() {
     <div className="setrow">
       <span>App version<small aria-live="polite">{note}</small></span>
       {ready ? (
-        <button className="chip solid" onClick={() => applyUpdate()}>{IS_NATIVE ? "Download" : "Refresh"}</button>
+        <button className="chip solid" onClick={() => applyUpdate()}>{IS_NATIVE ? "Update" : "Refresh"}</button>
       ) : (
         <button className="chip" disabled={status === "checking"} onClick={async () => { setStatus("checking"); setStatus(await checkForUpdate()); }}>
           {status === "checking" ? "Checking" : "Check"}
