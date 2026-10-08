@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fmtShort, todoLists, type TodoItem } from "../training";
+import { fmtShort, todoLists, upNext, type TodoItem } from "../training";
 import { newId } from "../sync/engine";
 import { useApp } from "./app-state";
 import { ConfirmButton } from "./cards";
@@ -60,13 +60,13 @@ function AddTodo() {
 /** Home: what's on the list right now. Adding happens on the Plan tab. */
 export function TodoCard() {
   const { model, setTab } = useApp();
-  const { now, later } = todoLists(model);
+  const lists = todoLists(model), { shown, rest } = upNext(lists, 4), now = lists.now;
   return (
     <section className="panelc slist todop" aria-label="To do">
       <div className="slhead"><span className="lbl">To do</span><b>{now.length ? `${now.length} open` : "All caught up"}</b></div>
-      {now.slice(0, 5).map((it) => <Row key={it.key} it={it} full={false} />)}
-      {!now.length && <p className="setnote" style={{ padding: "12px 16px" }}>Nothing due right now.</p>}
-      <button className="more" onClick={() => setTab("plan")}>{now.length > 5 || later.length ? "See the full list" : "Add or see all"} &rsaquo;</button>
+      {shown.slice(0, Math.max(4, Math.min(now.length, 5))).map((it) => <Row key={it.key} it={it} full={false} />)}
+      {!shown.length && <p className="setnote" style={{ padding: "12px 16px" }}>Nothing on the list.</p>}
+      <button className="more" onClick={() => setTab("plan")}>{shown.length > 5 || rest.length ? "See the full list" : "Add or see all"} &rsaquo;</button>
     </section>
   );
 }
@@ -74,7 +74,7 @@ export function TodoCard() {
 /** Plan tab: open items and the add box. Later and done items open in a sheet. */
 export function TodoList() {
   const { model, openSheet } = useApp();
-  const { now, later, done } = todoLists(model);
+  const lists = todoLists(model), { now, done } = lists, { shown, rest: later } = upNext(lists, 4);
   return (
     <section className="panelc slist todop" aria-label="To do">
       <div className="slhead">
@@ -82,8 +82,8 @@ export function TodoList() {
         <b>{now.length} open</b>
       </div>
       <AddTodo />
-      {now.map((it) => <Row key={it.key} it={it} full />)}
-      {!now.length && <p className="setnote" style={{ padding: "12px 16px" }}>All caught up.</p>}
+      {shown.map((it) => <Row key={it.key} it={it} full />)}
+      {!shown.length && <p className="setnote" style={{ padding: "12px 16px" }}>All caught up.</p>}
       {(later.length > 0 || done.length > 0) && (
         <div className="todomore">
           {later.length > 0 && <button className="more" onClick={() => openSheet({ kind: "todos", which: "later" })}>Later ({later.length}) &rsaquo;</button>}
@@ -97,7 +97,9 @@ export function TodoList() {
 /** Sheet: gear and items due later, or everything finished. */
 export function TodoSheetBody({ which }: { which: "later" | "done" }) {
   const { model } = useApp();
-  const list = todoLists(model)[which];
+  const lists = todoLists(model);
+  // Later leaves out what the card already shows.
+  const list = which === "later" ? upNext(lists, 4).rest : lists.done;
   return (
     <div className="todop todosheet">
       <p className="setnote">{which === "later" ? "Due more than two weeks out. They move up to the list as they get close." : "Checked off. Uncheck one to put it back on the list."}</p>

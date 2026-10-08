@@ -52,3 +52,12 @@ export function todoLists(model: Model): TodoLists {
     done: [...mine.filter((x) => x.done), ...gear.filter((g) => g.done)].sort((a, b) => doneAt(b) - doneAt(a)),
   };
 }
+
+/**
+ * What a to-do card shows: everything open now, topped up from later items (soonest first) so
+ * there are at least `min` whenever that many exist. `rest` is what's left for the Later list.
+ */
+export function upNext(lists: TodoLists, min = 4): { shown: TodoItem[]; rest: TodoItem[] } {
+  const take = Math.max(0, min - lists.now.length);
+  return { shown: [...lists.now, ...lists.later.slice(0, take)], rest: lists.later.slice(take) };
+}

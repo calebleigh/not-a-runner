@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeModel, emptyState, todoLists } from "./index";
+import { computeModel, emptyState, todoLists, upNext } from "./index";
 
 const WEEK3 = new Date(2026, 9, 21); // Wed of week 3
 
@@ -49,5 +49,25 @@ describe("to-do list", () => {
     expect(at("PT visit")).toBeLessThan(at("Healthier snacks"));
     expect(later.map((x) => x.text)).toContain("Book race hotel");
     expect(now.some((x) => x.text === "Book race hotel")).toBe(false);
+  });
+});
+
+describe("what the card shows", () => {
+  it("tops up from later so there are always at least four", () => {
+    const s = emptyState();
+    for (const k of ["helmet", "tuneup", "bottle", "lights", "mat"]) s.gear[k] = 1;
+    const lists = todoLists(computeModel(s, WEEK3));
+    const { shown, rest } = upNext(lists, 4);
+    expect(shown.length).toBe(4);
+    expect(shown.slice(0, lists.now.length)).toEqual(lists.now);
+    expect(rest.length).toBe(lists.later.length - (4 - lists.now.length));
+  });
+
+  it("shows everything open when there's more than four, and nothing when the list is empty", () => {
+    const s = emptyState();
+    for (let i = 0; i < 6; i++) s.todos[`t${i}`] = { text: `Item ${i}`, at: i };
+    const lists = todoLists(computeModel(s, WEEK3));
+    expect(upNext(lists).shown.length).toBe(lists.now.length);
+    expect(upNext({ now: [], later: [], done: [] }).shown).toEqual([]);
   });
 });
