@@ -77,10 +77,11 @@ export function Plan() {
 
   return (
     <section className="view stack" aria-label="Plan">
-      <div className="greet">
+      <h1 className="pagetitle">Plan</h1>
+      <div className="greet racehead">
         <div>
           <div className="lbl">{race ? `Race day, ${race.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}` : `${model.spec.weeks}-week fitness plan`}</div>
-          <h1>{model.spec.raceName}</h1>
+          <h2>{model.spec.raceName}</h2>
         </div>
         <div className="countdown">
           {race

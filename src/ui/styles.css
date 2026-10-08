@@ -720,3 +720,6 @@ input[type="date"].txtin{width:150px}
 .todomore .more+.more{border-left:1px solid var(--line)}
 .todosheet .gitem{padding:0}
 .todosheet .setnote{margin:0 0 6px}
+
+/* Plan: race name sits under the page title, a step smaller than it */
+.racehead h2{font:800 30px/1.05 var(--display);margin-top:4px}
