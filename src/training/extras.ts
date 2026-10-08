@@ -1,4 +1,7 @@
-import type { CardioKind, Extra, Log, State } from "./types";
+import type { CardioKind, Extra, ExtraKind, Log, State } from "./types";
+
+/** Extra types that can fill a planned cardio slot (counted as a walk or a ride). */
+export const CARDIO_EXTRA_KINDS: ExtraKind[] = ["walk", "hike", "bike"];
 
 /** An extra can stand in for a day's planned cardio unless that slot is rest, race day, or already done. */
 export function canUseAsCardio(state: State, w: number, d: number, planned: CardioKind | undefined): boolean {
@@ -18,7 +21,7 @@ export function applyExtraAsCardio(draft: State, w: number, d: number, index: nu
   if (rest.length) draft.extras[key] = rest;
   else delete draft.extras[key];
   if (expected.kind === "bike" && planned !== "bike") draft.swaps[id] = "bike";
-  else if (expected.kind === "walk" && planned !== "walk") draft.swaps[id] = "walk";
+  else if ((expected.kind === "walk" || expected.kind === "hike") && planned !== "walk") draft.swaps[id] = "walk";
   draft.logs[id] = { ...log, at };
   draft.done[id] = 1;
   return true;

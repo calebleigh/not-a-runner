@@ -1,4 +1,4 @@
-import { hms, todayDay } from "../training";
+import { dayCardio, dayKey, hms, kfmt, todayDay } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 import { Num } from "./motion";
@@ -28,20 +28,24 @@ export function TodayHero() {
     );
   }
 
-  const c = day.c, lg = state.logs[day.ids[0]], dn = !!state.done[day.ids[0]];
+  const c = day.c, dn = !!state.done[day.ids[0]];
   const { title, big, u } = splitTitle(c.t);
   const ht = <div className="ht">{title} {big && <span className="nw">{big}<small>{u}</small></span>}</div>;
   const open = () => openSheet({ kind: "cardio", w: curWeek, d: todayIdx });
   if (dn) {
+    // Once today's session is in, the card sums up the whole day: the planned session plus every extra.
+    const day = dayCardio(model, curWeek, todayIdx), steps = state.steps[dayKey(model.spec, today)];
+    const planLine = `Planned ${c.t.toLowerCase()}: done.` + (day.extras ? ` Plus ${day.extras} extra${day.extras > 1 ? "s" : ""}.` : "");
     return (
       <button className="hero done tap" onClick={open}>
-        <span className="lbl">Today's cardio, done</span>
-        {ht}
+        <span className="lbl">Today, done</span>
+        {day.dist ? <div className="ht"><span className="nw"><Num value={day.dist} dec={1} /><small>mi today</small></span></div> : ht}
         <div className="hstats">
-          {lg?.dist ? <div><div className="num"><Num value={lg.dist} dec={2} /><span className="unit">mi</span></div><div className="lbl">Distance</div></div> : null}
-          {lg?.time ? <div><div className="num">{hms(lg.time)}</div><div className="lbl">Time</div></div> : null}
-          {lg?.dist && lg.time ? <div><div className="num">{c.kind === "bike" ? (lg.dist / (lg.time / 3600)).toFixed(1) : hms(lg.time / lg.dist)}</div><div className="lbl">{c.kind === "bike" ? "mph" : "Pace /mi"}</div></div> : null}
+          {day.secs ? <div><div className="num">{hms(day.secs)}</div><div className="lbl">Moving</div></div> : null}
+          {steps ? <div><div className="num">{kfmt(steps)}</div><div className="lbl">Steps</div></div> : null}
+          {day.cal ? <div><div className="num"><Num value={day.cal} /></div><div className="lbl">Calories</div></div> : null}
         </div>
+        <p>{planLine}</p>
         <span className="go"><Icon.check /></span>
       </button>
     );

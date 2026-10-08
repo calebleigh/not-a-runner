@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
-  applyExtraAsCardio, canUseAsCardio, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
+  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, canUseAsCardio, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
 } from "../training";
 import { useApp } from "./app-state";
 
@@ -246,6 +246,7 @@ function ExtraForm({ onSave, onCancel }: { onSave: (e: Extra) => void; onCancel:
   const [dist, setDist] = useState("");
   const [mins, setMins] = useState("");
   const ref = useSheetFocus<HTMLDivElement>(true);
+  const onFoot = EXTRA_KINDS[kind].onFoot;
   const save = () => {
     const st = parseInt(steps) || 0, ds = parseFloat(dist) || 0, m = parseInt(mins) || 0;
     if (!ds && !m) return;
@@ -256,16 +257,18 @@ function ExtraForm({ onSave, onCancel }: { onSave: (e: Extra) => void; onCancel:
   };
   return (
     <div className="logform" ref={ref}>
-      <div className="feel two">
-        {(["walk", "bike"] as const).map((k) => <button key={k} className={kind === k ? "sel" : ""} aria-pressed={kind === k} onClick={() => setKind(k)}>{k === "walk" ? "Walk" : "Bike"}</button>)}
+      <div className="kinds" role="radiogroup" aria-label="Activity">
+        {(Object.keys(EXTRA_KINDS) as ExtraKind[]).map((k) => (
+          <button key={k} role="radio" className={kind === k ? "sel" : ""} aria-checked={kind === k} onClick={() => { setKind(k); if (!EXTRA_KINDS[k].onFoot) setSteps(""); }}>{EXTRA_KINDS[k].label}</button>
+        ))}
       </div>
-      <label className="xtl">Title (optional)<input className="xt" type="text" maxLength={40} placeholder="Evening walk" value={label} onChange={(e) => setLabel(e.target.value)} /></label>
-      <div className="fields three">
-        <label>Steps<input type="number" inputMode="numeric" min="0" placeholder="optional" value={steps} onChange={(e) => { setSteps(e.target.value); const v = parseInt(e.target.value) || 0; if (v) setDist((v / STEPS_PER_MI).toFixed(2)); }} /></label>
-        <label>Miles<input type="number" inputMode="decimal" step="0.01" min="0" value={dist} onChange={(e) => setDist(e.target.value)} /></label>
+      <label className="xtl">Title (optional)<input className="xt" type="text" maxLength={40} placeholder={`Evening ${EXTRA_KINDS[kind].label.toLowerCase()}`} value={label} onChange={(e) => setLabel(e.target.value)} /></label>
+      <div className={"fields " + (onFoot ? "three" : "two")}>
+        {onFoot && <label>Steps<input type="number" inputMode="numeric" min="0" placeholder="optional" value={steps} onChange={(e) => { setSteps(e.target.value); const v = parseInt(e.target.value) || 0; if (v) setDist((v / STEPS_PER_MI).toFixed(2)); }} /></label>}
+        <label>Miles{!onFoot && kind !== "bike" ? " (optional)" : ""}<input type="number" inputMode="decimal" step="0.01" min="0" value={dist} onChange={(e) => setDist(e.target.value)} /></label>
         <label>Minutes moving<input type="number" inputMode="numeric" min="0" value={mins} onChange={(e) => setMins(e.target.value)} /></label>
       </div>
-      <p style={{ fontSize: 14 }}>Enter steps and miles fill in for you. For minutes, count only time spent moving.</p>
+      <p style={{ fontSize: 14 }}>{onFoot ? "Enter steps and miles fill in for you. " : ""}For minutes, count only time spent moving.</p>
       <div className="row2">
         <button className="btn solid" onClick={save}>Save</button>
         <button className="btn small" style={{ marginTop: 14 }} onClick={onCancel}>Cancel</button>
@@ -286,11 +289,11 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
       {list.map((x, i) => (
         <div className="lvl" key={i}>
           <div>
-            <b>{x.kind === "bike" ? "Bike" : "Walk"}{x.label ? ": " + x.label : ""}</b>
-            <small>{[x.steps ? `${x.steps.toLocaleString("en-US")} steps` : null, `${x.dist} mi`, x.time ? `${Math.round(x.time / 60)} min` : null, `~${cardioCal(state, x.kind, x, w)} cal`].filter(Boolean).join(", ")}</small>
+            <b>{extraKind(x.kind).label}{x.label ? ": " + x.label : ""}</b>
+            <small>{[x.steps ? `${x.steps.toLocaleString("en-US")} steps` : null, x.dist ? `${x.dist} mi` : null, x.time ? `${Math.round(x.time / 60)} min` : null, `~${extraCal(state, x, w)} cal`].filter(Boolean).join(", ")}</small>
           </div>
           <div className="xact">
-            {canUse && <button className="btn small inline use" onClick={() => openSheet({ kind: "cardio", w, d, fromExtra: i })}>Use as cardio</button>}
+            {canUse && CARDIO_EXTRA_KINDS.includes(x.kind) && <button className="btn small inline use" onClick={() => openSheet({ kind: "cardio", w, d, fromExtra: i })}>Use as cardio</button>}
             <ConfirmButton className="btn small inline" label="Remove" confirmLabel="Confirm remove"
               onConfirm={() => update((s) => { const l = [...(s.extras[key] || [])]; l.splice(i, 1); if (l.length) s.extras[key] = l; else delete s.extras[key]; })} />
           </div>

@@ -512,3 +512,8 @@ input[type="date"].txtin{width:150px;color-scheme:dark}
 .quote::before{content:"“";position:absolute;right:10px;top:-18px;font:800 120px/1 var(--display);color:var(--accent);opacity:.18;pointer-events:none}
 .quote blockquote{margin:8px 0 0;font:700 italic 22px/1.2 var(--display);letter-spacing:-.005em;text-wrap:pretty}
 .quote figcaption{margin-top:10px;font-size:14px;font-weight:600;color:var(--accent)}
+/* Extra activity type picker */
+.kinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.kinds button{border:1px solid var(--line);background:var(--surface2);border-radius:min(12px,var(--rmax));padding:10px 2px;font:600 14px var(--body);cursor:pointer}
+.kinds button.sel{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.fields.two{grid-template-columns:repeat(2,1fr);margin-top:10px}

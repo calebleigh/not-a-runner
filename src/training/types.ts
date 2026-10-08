@@ -1,6 +1,7 @@
 export type Feel = "easy" | "ok" | "hard";
 export type SwapKind = "bike" | "walk" | "run";
-export type ExtraKind = "walk" | "bike";
+/** Extra activity types. Planned sessions and swaps only use walk, bike and walk/run. */
+export type ExtraKind = "walk" | "bike" | "hike" | "elliptical" | "swim" | "row" | "skate" | "other";
 export type CardioKind = "bike" | "walk" | "run" | "long" | "test" | "race" | "rest";
 export type AdaptKey = "run" | "bike" | "str";
 

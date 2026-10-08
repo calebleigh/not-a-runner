@@ -3,7 +3,7 @@ import { effKind, idParts, sortedLogs } from "./adapt";
 import { dateOf, parseDayKey } from "./calendar";
 import { dayAt } from "./model";
 import { specOf } from "./spec";
-import type { Extra, Log, Model, State, Strength, Week } from "./types";
+import type { Extra, ExtraKind, Log, Model, State, Strength, Week } from "./types";
 
 export const DEFAULT_WEIGHT_LB = 195;
 export const STEPS_PER_MI = 2250;
@@ -36,11 +36,33 @@ export function strengthCal(state: State, st: Strength | null | undefined, week?
 
 export const statKind = (k: string): "bike" | "walk" | "run" => (k === "bike" ? "bike" : k === "walk" ? "walk" : "run");
 
-export interface Totals { walk: number; run: number; bike: number; cal: number; secs: number }
+/**
+ * Extra activity types. Walk and bike use the speed-based calorie rates; the others use a fixed
+ * MET (moderate effort). Only on-foot types estimate steps. `bucket` is where their miles count in Stats.
+ */
+export const EXTRA_KINDS: Record<ExtraKind, { label: string; onFoot: boolean; met?: number; bucket: "walk" | "bike" | "other" }> = {
+  walk: { label: "Walk", onFoot: true, bucket: "walk" },
+  bike: { label: "Bike", onFoot: false, bucket: "bike" },
+  hike: { label: "Hike", onFoot: true, met: 6, bucket: "walk" },
+  elliptical: { label: "Elliptical", onFoot: false, met: 5, bucket: "other" },
+  swim: { label: "Swim", onFoot: false, met: 6, bucket: "other" },
+  row: { label: "Row", onFoot: false, met: 7, bucket: "other" },
+  skate: { label: "Skate", onFoot: false, met: 7.5, bucket: "other" },
+  other: { label: "Other", onFoot: false, met: 4, bucket: "other" },
+};
+export const extraKind = (k: string) => EXTRA_KINDS[k as ExtraKind] ?? EXTRA_KINDS.other;
+
+export function extraCal(state: State, x: Extra, week?: number): number {
+  const k = extraKind(x.kind);
+  if (!k.met) return cardioCal(state, x.kind === "bike" ? "bike" : "walk", x, week);
+  return x.time ? Math.round(k.met * bodyLb(state, week) * 0.4536 * x.time / 3600) : 0;
+}
+
+export interface Totals { walk: number; run: number; bike: number; other: number; cal: number; secs: number }
 
 export function totals(model: Model, inR: DateRange = ALL): Totals {
   const { state } = model;
-  const t: Totals = { walk: 0, run: 0, bike: 0, cal: 0, secs: 0 };
+  const t: Totals = { walk: 0, run: 0, bike: 0, other: 0, cal: 0, secs: 0 };
   for (const [id, l] of Object.entries(state.logs)) {
     const p = idParts(id);
     if (!inR(dateOf(model.spec, p.w, p.d))) continue;
@@ -63,9 +85,9 @@ export function totals(model: Model, inR: DateRange = ALL): Totals {
     const [w, dd] = parseDayKey(key);
     if (!inR(dateOf(model.spec, w, dd))) continue;
     for (const x of arr) {
-      t[x.kind] += x.dist || 0;
+      t[extraKind(x.kind).bucket] += x.dist || 0;
       t.secs += x.time || 0;
-      t.cal += cardioCal(state, x.kind, x, w);
+      t.cal += extraCal(state, x, w);
     }
   }
   return t;
@@ -81,8 +103,26 @@ export function loggedFootSteps(state: State, n: number, d: number): number {
     const e = effKind(state, n, d);
     if (e && e.kind !== "bike") t += Math.round(lg.dist * (e.kind === "walk" ? STEP_STRIDE.walk : STEP_STRIDE.run));
   }
-  for (const x of extrasFor(state, n, d)) if (x.kind !== "bike") t += x.steps || Math.round((x.dist || 0) * STEP_STRIDE.walk);
+  for (const x of extrasFor(state, n, d)) if (extraKind(x.kind).onFoot) t += x.steps || Math.round((x.dist || 0) * STEP_STRIDE.walk);
   return t;
+}
+
+export interface DayCardio { dist: number; secs: number; cal: number; extras: number; plannedDone: boolean }
+
+/** Everything cardio on one day: the planned session (if done) plus extra activities. */
+export function dayCardio(model: Model, w: number, d: number): DayCardio {
+  const { state } = model;
+  const id = `${w}-${d}-c`, lg = state.done[id] ? state.logs[id] : undefined, xs = extrasFor(state, w, d);
+  const out: DayCardio = { dist: 0, secs: 0, cal: 0, extras: xs.length, plannedDone: !!state.done[id] };
+  if (lg) {
+    const e = effKind(state, w, d);
+    out.dist += lg.dist || 0;
+    out.secs += lg.time || 0;
+    out.cal += e ? cardioCal(state, statKind(e.kind), lg, w) : 0;
+  }
+  for (const x of xs) { out.dist += x.dist || 0; out.secs += x.time || 0; out.cal += extraCal(state, x, w); }
+  out.dist = Math.round(out.dist * 100) / 100;
+  return out;
 }
 
 export function stepStats(state: State, inR: DateRange = ALL) {

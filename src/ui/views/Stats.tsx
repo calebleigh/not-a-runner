@@ -23,7 +23,7 @@ export function Stats() {
 
   const mStart = new Date(today.getFullYear(), today.getMonth(), 1), mEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   const inR = range === "month" ? (d: Date) => d >= mStart && d < mEnd : () => true;
-  const T = totals(model, inR), S = stepStats(state, inR), mi = T.walk + T.run + T.bike;
+  const T = totals(model, inR), S = stepStats(state, inR), mi = T.walk + T.run + T.bike + T.other;
   const wDone = Object.keys(state.done).filter((id) => { const p = idParts(id); return inR(addDays(model.spec.start, (p.w - 1) * 7 + p.d)); }).length;
 
   return (
@@ -41,7 +41,7 @@ export function Stats() {
       <section className="panelc bigstat">
         <span className="lbl">Total distance</span>
         <div><span className="num"><Num value={mi} dec={1} /></span><span className="unit">mi</span></div>
-        <div className="split"><span>Walk <b>{T.walk.toFixed(1)}</b></span><span>Walk/run <b>{T.run.toFixed(1)}</b></span><span>Bike <b>{T.bike.toFixed(1)}</b></span></div>
+        <div className="split"><span>Walk <b>{T.walk.toFixed(1)}</b></span><span>Walk/run <b>{T.run.toFixed(1)}</b></span><span>Bike <b>{T.bike.toFixed(1)}</b></span>{T.other > 0 && <span>Other <b>{T.other.toFixed(1)}</b></span>}</div>
       </section>
 
       <div className="tiles">
