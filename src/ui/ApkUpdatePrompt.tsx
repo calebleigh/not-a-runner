@@ -1,9 +1,12 @@
 import { useEffect } from "react";
-import { applyUpdate, checkApk, useDownloadPct, useUpdateReady } from "./updates";
+import { useApp } from "./app-state";
+import { applyUpdate, checkApk, onUpdateTapped, useDownloadPct, useUpdateReady } from "./updates";
 
 /** Android app: when a newer APK is on GitHub, offer it. Tapping downloads it; Android then installs it. */
 export function ApkUpdatePrompt() {
   const ready = useUpdateReady(), pct = useDownloadPct();
+  const { openSheet } = useApp();
+  useEffect(() => { onUpdateTapped(() => openSheet({ kind: "update" })); }, [openSheet]);
   useEffect(() => {
     checkApk(false);
     const onVis = () => { if (document.visibilityState === "visible") checkApk(false); };

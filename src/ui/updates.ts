@@ -72,7 +72,7 @@ export async function checkApk(force = true): Promise<CheckResult> {
   lastApkCheck = Date.now();
   try {
     const r = await latestRelease();
-    if (r && r.code > APP_CODE) { setUpdateReady(true, () => { downloadAndInstall(r.url); }); return "ready"; }
+    if (r && r.code > APP_CODE) { latest = r; setUpdateReady(true, () => { openUpdateSheet?.(); }); return "ready"; }
     return r ? "current" : "error";
   } catch {
     return navigator.onLine ? "error" : "offline";
@@ -86,6 +86,15 @@ const setDownload = (v: number | null) => { downloadPct = v; dlSubs.forEach((f) 
 export const useDownloadPct = () => useSyncExternalStore((f) => { dlSubs.add(f); return () => dlSubs.delete(f); }, () => downloadPct);
 
 /** Downloads the new APK in the app and opens Android's installer; falls back to the browser. */
+let latest: { version: string; url: string } | null = null;
+/** The newer APK on GitHub, once a check has found one. */
+export const latestApk = () => latest;
+let openUpdateSheet: (() => void) | null = null;
+/** The app shows its "Get the update" steps when Update is tapped (set up by the app shell). */
+export function onUpdateTapped(f: () => void) { openUpdateSheet = f; }
+/** Downloads and installs the newer APK (the last step of the update sheet). */
+export function installLatest() { if (latest) downloadAndInstall(latest.url); }
+
 async function downloadAndInstall(url: string) {
   if (downloadPct !== null) return;
   setDownload(0);

@@ -20,7 +20,8 @@ export type SheetSpec =
   | { kind: "why" }
   | { kind: "todos"; which: "later" | "done" }
   | { kind: "notes" }
-  | { kind: "streak" };
+  | { kind: "streak" }
+  | { kind: "update" };
 
 interface AppCtx {
   model: Model;
