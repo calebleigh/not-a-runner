@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppProvider, useApp, type Tab } from "./app-state";
 import { Icon } from "./icons";
 import { Wordmark } from "./Logo";
+import { AppHeader } from "./AppHeader";
 import { useMirroredScroll } from "./mirror";
 import { needsOnboarding } from "../training";
 import { Onboarding } from "./Onboarding";
@@ -43,6 +44,7 @@ function Shell() {
     </button>
   );
   return <>
+    <AppHeader />
     <div className="wrap">
       <main key={tab}>
         {tab === "home" && <Home />}

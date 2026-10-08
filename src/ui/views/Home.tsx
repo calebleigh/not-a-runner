@@ -1,13 +1,12 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, kfmt, phaseOf, phases, todayDay,
-  dayAt, whyForDay, type Tip,
+  LONGDAY, birthdayInfo, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, kfmt, phaseOf, phases, todayDay,
+  dayAt, whyForDay,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Recent } from "../Recent";
 import { TodoCard } from "../TodoList";
-import { Wordmark } from "../Logo";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
 
@@ -22,7 +21,7 @@ function Chip({ ok, ic, big, sub, onClick }: { ok: boolean; ic: ReactNode; big: 
 }
 
 export function Home() {
-  const { model, state, openSheet, setTab, now } = useApp();
+  const { model, state, openSheet, now } = useApp();
   const { curWeek, rawWeek, dow, todayIdx, today } = model;
   const wk = model.weeks[curWeek - 1];
   const name = (state.settings.name || "").trim();
@@ -46,17 +45,11 @@ export function Home() {
     chips.push(<Chip key="str" ok={sd} ic={<Icon.dumbbell />} big={sd ? "Done" : "Strength"} sub={`${day.st.title}, ${day.st.min} min`} onClick={() => openSheet({ kind: "strength", w: curWeek, d: todayIdx })} />);
   }
 
-  const tip = coachTip(model, now.getHours());
   const bday = birthdayInfo(state.settings.birthday, now);
   const why = whyForDay(state.settings, now);
-  const runTip = (t: Tip) => {
-    if (t.action?.type === "steps") openSheet({ kind: "steps", date: t.action.date });
-    else if (t.action?.type === "plan") setTab("plan");
-  };
 
   return (
     <section className="view stack" aria-label="Home">
-      <div className="brandbar"><Wordmark size={22} /></div>
       <div className="greet">
         <div>
           <div className="lbl">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div>
@@ -65,13 +58,7 @@ export function Home() {
           ) : (
             <h1>{name ? `Ready, ${name}?` : "Ready to move?"}</h1>
           )}
-          {tip ? (
-            <p className={"nudge" + (tip.adj ? " adj" : "")}>
-              {tip.t}{tip.a && <> <button onClick={() => runTip(tip)}>{tip.a}</button></>}
-            </p>
-          ) : why ? (
-            <p className="nudge why">{why}</p>
-          ) : null}
+          {why && <p className="nudge why">{why}</p>}
         </div>
         <div className="wkbadge" style={{ ["--p" as string]: `${Math.round(100 * (curWeek - 1) / model.spec.weeks)}%` }} title={`Week ${curWeek} of ${model.spec.weeks}`}>
           <span>W{curWeek}</span>

@@ -18,7 +18,8 @@ export type SheetSpec =
   | { kind: "export" }
   | { kind: "import" }
   | { kind: "why" }
-  | { kind: "todos"; which: "later" | "done" };
+  | { kind: "todos"; which: "later" | "done" }
+  | { kind: "notes" };
 
 interface AppCtx {
   model: Model;

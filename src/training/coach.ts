@@ -8,6 +8,11 @@ export interface Tip { t: string; a?: string; action?: TipAction; adj?: boolean 
 
 /** The single most useful nudge for today. `hour` is the current local hour. */
 export function coachTip(model: Model, hour: number): Tip | undefined {
+  return coachTips(model, hour)[0];
+}
+
+/** Every nudge that applies today, most useful first. */
+export function coachTips(model: Model, hour: number): Tip[] {
   const { state, spec, today, curWeek, foot, adapt } = model;
   const tips: Tip[] = [];
   const yd = addDays(today, -1);
@@ -20,5 +25,5 @@ export function coachTip(model: Model, hour: number): Tip | undefined {
   if (adapt.bike) a.push(`biking ${pctTxt(adapt.bike)}`);
   if (adapt.str) a.push(`strength ${adapt.str > 0 ? "harder" : "easier"}`);
   if (a.length) tips.push({ t: "Plan adjusted from your logs: " + a.join(", ") + ".", adj: true });
-  return tips[0];
+  return tips;
 }

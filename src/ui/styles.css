@@ -729,3 +729,29 @@ input[type="date"].txtin{width:150px}
 .racehead h2{font:800 30px/1.05 var(--display);margin-top:4px}
 /* A solid strip behind the status bar so scrolled content doesn't run under the clock and icons. */
 body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--paper);z-index:25;pointer-events:none}
+
+/* Top bar: brand on the left, sync and notifications on the right. Sits under the status bar. */
+.apphead{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:560px;margin:0 auto;padding:calc(8px + var(--sat)) 12px 8px 16px;background:var(--paper)}
+.apphead-acts{display:flex;gap:4px}
+.hicon{position:relative;width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:var(--rc);background:none;color:var(--ink);cursor:pointer}
+.hicon:hover{background:var(--surface)}
+.hicon svg{width:24px;height:24px}
+.hicon.sync.off,.hicon.sync.offline{color:var(--muted)}
+.hicon.sync.error{color:var(--bad)}
+.hicon.sync.syncing svg,.hicon.sync.starting svg{animation:pulse 1s ease-in-out infinite alternate}
+.badge{position:absolute;top:5px;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--on-accent);font:800 11px/18px var(--body);text-align:center}
+.wrap{padding-top:8px}
+.notelist{list-style:none;margin:0;padding:0}
+.notelist li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.notelist li:last-child{border-bottom:0}
+.ndot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.notelist li.adjust .ndot{background:var(--sky)}
+.notelist li.todo .ndot{background:var(--bad)}
+.ntext{flex:1;font-size:15px}
+.notelist .chip{flex:none}
+@media (min-width:900px){
+  /* The side rail has the logo; the bar keeps just the icons, over the content column. */
+  .apphead{max-width:1180px;margin-left:calc(var(--rail) + max(0px,(100vw - var(--rail) - 1180px) / 2));padding-left:20px;padding-right:20px}
+  .apphead-brand{visibility:hidden}
+}
+@media (prefers-reduced-motion: reduce){.hicon svg{animation:none!important}}
