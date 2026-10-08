@@ -1,6 +1,7 @@
 import { newId } from "../sync/engine";
 import { openTracker } from "./tracker";
 import { Icon } from "./icons";
+import { RouteShape } from "./RouteShape";
 import { trackKindFor } from "./trackFor";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -136,6 +137,7 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
           )}
           {lg?.time && !formOpen ? (
             <div className="logged">
+              <RouteShape route={lg.route} size={72} />
               {lg.dist ? `${lg.dist} mi in ` : ""}{hms(lg.time)}
               <small>{[lg.dist ? (c.kind === "bike" ? mph(lg.time, lg.dist) : pace(lg.time, lg.dist)) : null, lg.hr ? `${lg.hr} bpm` : null, `~${cardioCal(state, kind, lg, w)} cal`, lg.feel ? "Felt " + FEEL[lg.feel].toLowerCase() : null].filter(Boolean).join(", ")}</small>
             </div>
@@ -298,6 +300,7 @@ export function ExtraSection({ w, d, startOpen = false }: { w: number; d: number
       <p>Walks, hikes, rides, anything outside the plan.</p>
       {list.map((x, i) => (
         <div className="lvl" key={i}>
+          <RouteShape route={x.route} size={48} />
           <div>
             <b>{extraKind(x.kind).label}{x.label ? ": " + x.label : ""}</b>
             <small>{[x.steps ? `${x.steps.toLocaleString("en-US")} steps` : null, x.dist ? `${x.dist} mi` : null, x.time ? `${Math.round(x.time / 60)} min` : null, `~${extraCal(state, x, w)} cal`].filter(Boolean).join(", ")}</small>

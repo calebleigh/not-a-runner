@@ -829,3 +829,5 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-iv.jog{background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border:0;color:var(--on-accent)}
 .trk-iv.jog small{color:inherit;opacity:.8}
 .trk-voice{flex:none;padding:6px 10px;border-radius:min(10px,var(--rmax));border:1px solid currentColor;background:none;color:inherit;font:700 12px var(--body);opacity:.75;cursor:pointer}
+.routeshape{flex:none;display:block;border-radius:min(10px,var(--rmax));background:var(--surface2)}
+.logged .routeshape{float:right;margin-left:12px}
