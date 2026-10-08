@@ -6,7 +6,8 @@ The app is called **Not a Runner**. Read `docs/PRODUCT.md` before making product
 
 ## Where things stand
 
-- Stage 1 is built: Vite + React app in `src/`, deployed to https://not-a-runner.vercel.app (old address https://half-training-app.vercel.app still serves it; data lives per address, so users move with Export/Import). Plan logic is in `src/training/` with a parity test against the prototype.
+- Stages 1 and 2 are done and live at https://not-a-runner.vercel.app (old address https://half-training-app.vercel.app still serves it; data lives per address, so users move with Export/Import). Plan logic is in `src/training/`: `spec.ts` turns a profile into a plan spec (mapped onto the owner's 52-week template), `plan.ts` builds sessions. `parity.test.ts` keeps the owner's plan identical to the prototype; `generator.test.ts` checks generated plans. Next is Stage 3 (accounts and sync).
+- `npm run screens` opens the Fold 8 preview (cover and inner screens, synced). The owner reviews UI changes there before production deploys.
 - `reference/prototype.html` is a working single-file prototype. It has the full 52-week half-marathon plan, logging, adaptive plan rules, gear list, steps, weigh-ins, stats and the current visual design. Treat it as the source of truth for behavior and look. Port its logic; do not copy its single-file structure.
 - The prototype was built inside Claude's artifact viewer. Its `window.claude.use("db")` sync only works there. Replace it.
 - `reference/design/` holds the reference screens the owner likes. The orange-on-charcoal palette is final; take layout ideas from the others (hero card, big numbers, week pills, session cards), not their colors.
