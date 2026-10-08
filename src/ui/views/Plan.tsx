@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  DN, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac,
+  DN, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac, weekProgress,
   type CardioKind, type Day,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -32,7 +32,7 @@ export function Plan() {
 
   const daysLeft = Math.max(0, daysBetween(today, model.spec.race!));
   const w = model.weeks[planWeek - 1], weekEnd = dateOf(model.spec, planWeek, 6);
-  const ids = w.days.flatMap((x) => x.ids), doneN = ids.filter((i) => state.done[i]).length;
+  const prog = weekProgress(state, w);
   const isCur = planWeek === curWeek;
   const ph = phaseOf(model.spec, curWeek), P = phases[ph];
 
@@ -127,7 +127,10 @@ export function Plan() {
           <section className="panelc slist" aria-label="Sessions">
             <div className="slhead">
               <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}, {phases[phaseOf(model.spec, planWeek)].name}</span></span>
-              <b>{doneN} / {ids.length} done</b>
+              <span className="wkcounts">
+                <b>{prog.cardioDone} / {prog.cardioTotal} cardio</b>
+                {prog.strengthTotal > 0 && <small>Strength {prog.strengthDone} / {prog.strengthTotal}</small>}
+              </span>
             </div>
             {rows.map((r) => (
               <button key={r.d} className={"srow " + r.status + (r.isToday ? " today" : "") + (r.rest ? " rest" : "")}

@@ -189,7 +189,7 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 
 /* Bottom nav */
 .bnav{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;
-  background:rgba(20,19,18,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  background:var(--paper);border-top:1px solid var(--line);
   padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto}
 .bnav button{background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font:600 12px var(--body);padding:6px 0;cursor:pointer;transition:color .2s}
 .bnav button svg{transition:transform .25s var(--ease)}
@@ -308,7 +308,7 @@ html,body{overscroll-behavior-y:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-look,.area-how{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -337,8 +337,8 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you you" "look look" "how how" "data data";gap:22px 18px}
-  .area-you{grid-area:you}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
+  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
   /* How it works runs in two columns across the full width. */
@@ -517,3 +517,11 @@ input[type="date"].txtin{width:150px;color-scheme:dark}
 .kinds button{border:1px solid var(--line);background:var(--surface2);border-radius:min(12px,var(--rmax));padding:10px 2px;font:600 14px var(--body);cursor:pointer}
 .kinds button.sel{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .fields.two{grid-template-columns:repeat(2,1fr);margin-top:10px}
+/* Week counts: cardio is the main number, strength sits under it */
+.wkcounts{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.wkcounts small{font:600 12px var(--body);color:var(--muted)}
+/* On/off switch */
+.switch{flex:none;position:relative;width:52px;height:30px;border-radius:min(15px,var(--rmax));border:1px solid var(--line);background:var(--surface2);cursor:pointer;padding:0;transition:background .2s}
+.switch span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:min(11px,var(--rmax));background:var(--muted);transition:transform .2s var(--ease),background .2s}
+.switch.on{background:var(--accent);border-color:var(--accent)}
+.switch.on span{transform:translateX(22px);background:var(--on-accent)}

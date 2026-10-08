@@ -144,6 +144,24 @@ function AboutYou() {
   );
 }
 
+/** Plan options. Race name, date and training days join this section with the plan generator. */
+function YourPlan() {
+  const { state, update } = useApp();
+  const on = state.settings.strength !== false;
+  return (
+    <div className="area-plan">
+      <div className="sechead"><h3 className="sectitle">Your plan</h3></div>
+      <section className="card group">
+        <div className="setrow">
+          <span>Strength workouts<small>{on ? "About 13 minutes on training days. Tracked on its own, never counted against your week." : "Off. Not scheduled and not shown."}</small></span>
+          <button role="switch" aria-checked={on} aria-label="Strength workouts" className={"switch" + (on ? " on" : "")}
+            onClick={() => update((s) => { if (on) s.settings.strength = false; else delete s.settings.strength; })}><span /></button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function Settings() {
   const { openSheet } = useApp();
   return (
@@ -151,6 +169,7 @@ export function Settings() {
       <h1 className="pagetitle">Settings</h1>
       <div className="setgrid">
       <AboutYou />
+      <YourPlan />
       <LookPicker />
       <div className="area-how">
       <div className="sechead"><h3 className="sectitle">How it works</h3></div>

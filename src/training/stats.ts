@@ -138,15 +138,26 @@ export function stepStats(state: State, inR: DateRange = ALL) {
   return { sum, days, best, avg: days ? Math.round(sum / days) : 0 };
 }
 
-export function weekFrac(state: State, w: Week): number {
-  const ids = w.days.flatMap((x) => x.ids);
-  return ids.filter((i) => state.done[i]).length / ids.length;
+/**
+ * Progress counts cardio only; strength is tracked on its own so skipping it never drags the week down.
+ * Rest and race-day "sessions" count once marked done, like any other cardio slot.
+ */
+export function weekProgress(state: State, w: Week) {
+  const cardio = w.days.map((x) => x.ids[0]), strength = w.days.filter((x) => x.st && !x.st.light).map((x) => x.ids[1]);
+  const done = (ids: string[]) => ids.filter((i) => state.done[i]).length;
+  return { cardioDone: done(cardio), cardioTotal: cardio.length, strengthDone: done(strength), strengthTotal: strength.length };
 }
 
+/** Share of the week's cardio done, 0 to 1. */
+export function weekFrac(state: State, w: Week): number {
+  const p = weekProgress(state, w);
+  return p.cardioTotal ? p.cardioDone / p.cardioTotal : 0;
+}
+
+/** 1 when the day's cardio is done, else 0 (strength doesn't count toward progress). */
 export function dayDoneFrac(model: Model, w: number, d: number): number {
   const day = dayAt(model, w, d);
-  if (!day) return 0;
-  return day.ids.filter((i) => model.state.done[i]).length / day.ids.length;
+  return day && model.state.done[day.ids[0]] ? 1 : 0;
 }
 
 /** Logged cardio with distance and time that counts toward race times. */

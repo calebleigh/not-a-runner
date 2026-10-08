@@ -32,6 +32,8 @@ export interface Settings {
   why?: string;
   /** Accent gradient, light end and dark end as #RRGGBB. Missing means the default orange. */
   accent?: { hi: string; lo: string };
+  /** False turns strength workouts off (not scheduled, not shown). Missing means on. */
+  strength?: boolean;
   /** Corner style; also picks the matching logo. Missing means squared. */
   shape?: "round" | "square";
 }

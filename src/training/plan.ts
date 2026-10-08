@@ -168,10 +168,11 @@ export function strength(ctx: PlanCtx, n: number, d: number): Strength {
 export function buildWeeks(ctx: PlanCtx): Week[] {
   const W: Week[] = [];
   const { spec } = ctx;
+  const strengthOn = ctx.state.settings.strength !== false;
   for (let n = 1; n <= spec.weeks; n++) {
     const nd = n === spec.weeks ? spec.raceDay + 1 : 5, days: Day[] = [];
     for (let d = 0; d < nd; d++) {
-      const c = cardioFor(ctx, n, d), st = d < 5 ? strength(ctx, n, d) : null;
+      const c = cardioFor(ctx, n, d), st = d < 5 && strengthOn ? strength(ctx, n, d) : null;
       days.push({ d, date: dateOf(spec, n, d), c, st, ids: st ? [`${n}-${d}-c`, `${n}-${d}-s`] : [`${n}-${d}-c`] });
     }
     W.push({ n, s: dateOf(spec, n, 0), days, load: days.reduce((a, x) => a + x.c.m + (x.st ? x.st.min : 0), 0) });

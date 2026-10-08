@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
+  LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
   dayAt, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -24,8 +24,8 @@ export function Home() {
   const { curWeek, rawWeek, dow, todayIdx, today } = model;
   const wk = model.weeks[curWeek - 1];
   const name = (state.settings.name || "").trim();
-  const ids = wk.days.flatMap((x) => x.ids);
-  const doneN = ids.filter((i) => state.done[i]).length, pct = Math.round(100 * doneN / ids.length);
+  const prog = weekProgress(state, wk);
+  const pct = prog.cardioTotal ? Math.round(100 * prog.cardioDone / prog.cardioTotal) : 0;
   const day = todayDay(model);
 
   const chips: ReactNode[] = [];
@@ -74,7 +74,13 @@ export function Home() {
       <div className="cols">
       <div className="col">
       <section className="panelc vol">
-        <div className="top"><span className="lbl">This week</span><b>{doneN} / {ids.length} done</b></div>
+        <div className="top">
+          <span className="lbl">This week</span>
+          <span className="wkcounts">
+            <b>{prog.cardioDone} / {prog.cardioTotal} cardio</b>
+            {prog.strengthTotal > 0 && <small>Strength {prog.strengthDone} / {prog.strengthTotal}</small>}
+          </span>
+        </div>
         <div className="meter">
           <Grow pct={pct} />
           <div className="mtxt"><span className="num"><Num value={pct} /><span className="unit">%</span></span><em>{phases[phaseOf(model.spec, curWeek)].name}</em></div>
