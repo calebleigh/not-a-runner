@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { DN, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { DN, WHY_IDEAS, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
 import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
 import { Logo } from "./Logo";
@@ -20,7 +20,6 @@ const LEVELS: [StartLevel, string, string][] = [
   ["run_3_miles", "I can run 3 miles", "Slowly counts."],
   ["run_6_plus", "I can run 6 miles or more", "You'll start further in."],
 ];
-const WHY_IDEAS = ["Finish my first race", "Lose weight", "Keep up with my kids", "Feel better day to day", "Prove I can"];
 const GEAR_OPTIONS: [string, string][] = [
   ["shoes", "Running shoes"], ["mat", "Exercise mat"], ["bands", "Resistance bands"],
   ["kettlebell", "Kettlebell"], ["roller", "Foam roller"], ["fitband", "Heart rate band"],
@@ -38,7 +37,8 @@ interface Draft {
   birthday: string;
   weight: string;
   goalWeight: string;
-  why: string;
+  whys: string[];
+  whyText: string;
   gear: string[];
 }
 
@@ -67,7 +67,7 @@ export function Onboarding() {
   const { model, update, openSheet, setTab } = useApp();
   const start = onboardingStart(model.today);
   const [step, setStep] = useState(0);
-  const [d, setD] = useState<Draft>({ goal: null, raceName: "", raceDate: "", startLevel: null, days: [0, 1, 2, 3, 4], hasBike: true, impactSensitive: false, name: "", birthday: "", weight: "", goalWeight: "", why: "", gear: [] });
+  const [d, setD] = useState<Draft>({ goal: null, raceName: "", raceDate: "", startLevel: null, days: [0, 1, 2, 3, 4], hasBike: true, impactSensitive: false, name: "", birthday: "", weight: "", goalWeight: "", whys: [], whyText: "", gear: [] });
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
   const isRace = d.goal !== null && d.goal !== "fitness";
   const minRace = ymd(addDays(model.today, 14)), maxRace = ymd(addDays(start, 52 * 7 - 1));
@@ -90,12 +90,12 @@ export function Onboarding() {
     if (!profile) return;
     update((s) => {
       s.plan = { profile };
-      const n = d.name.trim(), w = parseFloat(d.weight), gw = parseFloat(d.goalWeight), why = d.why.trim();
+      const n = d.name.trim(), w = parseFloat(d.weight), gw = parseFloat(d.goalWeight), whys = [...d.whys, d.whyText.trim()].filter(Boolean);
       if (n) s.settings.name = n;
       if (parseBirthday(d.birthday)) s.settings.birthday = d.birthday;
       if (w > 50 && w < 600) s.settings.startWt = Math.round(w * 10) / 10;
       if (gw > 50 && gw < 600) s.settings.goalWt = Math.round(gw * 10) / 10;
-      if (why) s.settings.why = why;
+      if (whys.length) s.settings.whys = whys;
       for (const g of d.gear) s.gear[g] = 1;
     });
     setTab("home");
@@ -175,12 +175,13 @@ export function Onboarding() {
       break;
     case "why":
       title = "Why are you doing this?";
-      sub = "Optional. It shows on Home on days without a tip, for the mornings you need it.";
+      sub = "Pick as many as you like. It shows on Home on days without a tip, for the mornings you need it.";
       body = <>
-        <div className="onbchips">{WHY_IDEAS.map((w) => <button key={w} aria-pressed={d.why === w} className={d.why === w ? "on" : ""} onClick={() => set({ why: w })}>{w}</button>)}</div>
-        <label className="onbfield">Or in your own words<input className="xt" maxLength={80} placeholder="Finish a half before I turn 40" value={d.why} onChange={(e) => set({ why: e.target.value })} /></label>
+        <div className="onbchips">{WHY_IDEAS.map((w) => <button key={w} aria-pressed={d.whys.includes(w)} className={d.whys.includes(w) ? "on" : ""}
+          onClick={() => setD((x) => ({ ...x, whys: x.whys.includes(w) ? x.whys.filter((y) => y !== w) : [...x.whys, w] }))}>{w}</button>)}</div>
+        <label className="onbfield">Anything else, in your own words<input className="xt" maxLength={80} placeholder="Finish a half before I turn 40" value={d.whyText} onChange={(e) => set({ whyText: e.target.value })} /></label>
       </>;
-      cta = d.why.trim() ? "Next" : "Skip";
+      cta = d.whys.length || d.whyText.trim() ? "Next" : "Skip";
       break;
     case "gear":
       title = "Got any of these?";

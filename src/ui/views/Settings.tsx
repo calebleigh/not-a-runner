@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { addDays, birthdayInfo, changePlan, changeWeek, parseBirthday, tooSoon, type PlanProfile, type RaceGoal } from "../../training";
+import { WHY_IDEAS, addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
+import { replaySplash } from "../Splash";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Logo } from "../Logo";
@@ -82,6 +83,10 @@ function LookPicker() {
           })}
         </div>
         <p className="setnote">Changes the whole app, logo included. The home screen icon stays as it is.</p>
+        <div className="setrow">
+          <span>Launch animation<small>Plays when the app opens</small></span>
+          <button className="chip" onClick={replaySplash}>Replay</button>
+        </div>
       </section>
     </div>
   );
@@ -100,7 +105,10 @@ function AboutYou() {
   const st = state.settings;
   const [name, setName] = useField(st.name || "");
   const [bday, setBday] = useField(st.birthday || "");
-  const [why, setWhy] = useField(st.why || "");
+  const whys = whyList(st);
+  const [newWhy, setNewWhy] = useState("");
+  const setWhys = (list: string[]) => update((s) => { delete s.settings.why; if (list.length) s.settings.whys = list; else delete s.settings.whys; });
+  const addWhy = (w: string) => { const v = w.trim(); if (v && !whys.includes(v)) setWhys([...whys, v]); setNewWhy(""); };
   const [wt, setWt] = useField(st.startWt ? String(st.startWt) : "");
   const [goal, setGoal] = useField(st.goalWt ? String(st.goalWt) : "");
   const b = birthdayInfo(st.birthday, now);
@@ -121,11 +129,19 @@ function AboutYou() {
             onChange={(e) => setBday(e.target.value)}
             onBlur={() => update((s) => { if (parseBirthday(bday)) s.settings.birthday = bday; else delete s.settings.birthday; })} />
         </label>
-        <label className="setrow wide" htmlFor="pWhy">
-          <span>Your why<small>Shows on Home when there's no tip for the day</small></span>
-          <input className="txtin whyin" id="pWhy" maxLength={80} placeholder="Finish a half before I turn 40" value={why} onChange={(e) => setWhy(e.target.value)}
-            onBlur={() => update((s) => { const v = why.trim(); if (v) s.settings.why = v; else delete s.settings.why; })} />
-        </label>
+        <div className="setrow wide whyrow">
+          <span>Your why<small>One shows on Home each day there's no tip</small></span>
+          {whys.length > 0 && <ul className="whylist">{whys.map((w) => (
+            <li key={w}><span>{formatWhy(w)}</span><button className="xbtn" aria-label={`Remove ${w}`} onClick={() => setWhys(whys.filter((x) => x !== w))}>&times;</button></li>
+          ))}</ul>}
+          <form className="whyadd" onSubmit={(e) => { e.preventDefault(); addWhy(newWhy); }}>
+            <input className="txtin whyin" id="pWhy" maxLength={80} placeholder="Add a reason" value={newWhy} onChange={(e) => setNewWhy(e.target.value)} />
+            <button className="chip" type="submit" disabled={!newWhy.trim()}>Add</button>
+          </form>
+          {WHY_IDEAS.some((w) => !whys.includes(w)) && <div className="whyideas">{WHY_IDEAS.filter((w) => !whys.includes(w)).map((w) => (
+            <button key={w} className="chip" onClick={() => addWhy(w)}>+ {w}</button>
+          ))}</div>}
+        </div>
         <label className="setrow" htmlFor="startWt">
           <span>Starting weight<small>For calorie estimates</small></span>
           <span className="unitin">

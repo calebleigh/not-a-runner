@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import {
   LONGDAY, birthdayInfo, coachTip, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
-  dayAt, type Tip,
+  dayAt, whyForDay, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -46,7 +46,7 @@ export function Home() {
 
   const tip = coachTip(model, now.getHours());
   const bday = birthdayInfo(state.settings.birthday, now);
-  const why = (state.settings.why || "").trim();
+  const why = whyForDay(state.settings, now);
   const runTip = (t: Tip) => {
     if (t.action?.type === "steps") openSheet({ kind: "steps", date: t.action.date });
     else if (t.action?.type === "plan") setTab("plan");

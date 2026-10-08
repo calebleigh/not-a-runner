@@ -29,7 +29,9 @@ export interface Settings {
   /** "YYYY-MM-DD" */
   birthday?: string;
   /** Short personal reason for training, shown on Home. */
+  /** Older saves: one line. Newer saves use `whys`. */
   why?: string;
+  whys?: string[];
   /** Accent gradient, light end and dark end as #RRGGBB. Missing means the default orange. */
   accent?: { hi: string; lo: string };
   /** False turns strength workouts off (not scheduled, not shown). Missing means on. */

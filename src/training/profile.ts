@@ -1,5 +1,6 @@
 // Birthday math. Dates are local calendar days; a Feb 29 birthday is celebrated Feb 28 in other years.
 import { daysBetween, startOfDay } from "./calendar";
+import type { Settings } from "./types";
 
 export function parseBirthday(s: string | undefined): { y: number; m: number; d: number } | null {
   const m = s?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -38,3 +39,28 @@ export function isBirthdayOn(birthday: string | undefined, date: Date): boolean 
   const day = birthdayIn(b, date.getFullYear());
   return day.getMonth() === date.getMonth() && day.getDate() === date.getDate() && date.getFullYear() >= b.y;
 }
+
+/** The user's reasons for training. Older saves kept one comma-separated line in `why`. */
+export function whyList(settings: Settings): string[] {
+  if (Array.isArray(settings.whys)) return settings.whys.map((w) => w.trim()).filter(Boolean);
+  return (settings.why || "").split(/[,\n]/).map((w) => w.trim()).filter(Boolean);
+}
+
+/** A reason written as an encouraging sentence: capital first letter, ends with a period. */
+export function formatWhy(w: string): string {
+  const t = w.trim().replace(/\s+/g, " ");
+  if (!t) return "";
+  const s = t[0].toUpperCase() + t.slice(1);
+  return /[.!?]$/.test(s) ? s : s + ".";
+}
+
+/** One reason per day, rotating, the same all day. */
+export function whyForDay(settings: Settings, today: Date): string | null {
+  const list = whyList(settings);
+  if (!list.length) return null;
+  const day = Math.floor(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000);
+  return formatWhy(list[day % list.length]);
+}
+
+/** Suggested reasons, offered in onboarding and Settings. */
+export const WHY_IDEAS = ["Finish my first race", "Lose weight", "Keep up with my kids", "Feel better day to day", "Prove I can"];

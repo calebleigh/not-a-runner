@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 
+const REPLAY = "splash-replay";
+/** Plays the launch animation again (the Replay button in Settings). */
+export const replaySplash = () => window.dispatchEvent(new Event(REPLAY));
+
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LENGTH = REDUCED ? 700 : 1850;
 
@@ -50,14 +54,20 @@ function Mark({ round }: { round: boolean }) {
 
 /** Plays on every real load of the app: a launch from closed, or a refresh. Tap to skip. */
 export function Splash() {
-  const [on, setOn] = useState(true);
+  const [run, setRun] = useState(1);
   useEffect(() => {
-    const t = setTimeout(() => setOn(false), LENGTH);
-    return () => clearTimeout(t);
+    const again = () => setRun((n) => n + 1);
+    window.addEventListener(REPLAY, again);
+    return () => window.removeEventListener(REPLAY, again);
   }, []);
-  if (!on) return null;
+  useEffect(() => {
+    if (!run) return;
+    const t = setTimeout(() => setRun(0), LENGTH);
+    return () => clearTimeout(t);
+  }, [run]);
+  if (!run) return null;
   return (
-    <div className={"splash" + (REDUCED ? " still" : "")} onClick={() => setOn(false)} role="presentation">
+    <div key={run} className={"splash" + (REDUCED ? " still" : "")} onClick={() => setRun(0)} role="presentation">
       <div className="sp-shake">
         <Mark round={false} />
         <Mark round />
