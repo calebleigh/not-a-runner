@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { birthdayInfo, parseBirthday } from "../../training";
 import { useApp } from "../app-state";
+import { Icon } from "../icons";
 import { Logo } from "../Logo";
 import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Preset, type Shape } from "../theme";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
@@ -84,47 +86,86 @@ function LookPicker() {
   );
 }
 
-export function Settings() {
-  const { state, update, openSheet } = useApp();
-  const [name, setName] = useState(state.settings.name || "");
-  const [wt, setWt] = useState(state.settings.startWt ? String(state.settings.startWt) : "");
+/** Text field state that follows the saved value when it changes elsewhere (import, the other preview screen, sync). */
+function useField(saved: string): [string, (v: string) => void] {
+  const [v, setV] = useState(saved);
+  useEffect(() => { setV(saved); }, [saved]);
+  return [v, setV];
+}
+
+/** Name, birthday, your why, starting and goal weight. */
+function AboutYou() {
+  const { state, update, now } = useApp();
+  const st = state.settings;
+  const [name, setName] = useField(st.name || "");
+  const [bday, setBday] = useField(st.birthday || "");
+  const [why, setWhy] = useField(st.why || "");
+  const [wt, setWt] = useField(st.startWt ? String(st.startWt) : "");
+  const [goal, setGoal] = useField(st.goalWt ? String(st.goalWt) : "");
+  const b = birthdayInfo(st.birthday, now);
+  const bdayNote = !b ? "We'll have cake on the day" : b.isToday ? `Happy birthday! ${b.age} today` : `Turning ${b.turning} in ${b.daysUntil} day${b.daysUntil === 1 ? "" : "s"}`;
+  const weight = (v: string, key: "startWt" | "goalWt") => update((s) => { const n = parseFloat(v); if (n > 50 && n < 600) s.settings[key] = n; else delete s.settings[key]; });
   return (
-    <section className="view stack" aria-label="Settings">
-      <h1 className="pagetitle">Settings</h1>
-      <div className="setgrid">
-      <div className="area-you">
-      <div className="sechead"><h3 className="sectitle">About you</h3></div>
-      <section className="card group">
+    <div className="area-you">
+      <div className="sechead"><h3 className="sectitle">About you</h3>{b && <span className="lbl">{b.age} years</span>}</div>
+      <section className="card group yougrid">
         <label className="setrow" htmlFor="pName">
           <span>Name<small>For your greeting</small></span>
           <input className="txtin" id="pName" maxLength={20} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
             onBlur={() => update((s) => { const v = name.trim(); if (v) s.settings.name = v; else delete s.settings.name; })} />
         </label>
+        <label className={"setrow" + (b?.isToday ? " bdaytoday" : "")} htmlFor="pBday">
+          <span className="withicon">{b?.isToday && <Icon.cake />}<span>Birthday<small>{bdayNote}</small></span></span>
+          <input className="txtin" id="pBday" type="date" max={new Date().toISOString().slice(0, 10)} value={bday}
+            onChange={(e) => setBday(e.target.value)}
+            onBlur={() => update((s) => { if (parseBirthday(bday)) s.settings.birthday = bday; else delete s.settings.birthday; })} />
+        </label>
+        <label className="setrow wide" htmlFor="pWhy">
+          <span>Your why<small>Shows on Home when there's no tip for the day</small></span>
+          <input className="txtin whyin" id="pWhy" maxLength={80} placeholder="Finish a half before I turn 40" value={why} onChange={(e) => setWhy(e.target.value)}
+            onBlur={() => update((s) => { const v = why.trim(); if (v) s.settings.why = v; else delete s.settings.why; })} />
+        </label>
         <label className="setrow" htmlFor="startWt">
           <span>Starting weight<small>For calorie estimates</small></span>
           <span className="unitin">
-            <input type="number" inputMode="decimal" id="startWt" min="80" max="500" placeholder="195" value={wt} onChange={(e) => setWt(e.target.value)}
-              onBlur={() => update((s) => { const v = parseFloat(wt); if (v > 50 && v < 600) s.settings.startWt = v; else delete s.settings.startWt; })} />
+            <input type="number" inputMode="decimal" id="startWt" min="80" max="500" placeholder="195" value={wt} onChange={(e) => setWt(e.target.value)} onBlur={() => weight(wt, "startWt")} />
+            <em>lb</em>
+          </span>
+        </label>
+        <label className="setrow" htmlFor="goalWt">
+          <span>Goal weight<small>Optional, shown on your weight chart</small></span>
+          <span className="unitin">
+            <input type="number" inputMode="decimal" id="goalWt" min="80" max="500" placeholder="none" value={goal} onChange={(e) => setGoal(e.target.value)} onBlur={() => weight(goal, "goalWt")} />
             <em>lb</em>
           </span>
         </label>
       </section>
-      </div>
-      <div className="area-data">
-      <div className="sechead"><h3 className="sectitle">App and data</h3></div>
-      <section className="card group">
-        <div className="setrow">
-          <span>Backup<small>Saved on this phone. Export a copy now and then.</small></span>
-          <span className="btnpair"><button className="chip" onClick={() => openSheet({ kind: "export" })}>Export</button><button className="chip" onClick={() => openSheet({ kind: "import" })}>Import</button></span>
-        </div>
-        <VersionRow />
-      </section>
-      </div>
+    </div>
+  );
+}
+
+export function Settings() {
+  const { openSheet } = useApp();
+  return (
+    <section className="view stack" aria-label="Settings">
+      <h1 className="pagetitle">Settings</h1>
+      <div className="setgrid">
+      <AboutYou />
       <LookPicker />
       <div className="area-how">
       <div className="sechead"><h3 className="sectitle">How it works</h3></div>
       <section className="card group howlist">
         {HOWTO.map(([t, d]) => <details className="acc" key={t}><summary>{t}</summary><p>{d}</p></details>)}
+      </section>
+      </div>
+      <div className="area-data">
+      <div className="sechead"><h3 className="sectitle">App and data</h3></div>
+      <section className="card group datagrid">
+        <div className="setrow">
+          <span>Backup<small>Saved on this phone. Export a copy now and then.</small></span>
+          <span className="btnpair"><button className="chip" onClick={() => openSheet({ kind: "export" })}>Export</button><button className="chip" onClick={() => openSheet({ kind: "import" })}>Import</button></span>
+        </div>
+        <VersionRow />
       </section>
       </div>
       </div>

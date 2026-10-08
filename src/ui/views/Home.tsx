@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import {
-  LONGDAY, WEEKS, coachTip, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
+  LONGDAY, WEEKS, birthdayInfo, coachTip, dayDoneFrac, dayKey, daysBetween, hms, idParts, kfmt, phaseOf, phases, timedCardioLogs, todayDay,
   dayAt, type Tip,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -44,6 +44,8 @@ export function Home() {
   chips.push(<Chip key="extra" ok={xs.length > 0} ic={<Icon.plus />} big={xs.length ? xmi.toFixed(1) + " mi" : "Extra"} sub={xs.length ? `${xs.length} extra logged` : "Walk, hike, ride"} onClick={() => openSheet({ kind: "extra", date: today })} />);
 
   const tip = coachTip(model, now.getHours());
+  const bday = birthdayInfo(state.settings.birthday, now);
+  const why = (state.settings.why || "").trim();
   const runTip = (t: Tip) => {
     if (t.action?.type === "steps") openSheet({ kind: "steps", date: t.action.date });
     else if (t.action?.type === "plan") setTab("plan");
@@ -57,7 +59,11 @@ export function Home() {
       <div className="greet">
         <div>
           <div className="lbl">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div>
-          <h1>{name ? `Ready, ${name}?` : "Ready to move?"}</h1>
+          {bday?.isToday ? (
+            <h1 className="bdayhello"><Icon.cake />{name ? `Happy birthday, ${name}!` : "Happy birthday!"}</h1>
+          ) : (
+            <h1>{name ? `Ready, ${name}?` : "Ready to move?"}</h1>
+          )}
         </div>
         <div className="wkbadge" style={{ ["--p" as string]: `${Math.round(100 * (curWeek - 1) / WEEKS)}%` }} title={`Week ${curWeek} of ${WEEKS}`}>
           <span>W{curWeek}</span>
@@ -94,13 +100,15 @@ export function Home() {
       <div className="col">
       <div className="chips" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
 
-      {tip && (
+      {tip ? (
         <div className={"coach" + (tip.adj ? " adj" : "")}>
           <span className="dot2" />
           <span>{tip.t}</span>
           {tip.a && <button onClick={() => runTip(tip)}>{tip.a}</button>}
         </div>
-      )}
+      ) : why ? (
+        <div className="coach why"><span className="dot2" /><span><small>Your why</small>{why}</span></div>
+      ) : null}
 
       {last && (() => {
         const [id, l] = last, p = idParts(id), b = dayAt(model, p.w, p.d)?.c;

@@ -331,7 +331,7 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you data" "look look" "how how";gap:22px 18px}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you you" "look look" "how how" "data data";gap:22px 18px}
   .area-you{grid-area:you}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
@@ -473,3 +473,25 @@ html,body{overscroll-behavior-y:none}
 .shapeprev{flex:none;width:30px;height:30px;border:3px solid var(--accent);background:var(--accent-soft)}
 .shapebtn.round .shapeprev{border-radius:10px}
 .shapebtn.square .shapeprev{border-radius:4px}
+
+/* About you: two columns of rows when wide; "Your why" spans both */
+.withicon{display:flex;align-items:center;gap:10px}
+.withicon .cake{width:28px;height:28px;color:var(--accent);flex:none}
+.setrow.wide{flex-direction:column;align-items:stretch;gap:8px}
+.whyin{width:100%;text-align:left}
+input[type="date"].txtin{width:150px;color-scheme:dark}
+.bdaytoday small{color:var(--accent);font-weight:600}
+@media (prefers-reduced-motion: no-preference){
+  .cake .flame{transform-origin:12px 5.5px;animation:flicker 1.4s ease-in-out infinite}
+}
+@keyframes flicker{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.15,.9) rotate(3deg)}}
+@media (min-width:900px){
+  .yougrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+  .yougrid .setrow.wide{grid-column:1/-1}
+  .yougrid .setrow:nth-last-child(-n+2){border-bottom:0}
+  .datagrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+  .datagrid .setrow{border-bottom:0}
+}
+.bdayhello{display:flex;align-items:center;gap:10px}
+.bdayhello .cake{width:34px;height:34px;flex:none;color:var(--accent)}
+.coach.why small{display:block;font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}

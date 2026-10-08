@@ -24,6 +24,11 @@ export interface Extra {
 export interface Settings {
   name?: string;
   startWt?: number;
+  goalWt?: number;
+  /** "YYYY-MM-DD" */
+  birthday?: string;
+  /** Short personal reason for training, shown on Home. */
+  why?: string;
   /** Accent gradient, light end and dark end as #RRGGBB. Missing means the default orange. */
   accent?: { hi: string; lo: string };
   /** Corner style; also picks the matching logo. Missing means squared. */

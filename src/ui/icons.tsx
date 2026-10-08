@@ -16,6 +16,15 @@ export const Icon = {
   plan: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>,
   stats: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-8M21 20H3" /></svg>,
   settings: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+  cake: () => (
+    <svg viewBox="0 0 24 24" {...S} aria-hidden="true" className="cake">
+      <path className="flame" d="M12 2.2c1.2 1.3 1.2 2.6 0 3.3-1.2-.7-1.2-2 0-3.3z" style={{ fill: "var(--accent)", stroke: "var(--accent)" }} strokeWidth={1} />
+      <path d="M12 6v3" />
+      <rect x="6" y="9" width="12" height="5" rx="1.5" />
+      <rect x="3.5" y="14" width="17" height="7" rx="1.5" />
+      <path d="M3.5 17c1.4 0 1.4-1.2 2.8-1.2s1.4 1.2 2.8 1.2 1.4-1.2 2.9-1.2 1.4 1.2 2.8 1.2 1.4-1.2 2.8-1.2 1.4 1.2 2.9 1.2" />
+    </svg>
+  ),
   bigPlus: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} strokeWidth={2.8} aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>,
   box: () => <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" style={{ stroke: "var(--on-accent)" }} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 };

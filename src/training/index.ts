@@ -9,3 +9,4 @@ export * from "./coach";
 export * from "./backup";
 export * from "./format";
 export * from "./extras";
+export * from "./profile";

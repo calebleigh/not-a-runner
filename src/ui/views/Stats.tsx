@@ -164,17 +164,19 @@ export function Stats() {
   function weight() {
     const ws = Object.entries(state.weights).map(([w, v]) => [+w, v] as const).sort((a, b) => a[0] - b[0]);
     const start = state.settings.startWt || ws[0]?.[1];
+    const goal = state.settings.goalWt;
     let body;
     if (!ws.length || !start) body = <p className="foot" style={{ margin: 0 }}>No weigh-ins yet. Use the orange button on a Monday.</p>;
     else {
       const last = ws[ws.length - 1][1], ch = last - start;
       let chart = null;
       if (ws.length >= 2) {
-        const all = [start, ...ws.map((x) => x[1])], mn = Math.min(...all) - 2, mx = Math.max(...all) + 2;
+        const all = [start, ...ws.map((x) => x[1]), ...(goal ? [goal] : [])], mn = Math.min(...all) - 2, mx = Math.max(...all) + 2;
         const X = (w: number) => ((w - 1) / 51) * 500 + 10, Y = (v: number) => 100 - (v - mn) / (mx - mn) * 90;
         chart = (
           <svg viewBox="0 0 520 110" preserveAspectRatio="none" style={{ width: "100%", height: 100, marginTop: 8 }} role="img" aria-label="Weight by week">
             <line x1={10} x2={510} y1={Y(start)} y2={Y(start)} stroke="#2E2B28" strokeDasharray="4 4" />
+            {goal ? <line x1={10} x2={510} y1={Y(goal)} y2={Y(goal)} style={{ stroke: "var(--good)" }} strokeDasharray="6 5" opacity={0.7} /> : null}
             <polyline points={ws.map(([w, v]) => `${X(w).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")} fill="none" style={{ stroke: "var(--accent)" }} strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
           </svg>
         );
@@ -185,7 +187,7 @@ export function Stats() {
           <span style={{ fontWeight: 700, color: ch < 0 ? "var(--accent)" : "var(--muted)" }}>{ch > 0 ? "+" : ""}{ch.toFixed(1)} lb</span>
         </div>
         {chart}
-        <p className="foot">{ws.length >= 4 ? "A steady 0.5 to 1.5 lb a week is a healthy pace." : "Give it a few weeks before reading much into it."}</p>
+        <p className="foot">{goal && last > goal ? `${(last - goal).toFixed(1)} lb to your goal of ${goal}. ` : goal ? `You reached your goal of ${goal} lb. ` : ""}{ws.length >= 4 ? "A steady 0.5 to 1.5 lb a week is a healthy pace." : "Give it a few weeks before reading much into it."}</p>
       </>;
     }
     return (
