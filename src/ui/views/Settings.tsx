@@ -55,6 +55,8 @@ function LookPicker() {
   const preset = presetFor(cur);
   const shape: Shape = state.settings.shape ?? "square";
   const setShape = (v: Shape) => update((s) => { if (v === "round") s.settings.shape = v; else delete s.settings.shape; });
+  const mode = state.settings.mode ?? "dark";
+  const setMode = (v: "dark" | "light" | "system") => update((s) => { if (v === "dark") delete s.settings.mode; else s.settings.mode = v; });
   const setColor = (p: Preset) => update((s) => {
     if (sameAccent(p, DEFAULT_PRESET)) delete s.settings.accent;
     else s.settings.accent = { hi: p.hi, lo: p.lo };
@@ -62,8 +64,13 @@ function LookPicker() {
 
   return (
     <div className="area-look">
-      <div className="sechead"><h3 className="sectitle">Look</h3><span className="lbl">{shape === "square" ? "Squared" : "Rounded"}, {(preset ?? DEFAULT_PRESET).name}</span></div>
+      <div className="sechead"><h3 className="sectitle">Look</h3><span className="lbl">{mode === "light" ? "Light" : mode === "system" ? "Auto" : "Dark"}, {shape === "square" ? "Squared" : "Rounded"}, {(preset ?? DEFAULT_PRESET).name}</span></div>
       <section className="card lookcard">
+        <div className="seg modeseg" role="radiogroup" aria-label="Light or dark">
+          {([["dark", "Dark"], ["light", "Light"], ["system", "Match phone"]] as const).map(([v, l]) => (
+            <button key={v} role="radio" aria-checked={mode === v} className={mode === v ? "sel" : ""} onClick={() => setMode(v)}>{l}</button>
+          ))}
+        </div>
         <div className="shapes" role="radiogroup" aria-label="Shape">
           {(["square", "round"] as Shape[]).map((v) => (
             <button key={v} role="radio" aria-checked={shape === v} className={"shapebtn " + v + (shape === v ? " sel" : "")} onClick={() => setShape(v)}>
@@ -236,6 +243,7 @@ export function Settings() {
     <section className="view stack" aria-label="Settings">
       <h1 className="pagetitle">Settings</h1>
       <div className="setgrid">
+      <SyncSection />
       <AboutYou />
       <YourPlan />
       <LookPicker />
@@ -245,7 +253,6 @@ export function Settings() {
         {HOWTO.map(([t, d]) => <details className="acc" key={t}><summary>{t}</summary><p>{d}</p></details>)}
       </section>
       </div>
-      <SyncSection />
       <div className="area-data">
       <div className="sechead"><h3 className="sectitle">App and data</h3></div>
       <section className="card group datagrid">

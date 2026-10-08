@@ -17,6 +17,8 @@ export const PRESETS: Preset[] = [
 export const DEFAULT_PRESET = PRESETS[1];
 
 const PAPER = "#111110", INK = "#F4F1EC", DARK_TEXT = "#141210";
+/** Light mode background (matches --paper under [data-mode="light"]). */
+export const LIGHT_PAPER = "#F6F3EE";
 
 type RGB = [number, number, number];
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -53,6 +55,16 @@ export function hue(hex: string): number {
 
 /** Red accents would hide red warnings, so those themes warn in amber instead. */
 const WARN_AMBER = { bad: "#FFB020", soft: "#3A2B0E" };
+const WARN_AMBER_LIGHT = { bad: "#B26A00", soft: "#FBEBD3" };
+
+/** Darkens a color just enough to reach a contrast ratio against a background. */
+export function darkenTo(hex: string, bg: string, ratio: number): string {
+  for (let t = 0; t <= 1; t += 0.04) {
+    const c = mix(hex, "#000000", t);
+    if (contrast(c, bg) >= ratio) return c;
+  }
+  return "#000000";
+}
 export const isReddish = (hex: string) => { const h = hue(hex); return h <= 12 || h >= 340; };
 
 export const contrast = (a: string, b: string) => {
@@ -63,9 +75,16 @@ export const contrast = (a: string, b: string) => {
 export const sameAccent = (a: Accent, b: Accent) => a.hi.toUpperCase() === b.hi.toUpperCase() && a.lo.toUpperCase() === b.lo.toUpperCase();
 export const presetFor = (a: Accent) => PRESETS.find((p) => sameAccent(p, a));
 
-/** CSS custom properties for an accent; the empty object for the default (stylesheet values stay). */
-export function themeVars(a: Accent | undefined): Record<string, string> {
-  if (!a || !isHex(a.hi) || !isHex(a.lo) || sameAccent(a, DEFAULT_PRESET)) return {};
+/**
+ * CSS custom properties for an accent; the empty object for the default in dark mode (stylesheet
+ * values stay). Light mode always sets them: tints are mixed with the light background, and pale
+ * accents (Sunrise, Steel) are darkened so they stay readable on it.
+ */
+export function themeVars(a: Accent | undefined, light = false): Record<string, string> {
+  const valid = !!a && isHex(a.hi) && isHex(a.lo);
+  if (light) return lightVars(valid ? a! : DEFAULT_PRESET);
+  if (!valid || sameAccent(a!, DEFAULT_PRESET)) return {};
+  a = a!;
   const mid = presetFor(a)?.mid ?? mix(a.hi, a.lo, 0.5);
   const on = contrast(mid, DARK_TEXT) >= contrast(mid, INK) ? DARK_TEXT : INK;
   return {
@@ -81,6 +100,37 @@ export function themeVars(a: Accent | undefined): Record<string, string> {
   };
 }
 
+function lightVars(a: Accent): Record<string, string> {
+  const base = presetFor(a)?.mid ?? mix(a.hi, a.lo, 0.5);
+  const mid = darkenTo(base, LIGHT_PAPER, 3);
+  const hi = darkenTo(a.hi, LIGHT_PAPER, 2), lo = darkenTo(a.lo, LIGHT_PAPER, 3);
+  const on = contrast(mid, DARK_TEXT) >= contrast(mid, "#FFFFFF") ? DARK_TEXT : "#FFFFFF";
+  return {
+    "--accent": mid,
+    "--accent-hi": hi,
+    "--accent-lo": lo,
+    "--accent-soft": mix(LIGHT_PAPER, mid, 0.14),
+    "--accent-rgb": toRgb(mid).join(","),
+    "--sky": hi,
+    "--sky-soft": mix(LIGHT_PAPER, mid, 0.07),
+    "--on-accent": on,
+    ...(isReddish(mid) ? { "--bad": WARN_AMBER_LIGHT.bad, "--bad-soft": WARN_AMBER_LIGHT.soft } : {}),
+  };
+}
+
+/** Dark (the default), light, or follow the phone's setting. */
+export type Mode = "dark" | "light" | "system";
+export const isLight = (mode: Mode | undefined) =>
+  mode === "light" || (mode === "system" && typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: light)").matches);
+
+/** Sets light or dark on the page, including the browser's bar color. */
+export function applyMode(light: boolean, root: HTMLElement = document.documentElement) {
+  root.dataset.mode = light ? "light" : "dark";
+  // Remembered so the next launch starts in the right mode before the app loads (see index.html).
+  try { localStorage.setItem("mode", light ? "light" : "dark"); } catch { /* blocked */ }
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", light ? LIGHT_PAPER : PAPER);
+}
+
 export type Shape = "round" | "square";
 
 /** Squared (the default) caps every corner at one radius and uses the square logo; rounded uses full corners and the round logo. */
@@ -93,8 +143,8 @@ export function applyShape(shape: Shape | undefined, root: HTMLElement = documen
 
 const KEYS = ["--accent", "--accent-hi", "--accent-lo", "--accent-soft", "--accent-rgb", "--sky", "--sky-soft", "--on-accent", "--bad", "--bad-soft"];
 
-export function applyAccent(a: Accent | undefined, root: HTMLElement = document.documentElement) {
-  const vars = themeVars(a);
+export function applyAccent(a: Accent | undefined, light = false, root: HTMLElement = document.documentElement) {
+  const vars = themeVars(a, light);
   for (const k of KEYS) {
     if (vars[k]) root.style.setProperty(k, vars[k]);
     else root.style.removeProperty(k);

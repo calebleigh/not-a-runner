@@ -9,7 +9,7 @@ import { useMirroredState } from "../mirror";
 import { Grow, Num, reducedMotion } from "../motion";
 import { GearList } from "../GearList";
 
-const KC: Record<CardioKind, string> = { bike: "var(--accent-hi)", walk: "#9A958F", run: "var(--accent)", long: "var(--accent)", test: "#FFD08A", race: "#FFD08A", rest: "#33302D" };
+const KC: Record<CardioKind, string> = { bike: "var(--accent-hi)", walk: "var(--muted)", run: "var(--accent)", long: "var(--accent)", test: "var(--gold)", race: "var(--gold)", rest: "var(--bar)" };
 const DAY_SHORT = DN.map((d) => d.toUpperCase());
 
 type Status = "done" | "part" | "today" | "missed" | "up" | "rest";

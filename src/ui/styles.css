@@ -6,11 +6,19 @@
   --accent-rgb:255,106,19;
   --rmax:6px; /* corner radius cap: squared (default) uses one 6px corner everywhere; rounded lifts the cap */
   --rc:6px; /* corner for the + and play buttons; rounded makes them circles */
-  --on-accent:#141210; --bad:#FF5A4F; --bad-soft:#3A1A17; --good:#7BD88F;
+  --on-accent:#141210; --bad:#FF5A4F; --bad-soft:#3A1A17; --good:#7BD88F; --gold:#FFD08A;
+  --shade:rgba(255,255,255,.12);
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   --ease:cubic-bezier(.2,.8,.2,1);
   color-scheme:dark;
+}
+/* Light mode: same layout, light paper. Accent tints are set in theme.ts. */
+:root[data-mode="light"]{
+  --paper:#F6F3EE; --surface:#FFFFFF; --surface2:#EFEAE3; --ink:#1A1816; --muted:#6B655F; --line:#E3DDD5; --bar:#DCD5CC;
+  --bad:#D3372D; --bad-soft:#FBE4E1; --good:#2E8B47; --gold:#B7791F;
+  --shade:rgba(0,0,0,.08);
+  color-scheme:light;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{overflow-y:scroll;scrollbar-gutter:stable;background:var(--paper)}
@@ -105,7 +113,7 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 .trio .num{font-size:28px}
 .trio .lbl{font-size:11px;letter-spacing:.06em;text-transform:none;font-weight:500;margin-top:4px;display:block}
 .prog{display:flex;align-items:center;gap:12px;margin-top:16px}
-.prog .bar{flex:1;height:6px;border-radius:min(6px,var(--rmax));background:rgba(255,255,255,.12);overflow:hidden}
+.prog .bar{flex:1;height:6px;border-radius:min(6px,var(--rmax));background:var(--shade);overflow:hidden}
 .prog .bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:min(6px,var(--rmax));transition:width 1s var(--ease)}
 .prog b{font:700 14px var(--body)}
 
@@ -337,7 +345,7 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"you you" "plan plan" "look look" "how how" "sync sync" "data data";gap:22px 18px}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"sync sync" "you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
   .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-sync{grid-area:sync}
   .area-sync>.card{flex:1}
   /* Top two cards match heights. */
@@ -486,7 +494,7 @@ html,body{overscroll-behavior-y:none}
 .withicon .cake{width:28px;height:28px;color:var(--accent);flex:none}
 .setrow.wide{flex-direction:column;align-items:stretch;gap:8px}
 .whyin{width:100%;text-align:left}
-input[type="date"].txtin{width:150px;color-scheme:dark}
+input[type="date"].txtin{width:150px}
 .bdaytoday small{color:var(--accent);font-weight:600}
 @media (prefers-reduced-motion: no-preference){
   .cake .flame{transform-origin:12px 5.5px;animation:flicker 1.4s ease-in-out infinite}
@@ -554,7 +562,6 @@ input[type="date"].txtin{width:150px;color-scheme:dark}
 .onbopt.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
 .onbfield{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
 .onbfield .xt{font-size:18px;padding:12px}
-input[type="date"].xt{color-scheme:dark}
 .onbnote{margin:4px 0 0;color:var(--muted);font-size:15px}
 .daypick.big button{height:56px;font-size:14px}
 .onbyn{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line);background:var(--surface);border-radius:min(16px,var(--rmax))}
@@ -632,3 +639,7 @@ input[type="date"].xt{color-scheme:dark}
 @keyframes pulse{to{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.syncdot{animation:none!important}}
 .onbcta .gbtn{width:100%}
+
+.modeseg{margin-bottom:14px}
+:root[data-mode="light"] .meter .mtxt em{background:rgba(255,255,255,.75);color:var(--ink)}
+.area-sync .btnpair .chip{white-space:nowrap}

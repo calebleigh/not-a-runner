@@ -102,9 +102,9 @@ export function Stats() {
             const hh = 8 + (H - 14) * w.load / max, x = i * bw + 1, f = weekFrac(state, w);
             return (
               <g key={w.n}>
-                <rect x={x} y={H - hh} width={bw - 2} height={hh} rx={2} fill="#33302D" />
+                <rect x={x} y={H - hh} width={bw - 2} height={hh} rx={2} style={{ fill: "var(--bar)" }} />
                 {f > 0 && <rect x={x} y={H - hh * f} width={bw - 2} height={hh * f} rx={2} fill="url(#og)" />}
-                {w.n === curWeek && <rect x={x + bw / 2 - 1} y={0} width={2} height={H} fill="#F4F1EC" opacity={0.7} />}
+                {w.n === curWeek && <rect x={x + bw / 2 - 1} y={0} width={2} height={H} style={{ fill: "var(--ink)" }} opacity={0.7} />}
               </g>
             );
           })}
@@ -175,7 +175,7 @@ export function Stats() {
         const X = (w: number) => ((w - 1) / 51) * 500 + 10, Y = (v: number) => 100 - (v - mn) / (mx - mn) * 90;
         chart = (
           <svg viewBox="0 0 520 110" preserveAspectRatio="none" style={{ width: "100%", height: 100, marginTop: 8 }} role="img" aria-label="Weight by week">
-            <line x1={10} x2={510} y1={Y(start)} y2={Y(start)} stroke="#2E2B28" strokeDasharray="4 4" />
+            <line x1={10} x2={510} y1={Y(start)} y2={Y(start)} style={{ stroke: "var(--line)" }} strokeDasharray="4 4" />
             {goal ? <line x1={10} x2={510} y1={Y(goal)} y2={Y(goal)} style={{ stroke: "var(--good)" }} strokeDasharray="6 5" opacity={0.7} /> : null}
             <polyline points={ws.map(([w, v]) => `${X(w).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")} fill="none" style={{ stroke: "var(--accent)" }} strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
           </svg>

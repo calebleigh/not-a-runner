@@ -38,6 +38,8 @@ export interface Settings {
   strength?: boolean;
   /** Corner style; also picks the matching logo. Missing means squared. */
   shape?: "round" | "square";
+  /** Missing means dark. */
+  mode?: "light" | "system";
 }
 
 export interface State {

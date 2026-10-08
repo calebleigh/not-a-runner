@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PRESETS, contrast, hue, isHex, mix, themeVars, toHex, toRgb } from "./theme";
+import { LIGHT_PAPER, PRESETS, contrast, hue, isHex, mix, themeVars, toHex, toRgb } from "./theme";
 
 describe("theme", () => {
   it("round-trips hex colors", () => {
@@ -41,5 +41,19 @@ describe("theme", () => {
     }
     const dark = themeVars({ hi: "#3A4A8C", lo: "#1B2250" });
     expect(dark["--on-accent"]).toBe("#F4F1EC");
+  });
+});
+
+describe("light mode", () => {
+  it("keeps every accent readable on the light background", () => {
+    for (const p of PRESETS) {
+      const v = themeVars(p, true);
+      expect(contrast(v["--accent"], LIGHT_PAPER), p.name).toBeGreaterThanOrEqual(3);
+      expect(contrast(v["--accent-hi"], LIGHT_PAPER), p.name).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("sets tints even for the default orange", () => {
+    expect(themeVars(undefined, true)["--accent-soft"]).toBeDefined();
   });
 });

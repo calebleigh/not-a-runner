@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createStorage } from "../storage/store";
 import { initSync, noteChange } from "../sync/controller";
 import { mirrorSend, onMirror } from "./mirror";
-import { applyAccent, applyShape, type Shape } from "./theme";
+import { applyAccent, applyMode, applyShape, isLight, type Shape } from "./theme";
 import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
 
 export type Tab = "home" | "plan" | "stats" | "settings";
@@ -133,8 +133,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [showTab, update]);
 
   // Accent colors follow the saved theme.
-  const accent = state?.settings.accent;
-  useEffect(() => { applyAccent(accent); }, [accent?.hi, accent?.lo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const accent = state?.settings.accent, mode = state?.settings.mode;
+  const [systemTick, setSystemTick] = useState(0);
+  useEffect(() => {
+    if (mode !== "system") return;
+    const mq = matchMedia("(prefers-color-scheme: light)"), on = () => setSystemTick((n) => n + 1);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [mode]);
+  useEffect(() => {
+    const light = isLight(mode);
+    applyMode(light);
+    applyAccent(accent, light);
+  }, [accent?.hi, accent?.lo, mode, systemTick]); // eslint-disable-line react-hooks/exhaustive-deps
   const shape = state?.settings.shape;
   useEffect(() => { applyShape(shape); }, [shape]);
 
