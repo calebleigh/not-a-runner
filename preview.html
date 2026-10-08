@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fold Preview</title>
+<style>
+  /* Dev-only page: runs the app at Galaxy Z Fold 8 screen sizes. Not part of the production build. */
+  :root{--bg:#0b0b0a;--panel:#1B1A19;--line:#2E2B28;--ink:#F4F1EC;--muted:#9A958F;--accent:#FF6A13;--on-accent:#141210;color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:500 14px system-ui,-apple-system,"Segoe UI",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header b{font-size:15px;margin-right:6px}
+  label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+  select,button{font:inherit;color:var(--ink);background:#252321;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+  button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
+  .seg{display:flex;gap:4px}
+  .note{color:var(--muted);font-size:12px;margin-left:auto}
+  main{flex:1;display:flex;align-items:center;justify-content:center;gap:40px;padding:20px;min-height:0}
+  .dev{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+  .dev h2{margin:0;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .dev h2 span{color:var(--ink);text-transform:none;letter-spacing:0;margin-left:6px}
+  .bezel{background:#000;border:2px solid #333;border-radius:28px;padding:10px;box-shadow:0 20px 50px -20px #000}
+  .screen{overflow:hidden;border-radius:18px;position:relative}
+  iframe{border:0;display:block;transform-origin:0 0;background:#111110}
+  .dev[hidden]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <b>Fold 8 preview</b>
+  <div class="seg" role="group" aria-label="Show">
+    <button data-show="both" class="on">Both</button>
+    <button data-show="cover">Cover</button>
+    <button data-show="inner">Inner</button>
+  </div>
+  <div class="seg" role="group" aria-label="Inner screen orientation">
+    <button data-orient="landscape" class="on">Inner landscape</button>
+    <button data-orient="portrait">Inner portrait</button>
+  </div>
+  <label>Display size
+    <select id="dpr">
+      <option value="3">Smaller (3x)</option>
+      <option value="2.625" selected>Default (2.625x)</option>
+      <option value="2.25">Larger (2.25x)</option>
+    </select>
+  </label>
+  <button id="reload">Reload both</button>
+  <span class="note" id="note"></span>
+</header>
+<main id="stage">
+  <section class="dev" id="cover"><h2>Cover, closed <span></span></h2><div class="bezel"><div class="screen"><iframe title="Cover screen" src="/"></iframe></div></div></section>
+  <section class="dev" id="inner"><h2>Inner, open <span></span></h2><div class="bezel"><div class="screen"><iframe title="Inner screen" src="/"></iframe></div></div></section>
+</main>
+<script>
+  // Physical pixels from Samsung's specs. CSS size = physical / device pixel ratio.
+  const SCREENS = { cover: [1248, 1972], inner: [1848, 2448] }; // portrait width x height
+  const state = { show: "both", orient: "landscape", dpr: 2.625 };
+  const $ = (s) => document.querySelector(s);
+
+  function cssSize(name) {
+    let [w, h] = SCREENS[name];
+    if (name === "inner" && state.orient === "landscape") [w, h] = [h, w];
+    return [Math.round(w / state.dpr), Math.round(h / state.dpr)];
+  }
+
+  function layout() {
+    const stage = $("#stage"), shown = ["cover", "inner"].filter((n) => state.show === "both" || state.show === n);
+    for (const n of ["cover", "inner"]) $("#" + n).hidden = !shown.includes(n);
+    const sizes = Object.fromEntries(shown.map((n) => [n, cssSize(n)]));
+    // Scale every screen by the same factor so their relative sizes stay true.
+    const pad = 24 + 40 * (shown.length - 1) + 40, chrome = 34 + 24;
+    const totalW = shown.reduce((a, n) => a + sizes[n][0], 0), maxH = Math.max(...shown.map((n) => sizes[n][1]));
+    const k = Math.min(1, (stage.clientWidth - pad) / totalW, (stage.clientHeight - chrome - 24) / maxH);
+    for (const n of shown) {
+      const [w, h] = sizes[n], f = $("#" + n + " iframe"), scr = $("#" + n + " .screen");
+      f.style.width = w + "px"; f.style.height = h + "px"; f.style.transform = `scale(${k})`;
+      scr.style.width = w * k + "px"; scr.style.height = h * k + "px";
+      $("#" + n + " h2 span").textContent = `${w} x ${h}`;
+    }
+    $("#note").textContent = `Shown at ${Math.round(k * 100)}%. Sizes are CSS pixels. Each screen is a separate copy of the app; use Reload both after logging something.`;
+  }
+
+  document.querySelectorAll("[data-show]").forEach((b) => b.onclick = () => {
+    state.show = b.dataset.show;
+    document.querySelectorAll("[data-show]").forEach((x) => x.classList.toggle("on", x === b));
+    layout();
+  });
+  document.querySelectorAll("[data-orient]").forEach((b) => b.onclick = () => {
+    state.orient = b.dataset.orient;
+    document.querySelectorAll("[data-orient]").forEach((x) => x.classList.toggle("on", x === b));
+    layout();
+  });
+  $("#dpr").onchange = (e) => { state.dpr = +e.target.value; layout(); };
+  $("#reload").onclick = () => document.querySelectorAll("iframe").forEach((f) => f.contentWindow.location.reload());
+  addEventListener("resize", layout);
+  layout();
+</script>
+</body>
+</html>

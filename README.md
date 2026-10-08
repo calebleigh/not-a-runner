@@ -7,6 +7,7 @@ Training app for people who don't like running. See `CLAUDE.md` and `docs/`.
 ```
 npm install
 npm run dev        # local dev server
+npm run screens    # Fold 8 preview: cover and inner screens side by side, live
 npm test           # Vitest: plan logic, prototype parity, backups, storage
 npm run build      # typecheck + production build with service worker
 ```
