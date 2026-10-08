@@ -36,30 +36,37 @@ function Row({ it, full }: { it: TodoItem; full: boolean }) {
 function AddTodo() {
   const { update } = useApp();
   const [text, setText] = useState("");
+  const [due, setDue] = useState("");
   const add = () => {
     const v = text.trim();
     if (!v) return;
-    update((s) => { s.todos[newId()] = { text: v, at: Date.now() }; });
+    update((s) => { s.todos[newId()] = { text: v, at: Date.now(), ...(due ? { due } : {}) }; });
     setText("");
+    setDue("");
   };
   return (
     <form className="todoadd" onSubmit={(e) => { e.preventDefault(); add(); }}>
-      <input className="txtin" maxLength={80} placeholder="Add a to-do, like PT visit" aria-label="Add a to-do" value={text} onChange={(e) => setText(e.target.value)} />
+      <input className="txtin todotext" maxLength={80} placeholder="Add a to-do, like PT visit" aria-label="Add a to-do" value={text} onChange={(e) => setText(e.target.value)} />
+      <label className="tododue">
+        <span>Due</span>
+        <input className="txtin" type="date" aria-label="Due date (optional)" value={due} onChange={(e) => setDue(e.target.value)} />
+        {due && <button type="button" className="clrdate" aria-label="Clear due date" onClick={() => setDue("")}>&times;</button>}
+      </label>
       <button className="chip" type="submit" disabled={!text.trim()}>Add</button>
     </form>
   );
 }
 
-/** Home: what's on the list right now, with a quick add. */
+/** Home: what's on the list right now. Adding happens on the Plan tab. */
 export function TodoCard() {
   const { model, setTab } = useApp();
   const { now, later } = todoLists(model);
   return (
     <section className="panelc slist todop" aria-label="To do">
       <div className="slhead"><span className="lbl">To do</span><b>{now.length ? `${now.length} open` : "All caught up"}</b></div>
-      {now.slice(0, 4).map((it) => <Row key={it.key} it={it} full={false} />)}
-      <AddTodo />
-      {(now.length > 4 || later.length > 0) && <button className="more" onClick={() => setTab("plan")}>See the full list &rsaquo;</button>}
+      {now.slice(0, 5).map((it) => <Row key={it.key} it={it} full={false} />)}
+      {!now.length && <p className="setnote" style={{ padding: "12px 16px" }}>Nothing due right now.</p>}
+      <button className="more" onClick={() => setTab("plan")}>{now.length > 5 || later.length ? "See the full list" : "Add or see all"} &rsaquo;</button>
     </section>
   );
 }
@@ -78,7 +85,7 @@ export function TodoList() {
       <AddTodo />
       {now.map((it) => <Row key={it.key} it={it} full />)}
       {!now.length && <p className="setnote" style={{ padding: "12px 16px" }}>All caught up.</p>}
-      {later.length > 0 && <button className="more" aria-expanded={show === "later"} onClick={() => setShow(show === "later" ? null : "later")}>{show === "later" ? "Hide later gear" : `Gear for later (${later.length})`}</button>}
+      {later.length > 0 && <button className="more" aria-expanded={show === "later"} onClick={() => setShow(show === "later" ? null : "later")}>{show === "later" ? "Hide later" : `Later (${later.length})`}</button>}
       {show === "later" && later.map((it) => <Row key={it.key} it={it} full />)}
       {done.length > 0 && <button className="more" aria-expanded={show === "done"} onClick={() => setShow(show === "done" ? null : "done")}>{show === "done" ? "Hide done" : `Done (${done.length})`}</button>}
       {show === "done" && done.map((it) => <Row key={it.key} it={it} full />)}

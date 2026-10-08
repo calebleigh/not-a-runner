@@ -34,4 +34,20 @@ describe("to-do list", () => {
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys.length).toBe(16);
   });
+
+  it("sorts dated items in with the gear, and holds far-off ones for later", () => {
+    const s = emptyState();
+    s.todos.pt = { text: "PT visit", at: 1, due: "2026-10-23" }; // in 2 days
+    s.todos.old = { text: "Call the doctor", at: 2, due: "2026-10-19" }; // 2 days ago
+    s.todos.far = { text: "Book race hotel", at: 3, due: "2027-03-01" };
+    s.todos.any = { text: "Healthier snacks", at: 4 };
+    const { now, later } = todoLists(computeModel(s, WEEK3));
+    const at = (t: string) => now.findIndex((x) => x.text === t);
+    expect(now.find((x) => x.text === "Call the doctor")!.status).toBe("overdue");
+    expect(now.find((x) => x.text === "PT visit")!.status).toBe("due");
+    expect(at("Call the doctor")).toBeLessThan(at("PT visit"));
+    expect(at("PT visit")).toBeLessThan(at("Healthier snacks"));
+    expect(later.map((x) => x.text)).toContain("Book race hotel");
+    expect(now.some((x) => x.text === "Book race hotel")).toBe(false);
+  });
 });

@@ -32,6 +32,8 @@ export interface Todo {
   at: number;
   /** When it was checked off (ms). */
   done?: number;
+  /** Optional due date, "YYYY-MM-DD". */
+  due?: string;
 }
 
 export interface Settings {
