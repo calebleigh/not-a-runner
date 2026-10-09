@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DN, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
+import { AUTO_PAUSE_CHOICES, DN, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
 import { canCountSteps } from "../native/steps";
 import { newId } from "../sync/engine";
@@ -9,7 +9,7 @@ import { Icon } from "./icons";
 import { RouteMapView } from "./RouteMap";
 import { trackKindFor } from "./trackFor";
 import {
-  closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
+  autoPausePref, closeTracker, finishTracking, setAutoPause, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
 
 const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Run"], ["bike", "Bike"]];
@@ -63,6 +63,7 @@ export function TrackerScreen() {
   const paceS = indoor ? (miles >= 0.05 && s ? Math.round(s.elapsedS / miles) : null) : s?.paceS ?? null;
   const mph = indoor ? (s && s.elapsedS ? miles / (s.elapsedS / 3600) : 0) : s?.mph ?? 0;
   const stride = strideFor(state, t.kind === "run" ? "run" : "walk");
+  const autoPause = autoPausePref();
 
   const save = () => {
     if (!t.track || !t.finishedAt) return;
@@ -76,7 +77,7 @@ export function TrackerScreen() {
     <div className="tracker" role="dialog" aria-label="Workout tracker">
       <div className="trk-top">
         <div>
-          <span className={"lbl trk-status " + t.status}>{t.status === "done" ? "Finished" : t.status === "ready" ? "Ready" : t.status === "paused" ? "Paused" : "Recording"}</span>
+          <span className={"lbl trk-status " + t.status}>{t.status === "done" ? "Finished" : t.status === "ready" ? "Ready" : t.status === "paused" ? (t.autoPaused ? "Auto-paused" : "Paused") : "Recording"}</span>
           <h2>{where}</h2>
         </div>
         {t.status === "ready" && <button className="xbtn" aria-label="Close" onClick={() => closeTracker()}>&times;</button>}
@@ -122,6 +123,12 @@ export function TrackerScreen() {
                   : "Distance comes from your steps, using an average stride until a couple of outdoor walks teach the app yours. You can correct it at the end."
               : canTrackInBackground ? "Keeps recording with your screen off. Android shows a notice while it does." : "On the website, keep this screen open while you go. The Android app records with the screen off."}
           </p>
+          {!(bike && indoor) && (
+            <div className="trk-auto">
+              <span><b>Auto-pause</b><small>{autoPause ? `Pauses after ${autoPause} seconds without ${bike ? "moving" : "steps"}, starts again when you move.` : "Off. Pause by hand."}</small></span>
+              <div className="seg">{AUTO_PAUSE_CHOICES.map((v) => <button key={v} className={autoPause === v ? "sel" : ""} aria-pressed={autoPause === v} onClick={() => setAutoPause(v)}>{v ? `${v}s` : "Off"}</button>)}</div>
+            </div>
+          )}
           {t.intervals && (
             <div className="trk-ivinfo">
               <b>Interval coaching on</b>

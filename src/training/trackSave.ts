@@ -37,7 +37,8 @@ export function trackResult(state: State, track: Track, finishedAt: number, x: T
   const measured = x.indoor ? fromSteps : s.miles;
   const miles = x.miles != null && x.miles >= 0 ? x.miles : measured;
   const dist = Math.round(miles * 100) / 100;
-  const time = !x.indoor && x.miles == null && dist >= 0.05 ? s.movingS : s.elapsedS;
+  // With auto-pause the clock already leaves out stops, so it's what you saw that gets saved.
+  const time = !track.autoPause && !x.indoor && x.miles == null && dist >= 0.05 ? s.movingS : s.elapsedS;
   return { dist, time, estimated: !!x.indoor && x.miles == null && dist > 0, stats: s };
 }
 

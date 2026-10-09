@@ -33,6 +33,8 @@ export interface Track {
   splits: number[];
   /** Points kept for the route map (thinned). */
   route: [number, number][];
+  /** Auto-pause seconds this workout ran with (0 or missing: off). Then the clock is the time saved. */
+  autoPause?: number;
 }
 
 export const MILE = 1609.344;

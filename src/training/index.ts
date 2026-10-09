@@ -25,3 +25,4 @@ export * from "./stride";
 export * from "./health";
 export * from "./today";
 export * from "./month";
+export * from "./autopause";

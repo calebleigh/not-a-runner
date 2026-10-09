@@ -6,6 +6,8 @@ import { cue } from "../native/cues";
 import { watchSteps, type StepFeed } from "../native/steps";
 import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
 import { addFix, newTrack, pause, resume, trackStats, type Track, type TrackKind } from "../training/track";
+import { AUTO_PAUSE_DEFAULT, autoPauseStep, gpsMoved } from "../training/autopause";
+import { hideNotice, onNoticeAction, showNotice } from "../native/workoutNotice";
 
 /** Where a finished workout gets saved: a planned session, or an extra activity for today. */
 export interface TrackTarget { w: number; d: number; title: string; /** The session's instructions (for intervals). */ instructions?: string }
@@ -36,6 +38,10 @@ export interface ActiveTrack {
   voice: boolean;
   /** The last interval segment announced. */
   cuedIndex: number;
+  /** Paused by auto-pause (it resumes on its own), not by a tap. */
+  autoPaused?: boolean;
+  /** When you last moved (steps or GPS), for auto-pause. */
+  lastMoveAt?: number;
 }
 
 const KEY = "activeTrack";
@@ -58,6 +64,58 @@ function set(next: ActiveTrack | null, force = true) {
   active = next;
   persist(force);
   subs.forEach((f) => f());
+  notice();
+}
+
+// The lock screen and notification shade show the workout with a Pause button (Android).
+let noticeAt = 0, noticeKey = "";
+function notice() {
+  const a = active;
+  if (!a?.track || (a.status !== "recording" && a.status !== "paused")) { if (noticeKey) { noticeKey = ""; hideNotice(); } return; }
+  const key = a.status + (a.autoPaused ? "a" : "");
+  if (key === noticeKey && Date.now() - noticeAt < 3000) return;
+  noticeKey = key; noticeAt = Date.now();
+  const s = trackStats(a.track, Date.now());
+  const what = a.kind === "bike" ? "Bike" : a.kind === "run" ? "Run" : "Walk";
+  const dist = a.mode === "indoor" ? "" : `${s.miles.toFixed(2)} mi`;
+  const speed = a.mode === "indoor" ? "" : a.kind === "bike" ? (s.mph ? `${s.mph.toFixed(1)} mph` : "") : s.paceS ? `${Math.floor(s.paceS / 60)}:${String(s.paceS % 60).padStart(2, "0")} /mi` : "";
+  showNotice({
+    title: what,
+    status: a.status === "paused" ? (a.autoPaused ? "Auto-paused" : "Paused") : "Recording",
+    elapsedMs: s.elapsedS * 1000,
+    paused: a.status === "paused",
+    line1: [dist, speed].filter(Boolean).join("  ·  ") || "Indoors",
+    line2: a.steps ? `${a.steps.toLocaleString("en-US")} steps` : "",
+  });
+}
+onNoticeAction((action) => { if (action === "pause") pauseTracking(); else if (action === "resume") resumeTracking(); });
+
+// Auto-pause setting (seconds; 0 is off).
+export function autoPausePref(): number {
+  try { const v = localStorage.getItem("autoPause"); return v == null ? AUTO_PAUSE_DEFAULT : Math.max(0, parseInt(v) || 0); } catch { return AUTO_PAUSE_DEFAULT; }
+}
+export function setAutoPause(secs: number) {
+  try { localStorage.setItem("autoPause", String(secs)); } catch { /* blocked */ }
+  if (active) set({ ...active });
+}
+/** Indoors on a bike there's nothing to sense movement with. */
+const canAutoPause = (a: ActiveTrack) => !(a.kind === "bike" && a.mode === "indoor");
+
+/** Pauses after a while without movement; resumes an auto-pause when you move. */
+function checkAutoPause(moved = false) {
+  const a = active;
+  if (!a?.track || (a.status !== "recording" && a.status !== "paused") || !a.track.autoPause) return;
+  const now = Date.now();
+  const step = autoPauseStep({ now, lastMoveAt: a.lastMoveAt ?? a.track.startedAt, secs: a.track.autoPause, status: a.status, autoPaused: !!a.autoPaused, moved });
+  if (step === "pause") {
+    // The clock stopped when you did, not when auto-pause noticed.
+    const at = Math.max(a.lastMoveAt ?? a.track.startedAt, a.track.startedAt);
+    set({ ...a, status: "paused", autoPaused: true, track: pause(a.track, at) });
+    cue("Paused", { voice: false });
+  } else if (step === "resume") {
+    set({ ...a, status: "recording", autoPaused: false, lastMoveAt: now, track: resume(a.track, now) });
+    cue("Resumed", { voice: false });
+  }
 }
 
 export const useTracker = () => useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => active);
@@ -95,7 +153,8 @@ export function setSimulate(simulate: boolean) { if (active?.status === "ready")
 
 export async function startTracking() {
   if (!active || active.status !== "ready") return;
-  set({ ...active, status: "recording", track: newTrack(active.kind, Date.now()), error: null });
+  const now = Date.now(), ap = canAutoPause(active) ? autoPausePref() : 0;
+  set({ ...active, status: "recording", track: { ...newTrack(active.kind, now), ...(ap ? { autoPause: ap } : {}) }, lastMoveAt: now, autoPaused: false, error: null });
   await startFeed();
 }
 
@@ -109,8 +168,11 @@ async function startFeed() {
     set({ ...active, stepBase: active.steps });
     stepFeed = await watchSteps((n) => {
       if (!active || active.status === "done") return;
-      if (active.status === "paused") { set({ ...active, stepBase: active.steps - n }, false); return; }
-      set({ ...active, steps: active.stepBase + n }, false);
+      const moved = active.stepBase + n > active.steps;
+      // Steps out of an auto-pause count (they're what wakes it); during a tapped pause they don't.
+      if (active.status === "paused" && !active.autoPaused) { set({ ...active, stepBase: active.steps - n }, false); return; }
+      set({ ...active, steps: active.stepBase + n, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
+      if (moved) checkAutoPause(true);
     });
   }
   if (active.mode === "indoor") { startClock(); return; }
@@ -119,7 +181,12 @@ async function startFeed() {
     simulate: active.simulate,
     onFix: (f) => {
       if (!active?.track || active.status === "done") return;
-      set({ ...active, track: addFix(active.track, f), lastFixAt: Date.now(), error: null }, false);
+      const prev = active.track.anchor, before = active.track.distM;
+      const track = addFix(active.track, f);
+      // Moving: distance counted, or (while auto-paused, when nothing counts) a real move between fixes.
+      const moved = track.distM > before || (active.status === "paused" && gpsMoved(prev, f, active.kind));
+      set({ ...active, track, lastFixAt: Date.now(), error: null, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
+      checkAutoPause(moved);
       checkCue();
     },
     onError: (e) => { if (active) set({ ...active, error: e }); },
@@ -130,17 +197,17 @@ async function startFeed() {
 function startClock() {
   keepAwake(true);
   clearInterval(cueTimer);
-  cueTimer = window.setInterval(checkCue, 1000);
+  cueTimer = window.setInterval(() => { checkAutoPause(); checkCue(); notice(); }, 1000);
   checkCue();
 }
 
 export function pauseTracking() {
   if (active?.status !== "recording" || !active.track) return;
-  set({ ...active, status: "paused", track: pause(active.track, Date.now()) });
+  set({ ...active, status: "paused", autoPaused: false, track: pause(active.track, Date.now()) });
 }
 export function resumeTracking() {
   if (active?.status !== "paused" || !active.track) return;
-  set({ ...active, status: "recording", track: resume(active.track, Date.now()) });
+  set({ ...active, status: "recording", autoPaused: false, lastMoveAt: Date.now(), track: resume(active.track, Date.now()) });
 }
 
 /** Stops recording and shows the summary. */
