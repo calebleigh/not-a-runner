@@ -20,6 +20,8 @@ function shouldPlay(): boolean {
 }
 /** Decided once per page load. */
 const PLAY = shouldPlay();
+/** How long the splash covers the page on this load, so things under it can wait to animate. */
+export const SPLASH_MS = PLAY ? LENGTH - 300 : 0;
 
 /** Called just before the app reloads into a new version, so the animation plays once more. */
 export function playSplashNextLoad() {
@@ -89,6 +91,11 @@ export function Splash() {
       <div className="sp-name">Not a Runner</div>
     </div>
   );
+}
+
+/** The launch animation of the mark, played once where it's placed. */
+export function LogoBurst() {
+  return <span className="sp-shake"><Mark round={false} /><Mark round /></span>;
 }
 
 /** The logo at a given size; tapping it plays the launch animation right there. */

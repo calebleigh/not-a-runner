@@ -1,9 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { DN, WHY_IDEAS, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
 import { TooSoonNote } from "./TooSoonNote";
-import { GoogleButton, useSync } from "./SyncSection";
 import { useApp } from "./app-state";
-import { Logo } from "./Logo";
+import { Landing } from "./Landing";
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -65,8 +64,7 @@ function YesNo({ on, title, sub, onChange }: { on: boolean; title: string; sub: 
 
 /** First-run setup for new users: a few questions, then the plan is built. */
 export function Onboarding() {
-  const { model, update, openSheet, setTab } = useApp();
-  const sync = useSync();
+  const { model, update, setTab } = useApp();
   const start = onboardingStart(model.today);
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Draft>({ goal: null, raceName: "", raceDate: "", startLevel: null, days: [0, 1, 2, 3, 4], hasBike: true, impactSensitive: false, name: "", birthday: "", weight: "", goalWeight: "", whys: [], whyText: "", gear: [] });
@@ -106,21 +104,7 @@ export function Onboarding() {
   let title = "", sub: ReactNode = null, body: ReactNode = null, canNext = true, cta = "Next";
   switch (at) {
     case "welcome":
-      return (
-        <div className="onb welcome">
-          <div className="onbhero">
-            <Logo size={96} />
-            <h1>Not a Runner</h1>
-            <p>Train for a race even if you hate running. Bike, walk and lift your way there, then add running when your body is ready.</p>
-          </div>
-          <div className="onbcta">
-            <button className="btn solid" onClick={next}>Get started</button>
-            <GoogleButton label="I have an account" busy={sync.phase === "starting"} />
-            {sync.error && <p className="syncerr" role="alert">{sync.error}</p>}
-            <button className="btn small" onClick={() => openSheet({ kind: "import" })}>I have a backup code</button>
-          </div>
-        </div>
-      );
+      return <Landing onStart={next} />;
     case "goal":
       title = "What are you training for?";
       body = <div className="onbopts" role="radiogroup">{GOALS.map(([g, t, s]) => <Option key={g} on={d.goal === g} title={t} sub={s} onClick={() => set({ goal: g })} />)}</div>;
