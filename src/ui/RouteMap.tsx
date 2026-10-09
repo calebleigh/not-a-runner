@@ -107,13 +107,12 @@ export function RouteMapView({ points, live = false, className }: { points: Pt[]
         ...(live || ll.length < 2
           ? { center: ll.at(-1) ?? [-98.5, 39.8], zoom: ll.length ? 16 : 3 }
           : { bounds: ll.reduce((b, p) => b.extend(p), new ml.LngLatBounds(ll[0], ll[0])), fitBoundsOptions: { padding: 48 } }),
-        attributionControl: { compact: true }, pitchWithRotate: false, dragRotate: false,
+        // The required map credit is our own small button (below), so it never covers the map.
+        attributionControl: false, pitchWithRotate: false, dragRotate: false,
       });
       map.current = m;
       m.touchZoomRotate.disableRotation();
       m.on("dragstart", () => { if (live) setFollow(false); });
-      // The map credit is required, but it starts folded into the small "i" so it doesn't cover the map.
-      m.once("idle", () => el.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
       m.on("load", () => {
         const d = routeData(latest.current);
         m.addSource("route", { type: "geojson", data: d.line });
@@ -150,6 +149,23 @@ export function RouteMapView({ points, live = false, className }: { points: Pt[]
     <div className={"mapview " + (className ?? "")}>
       <div className="mapview-map" ref={el} />
       {live && !follow && <button className="chip mapview-recenter" onClick={recenter}>Recenter</button>}
+      <MapCredit />
+    </div>
+  );
+}
+
+/** The map's required credit: a small "i" that opens one line of links. */
+function MapCredit() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={"mapcredit" + (open ? " open" : "")}>
+      {open && (
+        <span>
+          <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">&copy; OpenMapTiles</a>{" "}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">&copy; OpenStreetMap contributors</a>
+        </span>
+      )}
+      <button aria-label={open ? "Hide map credits" : "Map credits"} aria-expanded={open} onClick={() => setOpen(!open)}>i</button>
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { NotesSheetBody, StreakSheetBody } from "./AppHeader";
 import { UpdateSheetBody } from "./UpdateSheet";
 import { HealthSheetBody } from "./HealthSection";
 import { AccountSheetBody } from "./SyncSection";
+import { FriendSheetBody, FriendsSheetBody } from "./Friends";
+import { useFriends } from "./friendsStore";
 import { healthName } from "../native/health";
 import { dateOf, dayAt, dayKey, isBirthdayOn, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
@@ -97,6 +99,7 @@ function Head({ title, cake }: { title: string; cake?: boolean }) {
 
 function SheetContent({ spec }: { spec: SheetSpec }) {
   const { model } = useApp();
+  const friends = useFriends();
   const dayTitle = (w: number, d: number) => { const dt = dateOf(model.spec, w, d); return sameDay(dt, model.today) ? "Today" : fmtLong(dt); };
   // Key by spec so forms reset when a different sheet opens.
   const key = JSON.stringify(spec);
@@ -165,6 +168,14 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "streak":
       title = "Weekly streak";
       body = <StreakSheetBody />;
+      break;
+    case "friends":
+      title = "Friends";
+      body = <FriendsSheetBody />;
+      break;
+    case "friend":
+      title = friends.cards[spec.uid]?.name ?? "Friend";
+      body = <FriendSheetBody uid={spec.uid} />;
       break;
     case "account":
       title = "Account";
@@ -276,3 +287,4 @@ function ImportBody() {
     <p className={"msg" + (err ? " err" : "")} aria-live="polite">{err}</p>
   </>;
 }
+

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AccountSheetBody } from "../SyncSection";
 import { addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
 import { TapLogo } from "../Splash";
@@ -253,6 +254,10 @@ export function Settings() {
   return (
     <section className="view stack" aria-label="Settings">
       <div className="setgrid">
+      <div className="area-sync">
+      <div className="sechead"><h3 className="sectitle">Account</h3></div>
+      <section className="card group"><AccountSheetBody /></section>
+      </div>
       <HealthSection />
       <AboutYou />
       <YourPlan />

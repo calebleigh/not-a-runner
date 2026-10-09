@@ -6,6 +6,7 @@ import { AppHeader } from "./AppHeader";
 import { TrackerScreen } from "./TrackerScreen";
 import { HealthAutoImport } from "./HealthSection";
 import { RouteMapScreen } from "./RouteMap";
+import { FriendsSync, takeInviteFromUrl } from "./friendsStore";
 import { useMirroredScroll } from "./mirror";
 import { needsOnboarding } from "../training";
 import { Onboarding } from "./Onboarding";
@@ -18,6 +19,9 @@ import { Home } from "./views/Home";
 import { Plan } from "./views/Plan";
 import { Settings } from "./views/Settings";
 import { Stats } from "./views/Stats";
+
+// An invite link (?invite=CODE) is remembered until the person is signed in.
+takeInviteFromUrl();
 
 const TABS: { tab: Tab; label: string; icon: () => React.JSX.Element }[] = [
   { tab: "home", label: "Home", icon: Icon.home },
@@ -66,6 +70,7 @@ function Shell() {
     <TrackerScreen />
     <HealthAutoImport />
     <RouteMapScreen />
+    <FriendsSync />
     <Toast />
     {IS_NATIVE ? <ApkUpdatePrompt /> : <UpdatePrompt />}
   </>;

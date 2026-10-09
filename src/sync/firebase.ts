@@ -38,6 +38,10 @@ const db = (() => {
   try { return initializeFirestore(app, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true }); } catch { return getFirestore(app); }
 })();
 
+/** For the friends module (same connection). */
+export const firestore = () => db;
+export const currentUid = () => auth.currentUser?.uid ?? null;
+
 const account = (u: User): Account => ({ uid: u.uid, email: u.email, name: u.displayName, photo: u.photoURL });
 const entries = (uid: string) => collection(db, "users", uid, "entries");
 /** Firestore ids can't contain "/". */

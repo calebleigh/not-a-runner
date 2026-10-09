@@ -13,3 +13,6 @@ dev-dist
 # Other apps' designs kept for reference only; not ours to publish.
 reference/design/
 android/.kotlin/
+
+# Google OAuth client files (the Android client id is public, but keep these out of the repo)
+client_secret_*.json

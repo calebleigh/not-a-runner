@@ -321,7 +321,7 @@ html,body{overscroll-behavior:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how,.area-health{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how,.area-sync,.area-health{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -350,8 +350,8 @@ html,body{overscroll-behavior:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"health health" "you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
-  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-health{grid-area:health}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"sync sync" "health health" "you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
+  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-health{grid-area:health}.area-sync{grid-area:sync}
   .area-sync>.card{flex:1}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
@@ -862,7 +862,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .hcitem{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax))}
 .hcitem small{color:var(--muted);font-size:13px}
 .hcitem .btnpair{flex-wrap:wrap;margin-top:4px}
-.setgrid:not(:has(.area-health)){grid-template-areas:"you you" "plan plan" "look look" "how how" "data data"}
+.setgrid:not(:has(.area-health)){grid-template-areas:"sync sync" "you you" "plan plan" "look look" "how how" "data data"}
 
 /* Home totals: lifetime numbers in big type */
 .totals{display:block;width:100%;text-align:left;color:inherit;font:inherit;cursor:pointer}
@@ -1125,7 +1125,68 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-btn:active{transform:scale(.97)}
 
 /* Map credit: a small, quiet "i" until tapped */
-.mapview .maplibregl-ctrl-attrib.maplibregl-compact{min-height:22px;margin:0 8px 8px 0;background:rgba(0,0,0,.35);opacity:.75}
-.mapview .maplibregl-ctrl-attrib-button{width:22px;height:22px;background-size:14px;background-position:center}
-.mapview .maplibregl-ctrl-attrib.maplibregl-compact-show{opacity:1;background:var(--paper);color:var(--ink)}
-.mapview .maplibregl-ctrl-attrib.maplibregl-compact-show a{color:var(--ink)}
+.mapcredit{position:absolute;right:6px;bottom:6px;z-index:2;display:flex;align-items:center;gap:6px;max-width:calc(100% - 12px)}
+.mapcredit button{flex:none;width:18px;height:18px;border-radius:50%;border:0;padding:0;background:rgba(0,0,0,.45);color:#fff;font:700 italic 11px/18px Georgia,serif;cursor:pointer;opacity:.7}
+.mapcredit.open button{opacity:1}
+.mapcredit span{font-size:10px;line-height:1.3;padding:3px 7px;border-radius:min(8px,var(--rmax));background:var(--paper);color:var(--muted)}
+.mapcredit a{color:var(--ink);text-decoration:none}
+.routemap .mapcredit{bottom:calc(6px + var(--sab))}
+
+/* Friends */
+.frbtn svg{width:25px;height:25px}
+.fr{display:flex;flex-direction:column;gap:14px}
+.fr .gbtn{width:100%}
+.frme{display:flex;align-items:center;gap:14px;padding:16px;border-radius:min(18px,var(--rmax));color:var(--on-accent);
+  background:repeating-linear-gradient(135deg,rgba(0,0,0,.07) 0 14px,transparent 14px 28px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));background-size:40px 40px,100% 100%;animation:stripes 3.5s linear infinite}
+.frme .avatar{box-shadow:0 0 0 3px rgba(0,0,0,.18)}
+.frme-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.frme-txt b{font:800 italic 26px/1 var(--display)}
+.frme-txt b small{font:600 13px var(--body);opacity:.7}
+.frme-txt span{font-size:14px;font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frstreak{flex:none;display:flex;align-items:center;gap:2px}
+.frstreak svg{width:24px;height:24px}
+.frstreak b{font:800 italic 34px/1 var(--display)}
+.frstreak.small svg{width:18px;height:18px;color:var(--accent)}
+.frstreak.small b{font-size:22px}
+.frmestats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.frmestats div{background:var(--surface);border:1px solid var(--line);border-radius:min(12px,var(--rmax));padding:10px 12px}
+.frmestats b{display:block;font:800 26px/1 var(--display)}
+.frmestats small{font-size:12px;color:var(--muted)}
+.frsec{display:flex;flex-direction:column;gap:6px}
+.frsec>.lbl{margin:6px 0 2px}
+.frrow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;text-align:left;cursor:pointer}
+.frrow .rtx b{font-size:16px}
+.fpill{flex:none;font:700 12px var(--body);padding:4px 10px;border-radius:min(20px,var(--rmax));background:var(--surface2);color:var(--muted);white-space:nowrap}
+.fpill.done{background:color-mix(in srgb,var(--good) 18%,var(--surface));color:var(--good)}
+.fpill.notyet{background:var(--accent-soft);color:var(--accent)}
+.frpoke,.frinvite,.frfound{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:min(14px,var(--rmax));background:var(--surface);border:1px solid var(--line)}
+.frpoke.cheer{border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+.frpoke.tease{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.frpoke .xbtn{font-size:20px}
+.frinvite{border-color:var(--accent);background:var(--accent-soft)}
+.frinvite .btnpair{display:flex;gap:6px;flex:none}
+.frcode{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:min(14px,var(--rmax));background:var(--surface);border:1px solid var(--line)}
+.frcode>div{flex:1;display:flex;flex-direction:column}
+.frcode small{font-size:12px;color:var(--muted)}
+.frcode b{font:800 30px/1 var(--display);letter-spacing:.06em}
+.frcode .btn{width:auto;margin:0;padding:0 16px;min-height:44px}
+.frenter{display:flex;gap:8px}
+.frenter .xt{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.08em}
+.frhead{display:flex;align-items:center;gap:16px}
+.frhead small{color:var(--muted);font-size:15px}
+.frbigstreak{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+.frbigstreak>div{padding:14px 16px;border-radius:min(16px,var(--rmax));background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column}
+.frbigstreak>div:first-child{background:var(--accent-soft);border-color:transparent}
+.frbigstreak .num{display:flex;align-items:center;gap:4px;font:800 italic 56px/1 var(--display);color:var(--accent)}
+.frbigstreak>div:last-child .num{color:var(--ink);font-size:40px}
+.frbigstreak .num svg{width:40px;height:40px}
+.frbigstreak small{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.frtoday{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 16px;border-radius:min(16px,var(--rmax));background:var(--surface);border:1px solid var(--line)}
+.frtoday b{font:800 24px/1.1 var(--display)}
+.frweek{display:flex;flex-direction:column;gap:6px}
+.frpokes{display:flex;flex-direction:column;gap:8px}
+.frpokebtn{text-align:left;padding:12px 14px;border-radius:min(14px,var(--rmax));border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 15px var(--body);cursor:pointer;transition:transform .15s var(--ease)}
+.frpokebtn:active{transform:scale(.98)}
+.frpokebtn.tease{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.frpokebtn.cheer{border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.frpokebtn:disabled{opacity:.45;cursor:default}

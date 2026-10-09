@@ -6,6 +6,7 @@ export * from "./adapt";
 export * from "./model";
 export * from "./stats";
 export * from "./insights";
+export * from "./friends";
 export * from "./coach";
 export * from "./backup";
 export * from "./format";

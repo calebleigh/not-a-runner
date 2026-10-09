@@ -23,7 +23,9 @@ export type SheetSpec =
   | { kind: "streak" }
   | { kind: "update" }
   | { kind: "health" }
-  | { kind: "account" };
+  | { kind: "account" }
+  | { kind: "friends" }
+  | { kind: "friend"; uid: string };
 
 interface AppCtx {
   model: Model;

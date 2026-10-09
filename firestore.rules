@@ -1,7 +1,15 @@
 rules_version = '2';
 // Synced app data: users/{uid}/entries/{entry}, one document per entry (see src/sync/engine.ts).
+// Friends (see src/sync/social.ts): profiles/{uid} is the small card friends can see, invites/{code}
+// lets someone add you, users/{uid}/friends/{friendUid} links two people (both ways), and
+// users/{uid}/pokes/{id} are pokes from friends.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function isFriend(uid) { return exists(/databases/$(database)/documents/users/$(uid)/friends/$(me())); }
+    function inviteOwner(code) { return get(/databases/$(database)/documents/invites/$(code)).data.uid; }
+
     match /users/{uid}/entries/{entry} {
       function owner() { return request.auth != null && request.auth.uid == uid; }
       function valid() {
@@ -19,6 +27,43 @@ service cloud.firestore {
       allow update: if owner() && valid() && request.resource.data.edited_at >= resource.data.edited_at;
       allow delete: if false;
     }
+
+    // The card friends see. Only its owner writes it; only the owner and their friends read it.
+    match /profiles/{uid} {
+      allow read: if signedIn() && (me() == uid || isFriend(uid));
+      allow write: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['name', 'photo', 'streak', 'best', 'today', 'week', 'totals', 'plan', 'updated_at'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+    }
+
+    // Anyone signed in who knows a code can look it up; you can only make or delete your own.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if signedIn() && resource.data.uid == me();
+      allow create, update: if signedIn() && code.size() == 8 && request.resource.data.uid == me()
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'at']);
+      allow delete: if signedIn() && resource.data.uid == me();
+    }
+
+    // A link needs the other person's invite code: adding them to my list, or me to theirs.
+    match /users/{uid}/friends/{fid} {
+      allow read: if signedIn() && me() == uid;
+      allow create: if signedIn() && uid != fid && request.resource.data.code is string && (
+        (me() == uid && inviteOwner(request.resource.data.code) == fid) ||
+        (me() == fid && inviteOwner(request.resource.data.code) == uid));
+      allow delete: if signedIn() && (me() == uid || me() == fid);
+    }
+
+    // Pokes: friends send short preset messages; only the person poked reads or clears them.
+    match /users/{uid}/pokes/{pid} {
+      allow read, delete: if signedIn() && me() == uid;
+      allow create: if signedIn() && isFriend(uid)
+        && request.resource.data.keys().hasOnly(['from', 'name', 'photo', 'kind', 'msg', 'at'])
+        && request.resource.data.from == me()
+        && request.resource.data.kind in ['tease', 'cheer']
+        && request.resource.data.msg is string && request.resource.data.msg.size() <= 80;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

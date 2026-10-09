@@ -3,7 +3,8 @@ import { notifications, streakOf, type Note } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 import { Logo } from "./Logo";
-import { Avatar, useSync } from "./SyncSection";
+
+import { unseenPokes, useFriends } from "./friendsStore";
 import { applyUpdate, useUpdateReady } from "./updates";
 import { conflictText } from "./HealthSection";
 import { useHealth } from "./healthSync";
@@ -41,13 +42,11 @@ const TITLES = { home: "Home", plan: "Plan", stats: "Stats", settings: "Settings
 /** Top bar: the app's name on Home, the page name elsewhere; then streak, sync and notifications. */
 export function AppHeader() {
   const { model, tab, openSheet } = useApp();
-  const sync = useSync();
   const streak = streakOf(model);
   const lit = streak.current > 0;
   const notes = useNotes(), seen = useSeen();
   const unseen = notes.filter((n) => !seen.includes(n.key)).length;
-  const on = sync.phase !== "off" && !!sync.account;
-  const syncLabel = !on ? "Sync is off" : sync.phase === "offline" ? "Offline, will sync later" : sync.phase === "error" ? "Sync needs attention" : sync.phase === "synced" ? "Synced" : "Syncing";
+  const pokes = unseenPokes(useFriends());
   return (
     <header className="apphead">
       {/* The logo shows on phones; on wide screens the side rail already has it. */}
@@ -60,8 +59,9 @@ export function AppHeader() {
           <Icon.bell />
           {unseen > 0 && <span className="badge">{unseen > 9 ? "9+" : unseen}</span>}
         </button>
-        <button className={"hicon acctbtn " + (on ? sync.phase : "off")} aria-label={on ? `Account. ${syncLabel}` : "Sign in"} title={on ? syncLabel : "Sign in"} onClick={() => openSheet({ kind: "account" })}>
-          {on && sync.account ? <><Avatar account={sync.account} size={30} /><span className="acctdot" aria-hidden="true" /></> : <Icon.user />}
+        <button className="hicon frbtn" aria-label={pokes ? `Friends, ${pokes} new pokes` : "Friends"} onClick={() => openSheet({ kind: "friends" })}>
+          <Icon.friends />
+          {pokes > 0 && <span className="badge">{pokes > 9 ? "9+" : pokes}</span>}
         </button>
       </span>
     </header>
