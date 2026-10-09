@@ -39,11 +39,15 @@ export function TrackerScreen() {
   }, [t?.status]);
   useEffect(() => { resumeAfterReload(); }, []);
   useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setSaveAsExtra(false); setTyped(""); } }, [t?.status]);
+  const planKind = t?.target ? dayAt(model, t.target.w, t.target.d)?.c.kind : undefined;
+  useEffect(() => { if (t?.status === "done") setSaveAsExtra(!!planKind && (planKind === "bike") !== (t.kind === "bike")); }, [t?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!t) return null;
   const day = t.target ? dayAt(model, t.target.w, t.target.d) : undefined;
   const already = !!day && !!state.done[day.ids[0]];
-  const where = day ? `${DN[t.target!.d]} ${fmtShort(day.date)}: ${t.target!.title}` : "Extra activity, today";
+  // A walk tracked on a bike day (or a ride on a walking day) isn't that session: it saves as an extra.
+  const mismatch = !!day && (day.c.kind === "bike") !== (t.kind === "bike");
+  const where = day && !mismatch ? `${DN[t.target!.d]} ${fmtShort(day.date)}: ${t.target!.title}` : "Extra activity, today";
   const now = t.finishedAt ?? Date.now();
   const s = t.track ? trackStats(t.track, now) : null;
   const bike = t.kind === "bike", indoor = t.mode === "indoor";
@@ -82,9 +86,9 @@ export function TrackerScreen() {
             const m = t.target?.title.match(/^(.*?)\s([\d.]+)\s(min|mi)$/);
             return (
               <section className="hero trk-plan">
-                <span className="lbl">{t.target ? "Today's session" : "Free workout"}</span>
-                <span className="ht">{m ? <>{m[1]} <span className="nw">{m[2]}<small>{m[3]}</small></span></> : t.target?.title ?? KINDS.find(([k]) => k === t.kind)![1]}</span>
-                {t.target?.instructions ? <p>{t.target.instructions}</p> : <p>Track anything. It saves as an extra activity.</p>}
+                <span className="lbl">{t.target && !mismatch ? "Today's session" : "Free workout"}</span>
+                <span className="ht">{mismatch ? KINDS.find(([k]) => k === t.kind)![1] : m ? <>{m[1]} <span className="nw">{m[2]}<small>{m[3]}</small></span></> : t.target?.title ?? KINDS.find(([k]) => k === t.kind)![1]}</span>
+                {mismatch ? <p>Saves as an extra activity. Today's {t.target!.title.toLowerCase()} stays open. Switch back to {day!.c.kind === "bike" ? "Bike" : "Walk"} to track it.</p> : t.target?.instructions ? <p>{t.target.instructions}</p> : <p>Track anything. It saves as an extra activity.</p>}
               </section>
             );
           })()}
