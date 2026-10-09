@@ -183,8 +183,8 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
             </div>
           ) : (
             <div className="row2">
-              <button className="btn solid" onClick={() => setFormOpen(true)}>Log it</button>
-              <button className="btn" onClick={() => { closeSheet(); openTracker(trackKindFor(c.kind), { w, d, title: c.t, instructions: c.d }); }}><Icon.play /> Track it</button>
+              <button className="btn solid trackit" onClick={() => { closeSheet(); openTracker(trackKindFor(c.kind), { w, d, title: c.t, instructions: c.d }); }}><Icon.play /> Track it</button>
+              <button className="btn" onClick={() => setFormOpen(true)}>Log it</button>
             </div>
           )}
         </>
