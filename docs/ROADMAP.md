@@ -24,8 +24,11 @@ Do these in order. Each stage ends deployed and usable.
 - Match imported sessions to planned sessions by date and type; ask before overwriting a manual log.
 - Optional native GPS tracking with the screen off: live distance, pace, time, route.
 
-## Stage 5: Strava (optional)
+## Stage 5: Strava (skipped)
+- Skipped (Oct 2026). The app's own GPS tracking and the Health Connect import cover it. Revisit only if users ask.
+- Original plan:
 - Strava OAuth through a small Vercel serverless function (client secret stays server-side). Webhook for new activities.
 
-## Stage 6: Test the market
+## Stage 6: Test the market (undecided)
+- The owner may not market the app at all. Don't start this stage unless asked.
 - Landing page and waitlist. If demand shows up: payments, privacy policy, medical disclaimer, small social features (shareable weekly card, private challenge with friends).
