@@ -3,6 +3,7 @@ import { addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday
 import { TooSoonNote } from "../TooSoonNote";
 import { TapLogo } from "../Splash";
 import { SyncSection } from "../SyncSection";
+import { HealthSection } from "../HealthSection";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Preset, type Shape } from "../theme";
@@ -254,6 +255,7 @@ export function Settings() {
     <section className="view stack" aria-label="Settings">
       <div className="setgrid">
       <SyncSection />
+      <HealthSection />
       <AboutYou />
       <YourPlan />
       <LookPicker />

@@ -20,3 +20,4 @@ export * from "./track";
 export * from "./trackSave";
 export * from "./intervals";
 export * from "./stride";
+export * from "./health";

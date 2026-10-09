@@ -27,9 +27,9 @@
 *,*::before,*::after{box-sizing:border-box}
 html{overflow-y:scroll;scrollbar-gutter:stable;background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
-body.locked{overflow:hidden}
+body.locked,body.tracking{overflow:hidden}
 /* Nothing behind an open sheet scrolls or shows a scrollbar. */
-html:has(body.locked){overflow:hidden}
+html:has(body.locked),html:has(body.tracking){overflow:hidden}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#3a3734;border-radius:min(8px,var(--rmax))}::-webkit-scrollbar-track{background:transparent}
 button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 button,input,summary{color:inherit}
@@ -294,15 +294,15 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 .filebtn{display:flex;align-items:center;justify-content:center;position:relative}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .filebtn:focus-within{outline:3px solid var(--sky);outline-offset:2px}
-.sheet-body{overscroll-behavior:contain}
+.sheet-body{overscroll-behavior:none}
 
 /* No pull-to-refresh or scroll chaining; the app is not a web page. */
-html,body{overscroll-behavior-y:none}
+html,body{overscroll-behavior:none}
 /* Sheet title and close stay put while the sheet scrolls. */
 /* Sheet: fixed header (handle and title), only the content below scrolls. */
 .sheet-inner{flex:1;min-height:0;display:flex;flex-direction:column}
 .sheet-head{flex:none;margin:0;padding:4px 16px 12px;border-bottom:1px solid var(--line)}
-.sheet-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px calc(28px + var(--sab))}
+.sheet-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:none;padding:12px 16px calc(28px + var(--sab))}
 /* Two-tap delete: the armed state is red. */
 .btn.confirm,.btn.small.confirm,.btn.solid.confirm{background:var(--bad);border-color:var(--bad);color:var(--on-accent)}
 .xact{flex:none;display:flex;flex-direction:column;gap:6px;align-items:stretch}
@@ -321,7 +321,7 @@ html,body{overscroll-behavior-y:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how,.area-sync{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how,.area-sync,.area-health{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -350,8 +350,8 @@ html,body{overscroll-behavior-y:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"sync sync" "you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
-  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-sync{grid-area:sync}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"sync sync" "health health" "you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
+  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-sync{grid-area:sync}.area-health{grid-area:health}
   .area-sync>.card{flex:1}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
@@ -379,7 +379,7 @@ html,body{overscroll-behavior-y:none}
 /* Plan */
 .sub2{display:block;margin-top:3px;letter-spacing:.08em}
 .weeksp .top{display:flex;justify-content:space-between;align-items:center}
-.wstrip{display:flex;gap:18px;overflow-x:auto;margin:10px -16px 0;padding:4px 16px 2px;scrollbar-width:none;scroll-behavior:smooth}
+.wstrip{display:flex;gap:18px;overflow-x:auto;overscroll-behavior-x:none;margin:10px -16px 0;padding:4px 16px 2px;scrollbar-width:none;scroll-behavior:smooth}
 .wstrip::-webkit-scrollbar{display:none}
 .wphase{flex:none;display:flex;flex-direction:column;gap:7px}
 .wpname{font:600 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
@@ -652,7 +652,7 @@ input[type="date"].txtin{width:150px}
 /* Home: on phones one column in reading order; on wide screens "now" on the left, "what happened" on the right. */
 @media (max-width:899px){
   .homecols>.col{display:contents}
-  .homecols .o1{order:1}.homecols .o2{order:2}.homecols .o3{order:3}.homecols .o4{order:4}.homecols .o5{order:5}.homecols .o6{order:6}
+  .homecols .o1{order:1}.homecols .o2{order:2}.homecols .o3{order:3}.homecols .o4{order:4}.homecols .o5{order:5}.homecols .o6{order:6}.homecols .o7{order:7}
 }
 @media (min-width:900px){
   .homecols{gap:22px}
@@ -789,7 +789,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 @media (min-width:900px){.apphead-title{font-size:34px}.apphead-logo{display:none}}
 
 /* Workout tracker: full screen over everything */
-.tracker{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;flex-direction:column;gap:18px;padding:calc(16px + var(--sat)) 20px calc(20px + var(--sab));overflow-y:auto;max-width:620px;margin:0 auto}
+.tracker{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;flex-direction:column;gap:18px;padding:calc(16px + var(--sat)) 20px calc(20px + var(--sab));overflow-y:auto;overscroll-behavior:none;max-width:620px;margin:0 auto}
 @media (min-width:900px){.tracker{max-width:none;padding-left:max(20px,calc(50vw - 300px));padding-right:max(20px,calc(50vw - 300px))}}
 .trk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .trk-top h2{font:800 26px/1.1 var(--display);margin-top:4px}
@@ -855,3 +855,21 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .updnum svg{width:16px;height:16px}
 .updstep.ok .updnum{background:var(--good)}
 .updstep .chip{flex:none}
+
+/* Health Connect: workouts waiting for an answer */
+.hclist{display:flex;flex-direction:column;gap:12px}
+.hclist .setnote{margin:0}
+.hcitem{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax))}
+.hcitem small{color:var(--muted);font-size:13px}
+.hcitem .btnpair{flex-wrap:wrap;margin-top:4px}
+.setgrid:not(:has(.area-health)){grid-template-areas:"sync sync" "you you" "plan plan" "look look" "how how" "data data"}
+
+/* Home totals */
+.totals .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.totseg{flex:0 1 230px;padding:3px;gap:2px}
+.totseg button{font-size:12px;padding:6px 0}
+.totrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:14px}
+.totrow>div{display:flex;flex-direction:column;gap:3px;min-width:0;padding:0 10px;border-left:1px solid var(--line)}
+.totrow>div:first-child{padding-left:0;border-left:0}
+.totrow b{font:800 clamp(24px,7vw,30px)/1 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.totrow small{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}

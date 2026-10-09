@@ -4,6 +4,7 @@ import { Icon } from "./icons";
 import { Wordmark } from "./Logo";
 import { AppHeader } from "./AppHeader";
 import { TrackerScreen } from "./TrackerScreen";
+import { HealthAutoImport } from "./HealthSection";
 import { useMirroredScroll } from "./mirror";
 import { needsOnboarding } from "../training";
 import { Onboarding } from "./Onboarding";
@@ -62,6 +63,7 @@ function Shell() {
     </nav>
     <SheetHost />
     <TrackerScreen />
+    <HealthAutoImport />
     <Toast />
     {IS_NATIVE ? <ApkUpdatePrompt /> : <UpdatePrompt />}
   </>;

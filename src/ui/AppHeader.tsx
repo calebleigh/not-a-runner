@@ -5,6 +5,8 @@ import { Icon } from "./icons";
 import { Logo } from "./Logo";
 import { useSync } from "./SyncSection";
 import { applyUpdate, useUpdateReady } from "./updates";
+import { conflictText } from "./HealthSection";
+import { useHealth } from "./healthSync";
 
 // Which notifications this device has seen (opening the list marks them all).
 const SEEN = "seenNotes";
@@ -27,7 +29,10 @@ const useSeen = () => useSyncExternalStore((f) => { seenSubs.add(f); return () =
 export function useNotes(): Note[] {
   const { model, now } = useApp();
   const update = useUpdateReady();
-  const list = notifications(model, now);
+  const health = useHealth();
+  // Workouts from the health store that match a session you logged yourself.
+  const asks: Note[] = health.mem.pending.map((c) => ({ key: `health:${c.workout.id}`, kind: "missed", text: conflictText(c), action: { label: "Choose", to: { type: "plan" } } }));
+  const list = [...asks, ...notifications(model, now)];
   return update ? [{ key: `update:${model.today.toDateString()}`, kind: "tip", text: "A new version of the app is ready.", action: { label: "Update", to: { type: "plan" } } }, ...list] : list;
 }
 
@@ -72,6 +77,7 @@ export function NotesSheetBody() {
     const to = n.action?.to;
     if (!to) return;
     if (n.key.startsWith("update:")) { applyUpdate(); return; }
+    if (n.key.startsWith("health:")) { openSheet({ kind: "health" }); return; }
     if (to.type === "steps") openSheet({ kind: "steps", date: to.date });
     else if (to.type === "day") openSheet({ kind: "day", w: to.w, d: to.d });
     else if (to.type === "weigh") openSheet({ kind: "weigh" });

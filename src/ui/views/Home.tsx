@@ -7,6 +7,7 @@ import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Recent } from "../Recent";
 import { TodoCard } from "../TodoList";
+import { TotalsCard } from "../Totals";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
 
@@ -100,7 +101,7 @@ export function Home() {
       {(() => {
         const q = quoteForWeek(curWeek);
         return (
-          <figure className="panelc quote o6">
+          <figure className="panelc quote o7">
             <span className="lbl">Quote of the week</span>
             <blockquote>{q.text}</blockquote>
             <figcaption>{q.by}</figcaption>
@@ -110,8 +111,9 @@ export function Home() {
       </div>
 
       <div className="col">
-      <div className="o5"><Recent /></div>
-      <div className="o4"><TodoCard /></div>
+      <div className="o4"><TotalsCard /></div>
+      <div className="o6"><Recent /></div>
+      <div className="o5"><TodoCard /></div>
 
 
 

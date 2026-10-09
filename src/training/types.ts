@@ -21,6 +21,8 @@ export interface Log {
   kind?: "walk" | "run" | "bike";
   /** Tracked indoors (steps or time) rather than with GPS. */
   indoor?: boolean;
+  /** The health store's id when it came from Health Connect (or Apple Health). */
+  hc?: string;
 }
 
 export interface Extra {

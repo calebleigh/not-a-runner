@@ -194,3 +194,17 @@ export function predict(state: State, dist: number): number | null {
 
 /** Cardio logs with a time, oldest first. */
 export const timedCardioLogs = (state: State) => sortedLogs(state).filter(([id, l]) => idParts(id).t === "c" && l.time);
+
+export interface SumUp { steps: number; miles: number; secs: number }
+
+/** Steps, miles and active time for the plan week, the calendar month and all time (Home's totals card). */
+export function homeTotals(model: Model): Record<"week" | "month" | "all", SumUp> {
+  const { today, curWeek, spec } = model;
+  const inWeek: DateRange = (d) => d >= dateOf(spec, curWeek, 0) && d <= dateOf(spec, curWeek, 6);
+  const inMonth: DateRange = (d) => d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+  const sum = (r: DateRange): SumUp => {
+    const t = totals(model, r);
+    return { steps: stepStats(model.state, r).sum, miles: Math.round((t.walk + t.run + t.bike + t.other) * 10) / 10, secs: t.secs };
+  };
+  return { week: sum(inWeek), month: sum(inMonth), all: sum(ALL) };
+}

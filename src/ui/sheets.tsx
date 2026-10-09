@@ -5,6 +5,8 @@ import { trackKindFor } from "./trackFor";
 import { TodoSheetBody } from "./TodoList";
 import { NotesSheetBody, StreakSheetBody } from "./AppHeader";
 import { UpdateSheetBody } from "./UpdateSheet";
+import { HealthSheetBody } from "./HealthSection";
+import { healthName } from "../native/health";
 import { dateOf, dayAt, dayKey, isBirthdayOn, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
 import { CardioCard, ExtraSection, StepsCard, StepsEntry, StrengthCard, WeighCard } from "./cards";
@@ -150,6 +152,10 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "why":
       title = "Your why";
       body = <WhyEditor />;
+      break;
+    case "health":
+      title = `From ${healthName}`;
+      body = <HealthSheetBody />;
       break;
     case "update":
       title = "Get the update";
