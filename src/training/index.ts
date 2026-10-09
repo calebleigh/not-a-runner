@@ -24,3 +24,4 @@ export * from "./intervals";
 export * from "./stride";
 export * from "./health";
 export * from "./today";
+export * from "./month";

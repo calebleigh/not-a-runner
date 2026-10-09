@@ -94,8 +94,8 @@ export function ConsistencyCard({ acts, p }: { acts: Activity[]; p: Period }) {
     if (w >= 1) openSheet({ kind: "day", w, d: dd });
   };
   const pct = c.planned ? Math.round(100 * c.plannedDone / c.planned) : null;
-  // Short periods read as a calendar; long ones as a strip of weeks (one column per week).
-  const cal = c.days.length <= 31;
+  // A strip of weeks, one column per week, Monday on top (the Plan tab has the calendar). Short periods get bigger squares.
+  const big = c.days.length <= 62;
   const lead = c.days.length ? (c.days[0].date.getDay() + 6) % 7 : 0;
   // Long strips open on the latest weeks.
   const strip = useRef<HTMLDivElement>(null);
@@ -109,19 +109,17 @@ export function ConsistencyCard({ acts, p }: { acts: Activity[]; p: Period }) {
         <div><b className="num">{pct === null ? "None" : <><Num value={pct} />%</>}</b><small>Planned done</small></div>
       </div>
       {c.days.length > 0 && (
-        <div ref={strip} className={cal ? "heat cal" : "heat strip"} role="img" aria-label={`${c.activeDays} active days`}>
-          {cal && "MTWTFSS".split("").map((l, i) => <span key={"h" + i} className="hl">{l}</span>)}
-          {Array.from({ length: lead }, (_, i) => <span key={"p" + i} className="hc pad" />)}
+        <div ref={strip} className={c.days.length <= 7 ? "heat row" : "heat strip" + (big ? " big" : "")} role="img" aria-label={`${c.activeDays} active days`}>
+          {c.days.length > 7 && Array.from({ length: lead }, (_, i) => <span key={"p" + i} className="hc pad" />)}
           {c.days.map((x) => (
             <button key={x.date.getTime()} className={"hc l" + lvl(x.mins)} title={`${dayTxt(x.date)}: ${x.mins ? x.mins + " min" : "rest"}`}
               aria-label={`${dayTxt(x.date)}: ${x.mins ? x.mins + " minutes" : "nothing logged"}`} onClick={() => open(x.date)}>
-              {cal ? x.date.getDate() : ""}
             </button>
           ))}
         </div>
       )}
       <div className="heatkey" aria-hidden="true"><span>Less</span>{[0, 1, 2, 3, 4].map((l) => <i key={l} className={"hc l" + l} />)}<span>More</span></div>
-      {p.kind !== "week" && p.kind !== "month" && <p className="foot">Each column is a week, Monday on top.</p>}
+      <p className="foot">{c.days.length <= 7 ? "Tap a day to open it." : "Each column is a week, Monday on top. Tap a day to open it."}</p>
     </section>
   );
 }

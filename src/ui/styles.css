@@ -376,20 +376,6 @@ html,body{overscroll-behavior:none}
 
 /* Plan */
 .sub2{display:block;margin-top:3px;letter-spacing:.08em}
-.weeksp .top{display:flex;justify-content:space-between;align-items:center}
-.wstrip{display:flex;gap:18px;overflow-x:auto;overscroll-behavior-x:none;margin:10px -16px 0;padding:4px 16px 2px;scrollbar-width:none;scroll-behavior:smooth}
-.wstrip::-webkit-scrollbar{display:none}
-.wphase{flex:none;display:flex;flex-direction:column;gap:7px}
-.wpname{font:600 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
-.wrow{display:flex;gap:6px}
-.wt{flex:none;width:32px;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;padding:0;cursor:pointer}
-.wt .t{width:100%;height:42px;border-radius:min(10px,var(--rmax));background:var(--surface2);position:relative;overflow:hidden;transition:transform .18s var(--ease)}
-.wt:active .t{transform:scale(.94)}
-.wt .t i{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(var(--accent-hi),var(--accent-lo));transition:height .7s var(--ease)}
-.wt small{font:700 12px var(--display);color:var(--muted)}
-.wt.cur small{color:var(--accent)}
-.wt.sel .t{outline:2px solid var(--accent);outline-offset:2px}
-.wt.sel small{color:var(--ink)}
 .todaybtn{flex:none;border:0;border-radius:min(20px,var(--rmax));padding:7px 14px;background:var(--accent-soft);color:var(--accent);font:700 14px var(--body);cursor:pointer}
 .todaybtn:active{transform:scale(.95)}
 .vol .top .lbl{line-height:1.2}
@@ -515,7 +501,6 @@ input[type="date"].txtin{width:150px}
 .coach.why small{display:block;font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 /* Birthday cake markers on day views */
 .daycake{position:absolute;inset:0;margin:auto;width:20px;height:20px;color:var(--accent);z-index:1}
-.wt .daycake{width:16px;height:16px}
 .daycake svg,.inlinecake svg{width:100%;height:100%}
 .inlinecake{display:inline-block;width:.85em;height:.85em;margin-left:.35em;vertical-align:-.05em;color:var(--accent)}
 .weekstrip .v .inlinecake{width:16px;height:16px;margin:0}
@@ -1035,11 +1020,8 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .constiles b{display:block;font:800 30px/1 var(--display)}
 .constiles small{font-size:12px;color:var(--muted)}
 .heat{display:grid;gap:4px}
-.heat.cal{grid-template-columns:repeat(7,minmax(0,1fr))}
 .heat.strip{grid-auto-flow:column;grid-template-rows:repeat(7,12px);grid-auto-columns:12px;gap:3px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
-.heat .hl{font:700 11px var(--body);color:var(--muted);text-align:center}
 .hc{border:0;padding:0;border-radius:min(5px,var(--rmax));background:var(--surface2);color:var(--muted);font:600 12px var(--body);cursor:pointer}
-.heat.cal .hc{aspect-ratio:1;display:grid;place-items:center}
 .heat.strip .hc{width:12px;height:12px;border-radius:min(3px,var(--rmax))}
 .hc.pad{background:none;cursor:default}
 .hc.l1{background:color-mix(in srgb,var(--accent) 30%,var(--surface2));color:var(--ink)}
@@ -1286,3 +1268,44 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-kinds small.rec{color:var(--accent)}
 .trk-kinds button.sel small.rec{color:var(--on-accent)}
 .btn.trackit{display:flex;align-items:center;justify-content:center;gap:8px}
+
+/* Plan: month calendar */
+.calhead{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.calhead h3{flex:1;font:800 italic 26px/1 var(--display);text-transform:uppercase;text-align:center}
+.calhead h3 small{font-size:18px;color:var(--muted)}
+.calnav{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:700 24px/1 var(--body);cursor:pointer}
+.calnav:disabled{opacity:.3;cursor:default}
+.calhead .todaybtn{order:-1}
+.calhead .todaybtn.on{opacity:.5}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.calh{font:700 11px var(--body);color:var(--muted);text-align:center;padding-bottom:2px}
+.calc{position:relative;height:clamp(46px,12vw,62px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:min(12px,var(--rmax));border:1px solid transparent;background:var(--surface2);color:var(--ink);cursor:pointer;padding:0;font:inherit;transition:transform .15s var(--ease)}
+.calc:active{transform:scale(.94)}
+.calc b{font:700 15px/1 var(--display)}
+.calic{height:16px;display:grid;place-items:center;color:var(--accent)}
+.calic svg{width:15px;height:15px}
+.calc.rest,.calc.extra{background:transparent;color:var(--muted)}
+.calc.out{background:transparent;color:var(--muted);opacity:.35;cursor:default}
+.calc.dim{opacity:.35}
+.calc.done{background:var(--accent);color:var(--on-accent)}
+.calc.done .calic{color:var(--on-accent)}
+.calc.part{background:linear-gradient(135deg,rgba(var(--accent-rgb),.45) 50%,var(--surface2) 50%)}
+.calc.missed{background:transparent;border:1px dashed var(--muted)}
+.calc.missed .calic{color:var(--muted)}
+.calc.wk:not(.dim){box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.35)}
+.calc.today{border:2px solid var(--ink)}
+.calc.race{background:var(--gold);color:var(--on-accent)}
+.calc.race .calic{color:var(--on-accent)}
+.caldot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.calcake{position:absolute;top:2px;right:3px;width:12px;height:12px;color:var(--gold)}
+.calcake svg{width:12px;height:12px}
+.calkey{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--muted)}
+.calkey span{display:flex;align-items:center;gap:6px}
+.calkey .k{width:12px;height:12px;border-radius:4px;display:inline-block}
+.calkey .k.done{background:var(--accent)}
+.calkey .k.missed{border:1px dashed var(--muted)}
+.calkey .k.up{background:var(--surface2);border:1px solid var(--line)}
+.heat.strip.big{grid-template-rows:repeat(7,22px);grid-auto-columns:22px;gap:4px}
+.heat.strip.big .hc{width:22px;height:22px;border-radius:min(5px,var(--rmax))}
+.heat.row{grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.heat.row .hc{height:34px;border-radius:min(8px,var(--rmax))}

@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
-  DN, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, phaseOf, phases, sameDay, weekFrac, weekProgress,
-  type CardioKind, type Day,
+  DN, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, monthGrid, phaseOf, phases, planMonths, sameDay, weekProgress,
+  type CardioKind, type Day, type MonthCell,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -27,7 +27,6 @@ export function Plan() {
   const { model, state, openSheet } = useApp();
   const { curWeek, today } = model;
   const [planWeek, setPlanWeek] = useMirroredState("planWeek", curWeek);
-  const stripRef = useRef<HTMLDivElement>(null);
   const [jump, setJump] = useState(0);
 
   const race = model.spec.race;
@@ -36,15 +35,6 @@ export function Plan() {
   const prog = weekProgress(state, w);
   const isCur = planWeek === curWeek;
   const ph = phaseOf(model.spec, curWeek), P = phases[ph];
-
-  // Keep the selected week tile in view.
-  useLayoutEffect(() => {
-    const P = stripRef.current, sel = P?.querySelector<HTMLElement>(".wt.sel");
-    if (!P || !sel) return;
-    P.style.scrollBehavior = "auto";
-    P.scrollLeft = sel.offsetLeft - P.clientWidth / 2 + sel.offsetWidth / 2;
-    P.style.scrollBehavior = "";
-  }, [planWeek]);
 
   // "Today": back to this week, bring today's row into view and flash it.
   useEffect(() => {
@@ -101,31 +91,8 @@ export function Plan() {
         <div className="phlabels">{phases.map((p, i) => <small key={p.name} className={i === ph ? "now" : ""}>{p.name}</small>)}</div>
       </section>
 
-      <section className="panelc weeksp">
-        <div className="top">
-          <span className="lbl">Weeks</span>
-          <button className="todaybtn" onClick={() => { setPlanWeek(curWeek); setJump((j) => j + 1); }}>Today</button>
-        </div>
-        <div className="wstrip" ref={stripRef}>
-          {phases.map((p) => (
-            <div className="wphase" key={p.name}>
-              <small className="wpname">{p.name}</small>
-              <div className="wrow">
-                {model.weeks.slice(p.from - 1, p.to).map((wk) => {
-                  const f = weekFrac(state, wk);
-                  return (
-                    <button key={wk.n} className={"wt" + (wk.n === planWeek ? " sel" : "") + (wk.n === curWeek ? " cur" : "")}
-                      aria-label={`Week ${wk.n}`} aria-pressed={wk.n === planWeek} onClick={() => setPlanWeek(wk.n)}>
-                      <span className="t"><Grow dir="h" pct={Math.round(f * 100)} />{[0, 1, 2, 3, 4, 5, 6].some((d) => isBirthdayOn(state.settings.birthday, dateOf(model.spec, wk.n, d))) && <span className="daycake"><Icon.cake /></span>}</span>
-                      <small>{wk.n}</small>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <MonthCalendar planWeek={planWeek} onDay={(c) => { setPlanWeek(c.w); openSheet({ kind: "day", w: c.w, d: c.d }); }}
+        onToday={() => { setPlanWeek(curWeek); setJump((j) => j + 1); }} />
 
       <div className="cols plancols">
         <div className="col">
@@ -148,6 +115,54 @@ export function Plan() {
           </section>
         </div>
         <div className="col"><TodoList /></div>
+      </div>
+    </section>
+  );
+}
+
+const KIND_ICON: Partial<Record<CardioKind, () => React.JSX.Element>> = {
+  walk: Icon.shoe, run: Icon.bolt, long: Icon.bolt, test: Icon.bolt, bike: Icon.bike, race: Icon.flag,
+};
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** A month at a time: what's planned each day and how it went. Tap a day to open it. */
+function MonthCalendar({ planWeek, onDay, onToday }: { planWeek: number; onDay: (c: MonthCell) => void; onToday: () => void }) {
+  const { model, state } = useApp();
+  const { today } = model;
+  const months = planMonths(model);
+  const nowIdx = Math.max(0, months.findIndex(([y, m]) => y === today.getFullYear() && m === today.getMonth()));
+  const [idx, setIdx] = useMirroredState("planMonth", nowIdx);
+  const i = Math.min(Math.max(idx, 0), months.length - 1);
+  const [y, m] = months[i];
+  const grid = monthGrid(model, y, m);
+  const isNow = i === nowIdx;
+  return (
+    <section className="panelc calp" aria-label="Calendar">
+      <div className="calhead">
+        <button className="calnav" aria-label="Previous month" disabled={i === 0} onClick={() => setIdx(i - 1)}>&lsaquo;</button>
+        <h3>{MONTHS[m]} <small>{y}</small></h3>
+        <button className="calnav" aria-label="Next month" disabled={i === months.length - 1} onClick={() => setIdx(i + 1)}>&rsaquo;</button>
+        <button className={"todaybtn" + (isNow ? " on" : "")} onClick={() => { setIdx(nowIdx); onToday(); }}>Today</button>
+      </div>
+      <div className="calgrid" role="grid">
+        {"MTWTFSS".split("").map((l, k) => <span key={"h" + k} className="calh" aria-hidden="true">{l}</span>)}
+        {grid.flat().map((c) => {
+          const inPlan = c.status !== "out" && c.w >= 1 && c.w <= model.spec.weeks;
+          const I = c.race ? Icon.flag : c.status === "rest" || c.status === "extra" || c.status === "out" ? null : KIND_ICON[c.kind];
+          const cls = ["calc", c.status, c.inMonth ? "" : "dim", c.today ? "today" : "", inPlan && c.w === planWeek ? "wk" : "", c.race ? "race" : ""].filter(Boolean).join(" ");
+          return (
+            <button key={c.date.getTime()} className={cls} disabled={!inPlan}
+              aria-label={`${c.date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}, ${c.race ? "race day" : c.status === "rest" ? "rest" : c.status}`}
+              onClick={() => onDay(c)}>
+              <b>{c.date.getDate()}</b>
+              <span className="calic">{I ? <I /> : c.status === "extra" ? <i className="caldot" /> : null}</span>
+              {isBirthdayOn(state.settings.birthday, c.date) && <span className="calcake"><Icon.cake /></span>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="calkey" aria-hidden="true">
+        <span><i className="k done" />Done</span><span><i className="k missed" />Missed</span><span><i className="k up" />Planned</span><span><i className="caldot" />Extra</span>
       </div>
     </section>
   );
