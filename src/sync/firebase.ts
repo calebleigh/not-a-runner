@@ -3,10 +3,10 @@
 import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
 import {
-  GoogleAuthProvider, OAuthProvider, browserLocalPersistence, browserPopupRedirectResolver, getRedirectResult,
+  GoogleAuthProvider, OAuthProvider, browserLocalPersistence, getAuth, browserPopupRedirectResolver, getRedirectResult,
   indexedDBLocalPersistence, initializeAuth, onAuthStateChanged, signInWithCredential, signInWithPopup, signInWithRedirect, signOut as fbSignOut, type User,
 } from "firebase/auth";
-import { Timestamp, collection, doc, initializeFirestore, memoryLocalCache, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { Timestamp, collection, doc, getFirestore, initializeFirestore, memoryLocalCache, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import type { Row } from "./engine";
 
 export type Provider = "google" | "apple";
@@ -24,12 +24,19 @@ const app = initializeApp({
   messagingSenderId: "216360511088",
   appId: "1:216360511088:web:516ad0823beb39cc2e36b5",
 });
-const auth = initializeAuth(app, {
-  persistence: [indexedDBLocalPersistence, browserLocalPersistence],
-  popupRedirectResolver: browserPopupRedirectResolver,
-});
+// Set up once per page. If this file runs again in the same page (a live code reload while
+// developing), reuse what's already there; setting either up twice throws.
+const auth = (() => {
+  try {
+    return initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence], popupRedirectResolver: browserPopupRedirectResolver });
+  } catch {
+    return getAuth(app);
+  }
+})();
 // The app keeps its own copy on the device, so Firestore doesn't need a second one.
-const db = initializeFirestore(app, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true });
+const db = (() => {
+  try { return initializeFirestore(app, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true }); } catch { return getFirestore(app); }
+})();
 
 const account = (u: User): Account => ({ uid: u.uid, email: u.email, name: u.displayName, photo: u.photoURL });
 const entries = (uid: string) => collection(db, "users", uid, "entries");
