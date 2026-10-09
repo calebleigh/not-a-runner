@@ -6,6 +6,7 @@ import { TodoSheetBody } from "./TodoList";
 import { NotesSheetBody, StreakSheetBody } from "./AppHeader";
 import { UpdateSheetBody } from "./UpdateSheet";
 import { HealthSheetBody } from "./HealthSection";
+import { AccountSheetBody } from "./SyncSection";
 import { healthName } from "../native/health";
 import { dateOf, dayAt, dayKey, isBirthdayOn, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
 import { useApp, type SheetSpec } from "./app-state";
@@ -164,6 +165,10 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "streak":
       title = "Weekly streak";
       body = <StreakSheetBody />;
+      break;
+    case "account":
+      title = "Account";
+      body = <AccountSheetBody />;
       break;
     case "notes":
       title = "Notifications";

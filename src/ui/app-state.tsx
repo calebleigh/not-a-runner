@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createStorage } from "../storage/store";
-import { initSync, noteChange } from "../sync/controller";
+import { initSync, noteChange, signOutSync } from "../sync/controller";
 import { mirrorSend, onMirror } from "./mirror";
 import { applyAccent, applyMode, applyShape, isLight, type Shape } from "./theme";
-import { computeModel, mergeState, startOfDay, type Model, type State } from "../training";
+import { computeModel, emptyState, mergeState, startOfDay, type Model, type State } from "../training";
 
 export type Tab = "home" | "plan" | "stats" | "settings";
 export type SheetSpec =
@@ -22,7 +22,8 @@ export type SheetSpec =
   | { kind: "notes" }
   | { kind: "streak" }
   | { kind: "update" }
-  | { kind: "health" };
+  | { kind: "health" }
+  | { kind: "account" };
 
 interface AppCtx {
   model: Model;
@@ -30,6 +31,8 @@ interface AppCtx {
   /** Mutate a draft copy of state; it is saved right away. */
   update: (fn: (draft: State) => void) => void;
   importState: (incoming: State) => void;
+  /** Signs out and clears this device, back to the welcome screen. The account keeps its copy. */
+  signOut: () => Promise<void>;
   tab: Tab;
   setTab: (t: Tab) => void;
   sheet: SheetSpec | null;
@@ -49,6 +52,7 @@ function savedTab(): Tab {
   try { const t = sessionStorage.getItem(TAB_KEY) as Tab; return TABS.includes(t) ? t : "home"; } catch { return "home"; }
 }
 const storage = createStorage();
+const DEVICE_KEYS = ["seenNotes", "sgOvRange", "totalsSpan"];
 
 export function useApp(): AppCtx {
   const c = useContext(Ctx);
@@ -125,6 +129,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const openSheet = useCallback((s: SheetSpec) => { setSheet(s); mirrorSend("sheet", s); }, []);
   const closeSheet = useCallback(() => { setSheet(null); mirrorSend("sheet", null); }, []);
 
+  const signOut = useCallback(async () => {
+    await signOutSync();
+    const fresh = emptyState();
+    stateRef.current = fresh;
+    setState(fresh);
+    await storage.save(fresh).catch(() => {});
+    mirrorSend("data", fresh);
+    // Per-device extras that belong to the person who was signed in.
+    for (const k of DEVICE_KEYS) try { localStorage.removeItem(k); } catch { /* blocked */ }
+    setSheet(null); mirrorSend("sheet", null);
+    setTab("home");
+  }, [setTab]);
+
   // Fold preview: follow the other screen (already saved there, so don't save or toast again).
   useEffect(() => {
     const offs = [
@@ -160,7 +177,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (!state || !model) return null;
   return (
-    <Ctx.Provider value={{ model, state, update, importState, tab, setTab, sheet, openSheet, closeSheet, toast, toastMsg, now }}>
+    <Ctx.Provider value={{ model, state, update, importState, signOut, tab, setTab, sheet, openSheet, closeSheet, toast, toastMsg, now }}>
       {children}
     </Ctx.Provider>
   );

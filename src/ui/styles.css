@@ -991,3 +991,23 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .lhero-disc{margin-top:8px}
 .lhero.go .lhero-disc{animation:l-up .6s var(--ease) 1.3s both}
 .coming .crace:nth-child(2){border-top:0;padding-top:0}
+
+/* Account: header button and sheet */
+.avatar{display:grid;place-items:center;flex:none;border-radius:50%;object-fit:cover;background:linear-gradient(145deg,var(--accent-hi),var(--accent-lo));color:var(--on-accent);font:800 15px/1 var(--display)}
+.acctbtn{position:relative}
+.acctbtn.off{color:var(--muted)}
+.acctdot{position:absolute;right:5px;bottom:5px;width:11px;height:11px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 2px var(--paper)}
+.acctbtn.synced .acctdot{background:var(--good)}
+.acctbtn.syncing .acctdot,.acctbtn.starting .acctdot{background:var(--accent);animation:pulse 1s ease-in-out infinite alternate}
+.acctbtn.error .acctdot{background:var(--bad)}
+.acct{display:flex;flex-direction:column;gap:12px}
+.acct .gbtn{width:100%}
+.acct-who{display:flex;align-items:center;gap:14px}
+.acct-who b{display:block;font:800 24px/1.1 var(--display)}
+.acct-who small{color:var(--muted);font-size:14px}
+.acct .setrow{padding:12px 0;border-block:1px solid var(--line)}
+.acct .btn.small{margin-top:0}
+.signoutwarn{display:flex;flex-direction:column;gap:8px}
+.signoutwarn small{color:var(--bad);font-size:14px}
+.signoutwarn .btnpair{display:flex;gap:8px}
+.signoutwarn .btnpair>*{flex:1;margin:0}

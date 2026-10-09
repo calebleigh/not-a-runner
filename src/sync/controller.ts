@@ -87,7 +87,7 @@ export async function signInSync(kind: Provider): Promise<void> {
   }
 }
 
-/** Stops syncing on this device. Everything stays on the device; the account keeps its copy. */
+/** Stops syncing on this device and signs out. The account keeps its copy; clearing the device is up to the caller. */
 export async function signOutSync(): Promise<void> {
   stopListen?.(); stopAuth?.(); stopListen = stopAuth = null;
   saved = { on: false, v: 2, meta: { dirty: {}, cursor: null }, account: null, lastSync: null };
@@ -97,6 +97,13 @@ export async function signOutSync(): Promise<void> {
 }
 
 export const syncNow = () => schedule(0);
+
+/** Uploads anything waiting right now. Returns how many changes still haven't uploaded. */
+export async function flushNow(): Promise<number> {
+  clearTimeout(timer);
+  await flush();
+  return Object.keys(saved.meta.dirty).length;
+}
 
 async function turnOn(a: Account) {
   const sameAccount = saved.on && saved.account?.uid === a.uid;
@@ -118,6 +125,7 @@ async function start() {
       return;
     }
     if (saved.account?.uid !== a.uid) { saved = { ...saved, account: a, meta: startMeta(host!.get()) }; persist(); }
+    else if (saved.account.photo !== a.photo || saved.account.name !== a.name) { saved = { ...saved, account: a }; persist(); emit({}); }
     stopListen = f.listen(a.uid, saved.meta.cursor, (rows) => {
       const r = applyRemote(host!.get(), saved.meta, rows);
       saved = { ...saved, meta: r.meta, lastSync: Date.now() };

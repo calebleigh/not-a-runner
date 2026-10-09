@@ -1,5 +1,8 @@
-import { useSyncExternalStore } from "react";
-import { onSyncStatus, signInSync, signOutSync, syncNow, syncStatus, type SyncStatus } from "../sync/controller";
+import { useState, useSyncExternalStore } from "react";
+import { flushNow, onSyncStatus, signInSync, syncNow, syncStatus, type SyncStatus } from "../sync/controller";
+import type { Account } from "../sync/firebase";
+import { useApp } from "./app-state";
+import { ConfirmButton } from "./cards";
 
 export const useSync = (): SyncStatus => useSyncExternalStore(onSyncStatus, syncStatus);
 
@@ -53,12 +56,77 @@ export function SyncSection() {
               <span>Sync across devices<small>Works offline. Changes upload when you're back online.</small></span>
               <span className="btnpair">
                 <button className="chip" onClick={syncNow}>Sync now</button>
-                <button className="chip" onClick={() => signOutSync()}>Sign out</button>
+                <SignOutButton className="chip" />
               </span>
             </div>
           </>
         )}
       </section>
+    </div>
+  );
+}
+
+/** The signed-in person's Google photo, or their initial. */
+export function Avatar({ account, size = 30 }: { account: Account; size?: number }) {
+  const [broken, setBroken] = useState(false);
+  const initial = (account.name || account.email || "?").trim().charAt(0).toUpperCase();
+  return account.photo && !broken
+    ? <img className="avatar" src={account.photo} alt="" width={size} height={size} referrerPolicy="no-referrer" onError={() => setBroken(true)} />
+    : <span className="avatar" style={{ width: size, height: size, fontSize: size * 0.48 }} aria-hidden="true">{initial}</span>;
+}
+
+/**
+ * Signs out of the app: uploads anything waiting, then clears this device and goes back to the
+ * welcome screen. Offline with changes still waiting, it says so and asks once more.
+ */
+export function SignOutButton({ className }: { className: string }) {
+  const { signOut } = useApp();
+  const [busy, setBusy] = useState(false);
+  const [left, setLeft] = useState(0);
+  const go = async (force: boolean) => {
+    setBusy(true);
+    const n = await flushNow();
+    if (n && !force) { setLeft(n); setBusy(false); return; }
+    await signOut();
+  };
+  if (left) return (
+    <span className="signoutwarn">
+      <small>{left} {left === 1 ? "change hasn't" : "changes haven't"} uploaded yet. Signing out now loses {left === 1 ? "it" : "them"}.</small>
+      <span className="btnpair">
+        <button className={className + " confirm"} disabled={busy} onClick={() => go(true)}>Sign out anyway</button>
+        <button className={className} onClick={() => setLeft(0)}>Cancel</button>
+      </span>
+    </span>
+  );
+  if (busy) return <button className={className} disabled>Signing out</button>;
+  return <ConfirmButton className={className} label="Sign out" confirmLabel="Tap again to sign out" onConfirm={() => go(false)} />;
+}
+
+/** The account sheet from the header: who's signed in and how sync is doing, or a way to sign in. */
+export function AccountSheetBody() {
+  const s = useSync();
+  const on = s.phase !== "off" && !!s.account;
+  if (!on || !s.account) return (
+    <div className="acct">
+      <p className="setnote">You're using Not a Runner without an account, so your training lives only on this device.</p>
+      <p className="setnote">Sign in to back it up and keep your phone and computer in sync.</p>
+      <GoogleButton busy={s.phase === "starting"} />
+      {s.error && <p className="syncerr" role="alert">{s.error}</p>}
+    </div>
+  );
+  const a = s.account;
+  return (
+    <div className="acct">
+      <div className="acct-who">
+        <Avatar account={a} size={56} />
+        <div><b>{a.name || a.email}</b>{a.name && a.email && <small>{a.email}</small>}</div>
+      </div>
+      <div className="setrow">
+        <span>Sync<small aria-live="polite">{s.error || [PHASE[s.phase], s.phase === "synced" ? ago(s.lastSync) : "", s.pending && s.phase !== "synced" ? `${s.pending} to upload` : ""].filter(Boolean).join(", ")}</small></span>
+        <button className="chip" onClick={syncNow}>Sync now</button>
+      </div>
+      <SignOutButton className="btn small" />
+      <p className="setnote">Signing out removes your training from this device. It stays safe in your account, and signing back in brings it all back.</p>
     </div>
   );
 }

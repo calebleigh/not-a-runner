@@ -3,7 +3,7 @@ import { notifications, streakOf, type Note } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 import { Logo } from "./Logo";
-import { useSync } from "./SyncSection";
+import { Avatar, useSync } from "./SyncSection";
 import { applyUpdate, useUpdateReady } from "./updates";
 import { conflictText } from "./HealthSection";
 import { useHealth } from "./healthSync";
@@ -40,7 +40,7 @@ const TITLES = { home: "Home", plan: "Plan", stats: "Stats", settings: "Settings
 
 /** Top bar: the app's name on Home, the page name elsewhere; then streak, sync and notifications. */
 export function AppHeader() {
-  const { model, tab, setTab, openSheet } = useApp();
+  const { model, tab, openSheet } = useApp();
   const sync = useSync();
   const streak = streakOf(model);
   const lit = streak.current > 0;
@@ -48,7 +48,6 @@ export function AppHeader() {
   const unseen = notes.filter((n) => !seen.includes(n.key)).length;
   const on = sync.phase !== "off" && !!sync.account;
   const syncLabel = !on ? "Sync is off" : sync.phase === "offline" ? "Offline, will sync later" : sync.phase === "error" ? "Sync needs attention" : sync.phase === "synced" ? "Synced" : "Syncing";
-  const goSync = () => { setTab("settings"); window.setTimeout(() => document.querySelector(".area-sync")?.scrollIntoView({ block: "start" }), 60); };
   return (
     <header className="apphead">
       {/* The logo shows on phones; on wide screens the side rail already has it. */}
@@ -57,8 +56,8 @@ export function AppHeader() {
         <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
           <Icon.flame /><b>{streak.current}</b>
         </button>
-        <button className={"hicon sync " + (on ? sync.phase : "off")} aria-label={syncLabel} title={syncLabel} onClick={goSync}>
-          {on && sync.phase !== "offline" ? <Icon.cloud /> : <Icon.cloudOff />}
+        <button className={"hicon acctbtn " + (on ? sync.phase : "off")} aria-label={on ? `Account. ${syncLabel}` : "Sign in"} title={on ? syncLabel : "Sign in"} onClick={() => openSheet({ kind: "account" })}>
+          {on && sync.account ? <><Avatar account={sync.account} size={30} /><span className="acctdot" aria-hidden="true" /></> : <Icon.user />}
         </button>
         <button className="hicon" aria-label={unseen ? `Notifications, ${unseen} new` : "Notifications"} onClick={() => { markSeen(notes.map((n) => n.key)); openSheet({ kind: "notes" }); }}>
           <Icon.bell />

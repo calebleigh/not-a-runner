@@ -10,7 +10,7 @@ import { Timestamp, collection, doc, initializeFirestore, memoryLocalCache, onSn
 import type { Row } from "./engine";
 
 export type Provider = "google" | "apple";
-export interface Account { uid: string; email: string | null; name: string | null }
+export interface Account { uid: string; email: string | null; name: string | null; photo?: string | null }
 
 // On these addresses the sign-in pages are served from the app's own domain (see the /__/ rewrites
 // in vercel.json), which keeps sign-in working in browsers that block third-party storage.
@@ -31,7 +31,7 @@ const auth = initializeAuth(app, {
 // The app keeps its own copy on the device, so Firestore doesn't need a second one.
 const db = initializeFirestore(app, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true });
 
-const account = (u: User): Account => ({ uid: u.uid, email: u.email, name: u.displayName });
+const account = (u: User): Account => ({ uid: u.uid, email: u.email, name: u.displayName, photo: u.photoURL });
 const entries = (uid: string) => collection(db, "users", uid, "entries");
 /** Firestore ids can't contain "/". */
 const docId = (key: string) => key.replace(/\//g, "|");
