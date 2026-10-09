@@ -399,11 +399,10 @@ html,body{overscroll-behavior:none}
 .srow.flash{animation:rowflash .9s var(--ease) 2}
 @keyframes rowflash{50%{background:rgba(var(--accent-rgb),.35)}}
 .sstat{flex:none}
-.sstat.done{width:26px;height:26px;border-radius:var(--rc);display:grid;place-items:center;background:var(--accent);color:var(--on-accent)}
+.sstat.done{width:26px;height:26px;border-radius:var(--rc);display:grid;place-items:center;border:1.5px solid transparent;background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55);color:var(--muted)}
 .sstat.done svg{width:14px;height:14px}
-/* A great day: everything done. Gold star, gold ring. */
-.sstat.done.great{background:linear-gradient(145deg,var(--gold),var(--accent));color:var(--on-accent)}
-.sstat.done.great svg{fill:currentColor}
+/* A good day is faded orange; a great day (everything done) gets the orange stripes. */
+.sstat.done.great{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 5px,transparent 5px 10px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border-color:transparent;color:var(--on-accent)}
 .sstat.todaytag,.sstat.missed{padding:4px 10px;border-radius:min(20px,var(--rmax));font:700 12px var(--body)}
 .sstat.todaytag{background:var(--accent);color:var(--on-accent)}
 .sstat.missed{background:var(--bad-soft);color:var(--bad)}
@@ -1289,12 +1288,11 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .calc.rest,.calc.extra{background:transparent;color:var(--muted)}
 .calc.out{background:transparent;color:var(--muted);opacity:.35;cursor:default}
 .calc.dim{opacity:.35}
-.calc.done{background:var(--accent);color:var(--on-accent)}
-.calc.done .calic{color:var(--on-accent)}
-.calc.done.great{background:linear-gradient(145deg,var(--gold),var(--accent))}
-.calstar{position:absolute;top:4px;left:4px;width:13px;height:13px;color:var(--on-accent)}
-.calstar svg{width:13px;height:13px;fill:currentColor;stroke-width:1.5}
-.calkey .k.done.great{background:linear-gradient(145deg,var(--gold),var(--accent))}
+.calc.done{background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55);border-width:1.5px;color:var(--ink)}
+.calc.done .calic{color:var(--muted)}
+.calc.done.great{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 5px,transparent 5px 10px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border-color:transparent;color:var(--on-accent)}
+.calc.done.great .calic{color:var(--on-accent)}
+.calkey .k.done.great{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 5px,transparent 5px 10px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border:0}
 .calc.missed{background:transparent;border:1px dashed var(--muted)}
 .calc.missed .calic{color:var(--muted)}
 .calc.wk:not(.dim){box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.35)}
@@ -1307,7 +1305,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .calkey{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--muted)}
 .calkey span{display:flex;align-items:center;gap:6px}
 .calkey .k{width:12px;height:12px;border-radius:4px;display:inline-block}
-.calkey .k.done{background:var(--accent)}
+.calkey .k.done{background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55);border:1.5px solid rgba(var(--accent-rgb),.55)}
 .calkey .k.missed{border:1px dashed var(--muted)}
 .calkey .k.up{background:var(--surface2);border:1px solid var(--line)}
 .heat.strip.big{grid-template-rows:repeat(7,22px);grid-auto-columns:22px;gap:4px}

@@ -16,7 +16,7 @@ type Status = "great" | "done" | "today" | "missed" | "up" | "rest";
 
 const STATUS: Record<Status, () => ReactNode> = {
   done: () => <span className="sstat done" aria-label="Done"><Icon.check /></span>,
-  great: () => <span className="sstat done great" aria-label="Great day, all done"><Icon.star /></span>,
+  great: () => <span className="sstat done great" aria-label="Great day, all done"><Icon.check /></span>,
   today: () => <span className="sstat todaytag">Today</span>,
   missed: () => <span className="sstat missed">Missed</span>,
   up: () => <span className="sstat up" aria-hidden="true">›</span>,
@@ -57,7 +57,7 @@ export function Plan() {
       return { d, date, isToday, status, kind: "rest" as CardioKind, title: "Rest", sub: xs.length ? `${xs.length} extra, ${mi.toFixed(1)} mi` : "Log a walk if you go", rest: true };
     }
     const c = day.c, lg = state.logs[day.ids[0]], sd = day.ids[1] ? !!state.done[day.ids[1]] : true;
-    // Cardio done is a good day (a check); everything done is a great one (a star).
+    // Cardio done is a good day (faded orange); everything done is a great one (orange stripes).
     const g = dayGrade(model, day, date);
     const status: Status = g === "great" ? "great" : g ? "done" : isToday ? "today" : date < today ? "missed" : "up";
     const parts: string[] = [];
@@ -158,7 +158,6 @@ function MonthCalendar({ planWeek, onDay, onToday }: { planWeek: number; onDay: 
               onClick={() => onDay(c)}>
               <b>{c.date.getDate()}</b>
               <span className="calic">{I ? <I /> : c.status === "extra" ? <i className="caldot" /> : null}</span>
-              {c.great && <span className="calstar" aria-hidden="true"><Icon.star /></span>}
               {isBirthdayOn(state.settings.birthday, c.date) && <span className="calcake"><Icon.cake /></span>}
             </button>
           );
