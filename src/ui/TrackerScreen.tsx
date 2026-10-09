@@ -69,7 +69,7 @@ export function TrackerScreen() {
     <div className="tracker" role="dialog" aria-label="Workout tracker">
       <div className="trk-top">
         <div>
-          <span className="lbl">{t.status === "done" ? "Finished" : t.status === "ready" ? "Ready" : t.status === "paused" ? "Paused" : "Recording"}</span>
+          <span className={"lbl trk-status " + t.status}>{t.status === "done" ? "Finished" : t.status === "ready" ? "Ready" : t.status === "paused" ? "Paused" : "Recording"}</span>
           <h2>{where}</h2>
         </div>
         {t.status === "ready" && <button className="xbtn" aria-label="Close" onClick={() => closeTracker()}>&times;</button>}
@@ -118,16 +118,17 @@ export function TrackerScreen() {
               </div>
             );
           })()}
-          <div className="trk-time">
-            <span className="num">{hms(s?.elapsedS ?? 0)}</span>
-            <small>{!indoor && s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</small>
-          </div>
-          {/* Steps count on foot in both modes (the phone's step counter; the website can't read it). */}
-          <div className={"trk-nums" + (!bike && canCountSteps ? " three" : "")}>
-            {!bike && canCountSteps && <div><span className="num">{t.steps.toLocaleString("en-US")}</span><small>Steps</small></div>}
-            <div><span className="num">{miles.toFixed(2)}</span><small>{indoor && miles > 0 ? "Miles (est.)" : "Miles"}</small></div>
-            <div><span className="num">{bike ? mph.toFixed(1) : pace(paceS)}</span><small>{bike ? "Avg mph" : "Avg pace /mi"}</small></div>
-          </div>
+          {/* The live card: distance big, the rest underneath, like Home's today card. Stripes drift while moving. */}
+          <section className={"hero trk-hero " + t.status}>
+            <span className="lbl">{bike ? "Ride" : t.kind === "run" ? "Walk/run" : "Walk"}{indoor ? ", indoors" : ""}</span>
+            <span className="ht"><span className="nw">{miles.toFixed(2)}<small>{indoor && miles > 0 ? "mi est." : "mi"}</small></span></span>
+            <div className="hstats trk-hstats">
+              <div><span className="num">{hms(s?.elapsedS ?? 0)}</span><span className="lbl">{!indoor && s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</span></div>
+              <div><span className="num">{bike ? mph.toFixed(1) : pace(paceS)}</span><span className="lbl">{bike ? "Avg mph" : "Avg pace"}</span></div>
+              {/* Steps count on foot in both modes (the phone's step counter; the website can't read it). */}
+              {!bike && canCountSteps && <div><span className="num">{t.steps.toLocaleString("en-US")}</span><span className="lbl">Steps</span></div>}
+            </div>
+          </section>
           {!indoor && t.track && <RouteMapView className="trk-map" points={t.track.route} live={t.status !== "done"} />}
           {t.error === "denied" ? (
             <div className="trk-msg bad">
@@ -138,7 +139,7 @@ export function TrackerScreen() {
             <div className="trk-msg">Looking for GPS. Indoors or under cover, distance may not count; time still does.</div>
           ) : null}
           {s && s.splitS.length > 0 && (
-            <ol className="trk-splits">
+            <ol className="trk-splits" aria-label="Mile splits">
               {s.splitS.map((v, i) => <li key={i}><span>Mile {i + 1}</span><b>{bike ? `${(3600 / v).toFixed(1)} mph` : hms(v)}</b></li>)}
             </ol>
           )}
@@ -164,8 +165,8 @@ export function TrackerScreen() {
           ) : (
             <div className="trk-ctrl">
               {t.status === "recording"
-                ? <button className="trk-btn" onClick={() => pauseTracking()}>Pause</button>
-                : <button className="trk-btn go" onClick={() => resumeTracking()}>Resume</button>}
+                ? <button className="trk-btn" onClick={() => pauseTracking()}><Icon.pause /><span>Pause</span></button>
+                : <button className="trk-btn go" onClick={() => resumeTracking()}><Icon.play /><span>Resume</span></button>}
               <ConfirmButton className="trk-btn finish" label="Finish" confirmLabel="Tap to finish" onConfirm={() => finishTracking()} />
             </div>
           )}

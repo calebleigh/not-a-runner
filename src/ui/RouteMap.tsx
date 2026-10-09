@@ -112,6 +112,8 @@ export function RouteMapView({ points, live = false, className }: { points: Pt[]
       map.current = m;
       m.touchZoomRotate.disableRotation();
       m.on("dragstart", () => { if (live) setFollow(false); });
+      // The map credit is required, but it starts folded into the small "i" so it doesn't cover the map.
+      m.once("idle", () => el.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
       m.on("load", () => {
         const d = routeData(latest.current);
         m.addSource("route", { type: "geojson", data: d.line });

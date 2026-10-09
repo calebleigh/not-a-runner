@@ -1099,3 +1099,33 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .hright{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .hright .pill{font-size:12px}
 @media (min-width:900px){.statgrid>.ocard:last-child:nth-child(odd){grid-column:1/-1}}
+
+/* Tracker: live status, the orange card, chunky controls */
+.trk-status{display:inline-flex;align-items:center;gap:8px}
+.trk-status.recording{color:var(--accent)}
+.trk-status.recording::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(var(--accent-rgb),.6);animation:trk-pulse 1.4s ease-out infinite}
+.trk-status.paused::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--muted)}
+@keyframes trk-pulse{to{box-shadow:0 0 0 10px rgba(var(--accent-rgb),0)}}
+.trk-hero{flex:none;min-height:0;cursor:default}
+.trk-hero .ht{padding-right:0;font-size:clamp(76px,24vw,128px);line-height:.9}
+.trk-hero .ht small{font-size:.34em}
+.trk-hstats{padding-right:0;flex-wrap:wrap;gap:12px 26px;margin-top:16px}
+.trk-hstats>div{display:flex;flex-direction:column}
+.trk-hstats .num{font:800 clamp(28px,8vw,38px)/1 var(--display)}
+.trk-hero.paused{animation-play-state:paused;filter:saturate(.55) brightness(.85)}
+.trk-hero.done{animation:none}
+.trk-splits{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;border:0;border-radius:0;gap:8px;scrollbar-width:none;flex:none}
+.trk-splits li{flex:none;flex-direction:column;gap:2px;padding:10px 14px;border:1px solid var(--line);border-radius:min(14px,var(--rmax))}
+.trk-splits li+li{border-top:1px solid var(--line)}
+.trk-splits li span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.trk-splits b{font:800 italic 22px/1 var(--display)}
+.trk-btn{height:76px;display:flex;align-items:center;justify-content:center;gap:10px;font:800 italic 26px var(--display);text-transform:uppercase;letter-spacing:.02em}
+.trk-btn svg{width:26px;height:26px}
+.trk-btn.finish{background:var(--ink);color:var(--paper);border:0}
+.trk-btn:active{transform:scale(.97)}
+
+/* Map credit: a small, quiet "i" until tapped */
+.mapview .maplibregl-ctrl-attrib.maplibregl-compact{min-height:22px;margin:0 8px 8px 0;background:rgba(0,0,0,.35);opacity:.75}
+.mapview .maplibregl-ctrl-attrib-button{width:22px;height:22px;background-size:14px;background-position:center}
+.mapview .maplibregl-ctrl-attrib.maplibregl-compact-show{opacity:1;background:var(--paper);color:var(--ink)}
+.mapview .maplibregl-ctrl-attrib.maplibregl-compact-show a{color:var(--ink)}
