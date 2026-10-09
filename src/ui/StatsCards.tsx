@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  ACT_TYPES, FEEL, addDays, dayKey, parseDayKey, breakdown, bucketsOf, consistency, feelCounts, hms, mph, pace, recordsOf, seriesOf, speedSeries, inPeriod,
+  ACT_TYPES, FEEL, addDays, dayKey, sameDay, parseDayKey, breakdown, bucketsOf, consistency, feelCounts, hms, mph, pace, recordsOf, seriesOf, speedSeries, inPeriod,
   type Activity, type ActType, type Metric, type Period,
 } from "../training";
 import { useApp } from "./app-state";
@@ -95,11 +95,15 @@ export function ConsistencyCard({ acts, p }: { acts: Activity[]; p: Period }) {
   };
   const pct = c.planned ? Math.round(100 * c.plannedDone / c.planned) : null;
   // A strip of weeks, one column per week, Monday on top (the Plan tab has the calendar). Short periods get bigger squares.
-  const big = c.days.length <= 62;
-  const lead = c.days.length ? (c.days[0].date.getDay() + 6) % 7 : 0;
+  // This week shows all seven days: the ones still to come are faint until they happen.
+  const last = c.days[c.days.length - 1]?.date;
+  const ahead = last && sameDay(last, model.today) ? 6 - ((last.getDay() + 6) % 7) : 0;
+  const days: { date: Date; mins: number; future?: boolean }[] = [...c.days, ...Array.from({ length: ahead }, (_, i) => ({ date: addDays(last!, i + 1), mins: 0, future: true }))];
+  const big = days.length <= 62;
+  const lead = days.length ? (days[0].date.getDay() + 6) % 7 : 0;
   // Newest week first, on the left; each column still runs Monday to Sunday (empty slots pad the ends).
-  const weeks: (typeof c.days[number] | null)[][] = [];
-  c.days.forEach((x, i) => {
+  const weeks: (typeof days[number] | null)[][] = [];
+  days.forEach((x, i) => {
     const k = Math.floor((lead + i) / 7);
     (weeks[k] ??= Array(7).fill(null))[(lead + i) % 7] = x;
   });
@@ -113,16 +117,16 @@ export function ConsistencyCard({ acts, p }: { acts: Activity[]; p: Period }) {
         <div><b className="num">{pct === null ? "None" : <><Num value={pct} />%</>}</b><small>Planned done</small></div>
       </div>
       {c.days.length > 0 && (
-        <div className={c.days.length <= 7 ? "heat row" : "heat strip" + (big ? " big" : "")} role="img" aria-label={`${c.activeDays} active days`}>
-          {(c.days.length > 7 ? weeks.flat() : c.days).map((x, i) => x ? (
-            <button key={x.date.getTime()} className={"hc l" + lvl(x.mins)} title={`${dayTxt(x.date)}: ${x.mins ? x.mins + " min" : "rest"}`}
-              aria-label={`${dayTxt(x.date)}: ${x.mins ? x.mins + " minutes" : "nothing logged"}`} onClick={() => open(x.date)}>
+        <div className={days.length <= 7 ? "heat row" : "heat strip" + (big ? " big" : "")} role="img" aria-label={`${c.activeDays} active days`}>
+          {(days.length > 7 ? weeks.flat() : days).map((x, i) => x ? (
+            <button key={x.date.getTime()} className={"hc " + (x.future ? "future" : "l" + lvl(x.mins))} title={`${dayTxt(x.date)}: ${x.future ? "coming up" : x.mins ? x.mins + " min" : "rest"}`}
+              aria-label={`${dayTxt(x.date)}: ${x.future ? "coming up" : x.mins ? x.mins + " minutes" : "nothing logged"}`} onClick={() => open(x.date)}>
             </button>
           ) : <span key={"p" + i} className="hc pad" />)}
         </div>
       )}
       <div className="heatkey" aria-hidden="true"><span>Less</span>{[0, 1, 2, 3, 4].map((l) => <i key={l} className={"hc l" + l} />)}<span>More</span></div>
-      <p className="foot">{c.days.length <= 7 ? "Tap a day to open it." : "Newest week on the left. Each column is a week, Monday on top. Tap a day to open it."}</p>
+      <p className="foot">{days.length <= 7 ? "Tap a day to open it." : "Newest week on the left. Each column is a week, Monday on top. Tap a day to open it."}</p>
     </section>
   );
 }

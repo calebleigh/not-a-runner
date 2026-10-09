@@ -401,7 +401,7 @@ html,body{overscroll-behavior:none}
 .sstat{flex:none}
 .sstat.done{width:26px;height:26px;border-radius:var(--rc);display:grid;place-items:center;background:var(--accent);color:var(--on-accent)}
 .sstat.done svg{width:14px;height:14px}
-.sstat.part{width:26px;height:26px;border-radius:50%;background:conic-gradient(var(--accent) 50%,var(--surface2) 0)}
+.sstat.part{width:26px;height:26px;border-radius:var(--rc);background:linear-gradient(135deg,rgba(var(--accent-rgb),.45) 50%,var(--surface2) 50%)}
 .sstat.todaytag,.sstat.missed{padding:4px 10px;border-radius:min(20px,var(--rmax));font:700 12px var(--body)}
 .sstat.todaytag{background:var(--accent);color:var(--on-accent)}
 .sstat.missed{background:var(--bad-soft);color:var(--bad)}
@@ -1023,6 +1023,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .hc{border:0;padding:0;border-radius:min(5px,var(--rmax));background:var(--surface2);color:var(--muted);font:600 12px var(--body);cursor:pointer}
 .heat.strip .hc{width:12px;height:12px;border-radius:min(3px,var(--rmax))}
 .hc.pad{background:none;cursor:default}
+.hc.future{background:none;box-shadow:inset 0 0 0 1.5px var(--line)}
 .hc.l1{background:color-mix(in srgb,var(--accent) 30%,var(--surface2));color:var(--ink)}
 .hc.l2{background:color-mix(in srgb,var(--accent) 55%,var(--surface2));color:var(--ink)}
 .hc.l3{background:color-mix(in srgb,var(--accent) 80%,var(--surface2));color:var(--on-accent)}
