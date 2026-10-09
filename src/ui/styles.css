@@ -399,7 +399,7 @@ html,body{overscroll-behavior:none}
 .srow.flash{animation:rowflash .9s var(--ease) 2}
 @keyframes rowflash{50%{background:rgba(var(--accent-rgb),.35)}}
 .sstat{flex:none}
-.sstat.done{width:26px;height:26px;border-radius:var(--rc);display:grid;place-items:center;border:1.5px solid transparent;background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55);color:var(--muted)}
+.sstat.done{width:26px;height:26px;border-radius:var(--rc);display:grid;place-items:center;border:1.5px solid transparent;background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55);color:var(--ink)}
 .sstat.done svg{width:14px;height:14px}
 /* A good day is faded orange; a great day (everything done) gets the orange stripes. */
 .sstat.done.great{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 5px,transparent 5px 10px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border-color:transparent;color:var(--on-accent)}
@@ -1289,9 +1289,9 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .calc.out{background:transparent;color:var(--muted);opacity:.35;cursor:default}
 .calc.dim{opacity:.35}
 .calc.done{background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55);border-width:1.5px;color:var(--ink)}
-.calc.done .calic{color:var(--muted)}
+.calc.done .calic{color:inherit}
 .calc.done.great{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 5px,transparent 5px 10px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border-color:transparent;color:var(--on-accent)}
-.calc.done.great .calic{color:var(--on-accent)}
+.calc.done.great .calic{color:inherit}
 .calkey .k.done.great{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 5px,transparent 5px 10px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));border:0}
 .calc.missed{background:transparent;border:1px dashed var(--muted)}
 .calc.missed .calic{color:var(--muted)}
