@@ -6,7 +6,7 @@ import { trackKindFor } from "./trackFor";
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
-  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, changeLoggedKind, type SwapKind, canUseAsCardio, makeUpTarget, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
+  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, changeLoggedKind, effKind, type SwapKind, canUseAsCardio, makeUpTarget, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
 } from "../training";
 import { useApp } from "./app-state";
 
@@ -141,6 +141,9 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
   const swapOpts: [("bike" | "walk" | "run"), string][] = [["bike", "Bike"], ["walk", "Walk"]];
   if (phaseOf(model.spec, w) >= 1) swapOpts.push(["run", "Walk/run"]);
   const kind = statKind(c.kind);
+  // What the plan had before any swap, so "Back to ..." can undo it.
+  const base = statKind(effKind(state, w, d)?.base ?? c.kind);
+  const others = swapOpts.filter(([k]) => !(k === c.kind || (k === "run" && ["run", "long", "test"].includes(c.kind)) || (c.orig && k === base)));
 
   return (
     <section className={"card" + (isDone ? " done" : "")}>
@@ -150,18 +153,13 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
       {c.shoes && !state.gear.shoes && !isDone && <p className="warn">No running shoes marked yet. Walk this one instead, and get fitted soon.</p>}
       {c.kind === "rest" || c.kind === "race" ? <MarkBtn id={id} /> : (
         <>
-          {!isDone && !formOpen && (
+          {!isDone && !(formOpen && from) && (
             <div className="swaps">
-              {c.orig ? (
-                <button onClick={() => update((s) => { delete s.swaps[id]; })}>Undo swap</button>
-              ) : (
-                <>
-                  <span>Swap to</span>
-                  {swapOpts.filter(([k]) => !(k === c.kind || (k === "run" && ["run", "long", "test"].includes(c.kind)))).map(([k, l]) => (
-                    <button key={k} onClick={() => update((s) => { s.swaps[id] = k; })}>{l}</button>
-                  ))}
-                </>
-              )}
+              {c.orig && <button className="swapback" onClick={() => update((s) => { delete s.swaps[id]; })}>Back to {c.orig}</button>}
+              {others.length > 0 && <span>{c.orig ? "Or swap to" : "Swap to"}</span>}
+              {others.map(([k, l]) => (
+                <button key={k} onClick={() => update((s) => { s.swaps[id] = k; })}>{l}</button>
+              ))}
             </div>
           )}
           {lg?.time && !formOpen ? (

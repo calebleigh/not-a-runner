@@ -1276,3 +1276,4 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .invcode{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:min(14px,var(--rmax));border:1px dashed var(--line)}
 .invcode small{color:var(--muted);font-size:13px}
 .invcode b{font:800 26px/1 var(--display);letter-spacing:.08em}
+.swaps .swapback{flex-basis:100%;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;text-align:left;margin-bottom:4px}
