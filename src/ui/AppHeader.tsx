@@ -56,12 +56,12 @@ export function AppHeader() {
         <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
           <Icon.flame /><b>{streak.current}</b>
         </button>
-        <button className={"hicon acctbtn " + (on ? sync.phase : "off")} aria-label={on ? `Account. ${syncLabel}` : "Sign in"} title={on ? syncLabel : "Sign in"} onClick={() => openSheet({ kind: "account" })}>
-          {on && sync.account ? <><Avatar account={sync.account} size={30} /><span className="acctdot" aria-hidden="true" /></> : <Icon.user />}
-        </button>
         <button className="hicon" aria-label={unseen ? `Notifications, ${unseen} new` : "Notifications"} onClick={() => { markSeen(notes.map((n) => n.key)); openSheet({ kind: "notes" }); }}>
           <Icon.bell />
           {unseen > 0 && <span className="badge">{unseen > 9 ? "9+" : unseen}</span>}
+        </button>
+        <button className={"hicon acctbtn " + (on ? sync.phase : "off")} aria-label={on ? `Account. ${syncLabel}` : "Sign in"} title={on ? syncLabel : "Sign in"} onClick={() => openSheet({ kind: "account" })}>
+          {on && sync.account ? <><Avatar account={sync.account} size={30} /><span className="acctdot" aria-hidden="true" /></> : <Icon.user />}
         </button>
       </span>
     </header>

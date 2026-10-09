@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
 import { TapLogo } from "../Splash";
-import { SyncSection } from "../SyncSection";
 import { HealthSection } from "../HealthSection";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -254,7 +253,6 @@ export function Settings() {
   return (
     <section className="view stack" aria-label="Settings">
       <div className="setgrid">
-      <SyncSection />
       <HealthSection />
       <AboutYou />
       <YourPlan />

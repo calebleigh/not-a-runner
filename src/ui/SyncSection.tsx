@@ -30,42 +30,6 @@ export function GoogleButton({ label = "Sign in with Google", busy }: { label?: 
   );
 }
 
-/** Settings: turn sync on with an account, see how it's doing, or turn it off. */
-export function SyncSection() {
-  const s = useSync();
-  const on = s.phase !== "off";
-  return (
-    <div className="area-sync">
-      <div className="sechead"><h3 className="sectitle">Sync</h3>{on && s.account && <span className="lbl">On</span>}</div>
-      <section className="card group">
-        {!on || !s.account ? (
-          <div className="syncoff">
-            <p><b>Use the app on more than one device?</b> Sign in and your phone and computer stay in sync. Without an account, everything stays on this device.</p>
-            <GoogleButton busy={s.phase === "starting"} />
-            {s.error && <p className="syncerr" role="alert">{s.error}</p>}
-          </div>
-        ) : (
-          <>
-            <div className="setrow">
-              <span>{s.account.email || s.account.name || "Signed in"}
-                <small aria-live="polite">{s.error || [PHASE[s.phase], s.phase === "synced" ? ago(s.lastSync) : "", s.pending && s.phase !== "synced" ? `${s.pending} to upload` : ""].filter(Boolean).join(", ")}</small>
-              </span>
-              <span className={"syncdot " + s.phase} aria-hidden="true" />
-            </div>
-            <div className="setrow">
-              <span>Sync across devices<small>Works offline. Changes upload when you're back online.</small></span>
-              <span className="btnpair">
-                <button className="chip" onClick={syncNow}>Sync now</button>
-                <SignOutButton className="chip" />
-              </span>
-            </div>
-          </>
-        )}
-      </section>
-    </div>
-  );
-}
-
 /** The signed-in person's Google photo, or their initial. */
 export function Avatar({ account, size = 30 }: { account: Account; size?: number }) {
   const [broken, setBroken] = useState(false);
