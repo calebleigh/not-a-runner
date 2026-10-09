@@ -9,6 +9,7 @@ export const Icon = {
   steps: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M7 16c-1.7 0-3-1.6-3-4.5S5.3 5 7 5s2.5 2.3 2.5 5-1 6-2.5 6zM6 19.5h2.5M17 13c1.7 0 3-1.6 3-4.5S18.7 2 17 2s-2.5 2.3-2.5 5 1 6 2.5 6zM15.5 16.5H18" /></svg>,
   scale: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" /><path d="M8.5 9.5a5 5 0 0 1 7 0l-2.2 2.4" /></svg>,
   plus: () => <svg viewBox="0 0 24 24" {...S} strokeWidth={2.4} aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>,
+  close: () => <svg viewBox="0 0 24 24" {...S} strokeWidth="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>,
   clock: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2.5M9 2h6" /></svg>,
   flame: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M12 22c4 0 7-2.7 7-6.8 0-4.2-3.3-6.6-4.2-10.2-2.4 1.5-3.6 3.6-3.4 6.2-1.3-.6-2.2-1.9-2.4-3.4C7 9.6 5 12.2 5 15.2 5 19.3 8 22 12 22z" /></svg>,
   bike: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5" /><circle cx="18.5" cy="16.5" r="3.5" /><path d="M5.5 16.5L9 9h6l3.5 7.5M9 9l3 7.5L15 9M8 6h3" /></svg>,

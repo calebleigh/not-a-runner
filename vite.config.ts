@@ -22,6 +22,8 @@ export default defineConfig({
       includeAssets: ["icon-180.png"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
+        // Maps need the network anyway, so the map library (1 MB) isn't downloaded ahead of time.
+        globIgnores: ["**/maplibre-gl*"],
         cleanupOutdatedCaches: true,
         // Sign-in pages (proxied to Firebase, see vercel.json) must load from the network, not the app shell.
         navigateFallbackDenylist: [/^\/__\//],
