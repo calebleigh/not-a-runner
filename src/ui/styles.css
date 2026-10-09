@@ -1254,3 +1254,25 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .relogwhy input{accent-color:var(--accent);margin-top:3px}
 .relogwhy b{display:block;font:700 15px var(--body)}
 .relogwhy small{color:var(--muted);font-size:13px}
+
+/* Invite sheet */
+.invsheet{display:flex;flex-direction:column;gap:14px}
+.invcard{position:relative;display:flex;flex-direction:column;gap:6px;border-radius:min(22px,var(--rmax));padding:18px 18px 16px;color:var(--on-accent);overflow:hidden;
+  background:repeating-linear-gradient(135deg,rgba(0,0,0,.07) 0 14px,transparent 14px 28px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));background-size:40px 40px,100% 100%;animation:stripes 2.5s linear infinite;box-shadow:0 18px 40px -14px rgba(var(--accent-rgb),.7)}
+.invtop{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.invtop b{font:800 italic 20px/1 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.invlogo{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--on-accent)}
+.invcard>small{font:600 14px var(--body);opacity:.8}
+.invbig{font:800 italic 46px/.95 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
+.invfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font:600 13px var(--body)}
+.invfoot>span:first-child{display:flex;align-items:center;gap:4px}
+.invfoot svg{width:16px;height:16px}
+.invjoin{flex:none;background:var(--on-accent);color:var(--accent-hi);border-radius:999px;padding:7px 14px;font:800 italic 16px/1 var(--display);text-transform:uppercase}
+.invshare{display:flex;align-items:center;justify-content:center;gap:8px;margin:0}
+.invshare svg{width:20px;height:20px}
+.invways{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.invways button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:min(16px,var(--rmax));background:var(--surface);border:1px solid var(--line);color:var(--ink);font:700 14px var(--body);cursor:pointer}
+.invways svg{width:24px;height:24px;color:var(--accent)}
+.invcode{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:min(14px,var(--rmax));border:1px dashed var(--line)}
+.invcode small{color:var(--muted);font-size:13px}
+.invcode b{font:800 26px/1 var(--display);letter-spacing:.08em}

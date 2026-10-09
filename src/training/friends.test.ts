@@ -34,6 +34,7 @@ describe("invite codes", () => {
   it("reads a code from typing or a pasted link", () => {
     expect(parseInviteCode("abcd efgh")).toBe("ABCDEFGH");
     expect(parseInviteCode("https://not-a-runner.vercel.app/?invite=K7QM2XRP")).toBe("K7QM2XRP");
+    expect(parseInviteCode("https://not-a-runner.vercel.app/i/K7QM2XRP?n=Caleb")).toBe("K7QM2XRP");
     expect(parseInviteCode("ABC")).toBeNull();
     expect(parseInviteCode("ABCDEFG0")).toBeNull();
   });

@@ -7,7 +7,7 @@ import { NotesSheetBody, StreakSheetBody } from "./AppHeader";
 import { UpdateSheetBody } from "./UpdateSheet";
 import { HealthSheetBody } from "./HealthSection";
 import { AccountSheetBody } from "./SyncSection";
-import { FriendSheetBody, FriendsSheetBody } from "./Friends";
+import { FriendSheetBody, FriendsSheetBody, InviteSheetBody } from "./Friends";
 import { useFriends } from "./friendsStore";
 import { healthName } from "../native/health";
 import { dateOf, dayAt, dayKey, isBirthdayOn, decodeBackup, encodeBackup, fmtLong, kfmt, parseDayKey, sameDay, todayDay } from "../training";
@@ -176,6 +176,10 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "friend":
       title = friends.cards[spec.uid]?.name ?? "Friend";
       body = <FriendSheetBody uid={spec.uid} />;
+      break;
+    case "invite":
+      title = "Invite a friend";
+      body = <InviteSheetBody code={spec.code} />;
       break;
     case "account":
       title = "Account";

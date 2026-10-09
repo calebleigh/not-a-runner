@@ -97,7 +97,11 @@ export async function loadInviteCode(a: Account, name: string): Promise<string> 
   return code;
 }
 
-export const inviteLink = (code: string) => `https://not-a-runner.vercel.app/?invite=${code}`;
+/** The link to share. Opened in a text or email, it shows a card saying who invited you (api/invite.ts). */
+export const inviteLink = (code: string, name = "") => {
+  const n = name.trim().split(/\s+/)[0] || "";
+  return `https://not-a-runner.vercel.app/i/${code}${n ? `?n=${encodeURIComponent(n)}` : ""}`;
+};
 
 export async function lookUpInvite(code: string): Promise<Invite | null> {
   return (await social()).readInvite(code);
@@ -137,11 +141,13 @@ export async function dismissPoke(id: string) {
 const PENDING = "pendingInvite";
 export function takeInviteFromUrl() {
   try {
-    const u = new URL(location.href), c = u.searchParams.get("invite");
+    // ?invite=CODE, or /i/CODE when the app was already installed and opened the link itself.
+    const u = new URL(location.href), p = u.pathname.match(/^\/i\/([A-Za-z0-9]+)/), c = u.searchParams.get("invite") || p?.[1];
     if (!c) return;
     localStorage.setItem(PENDING, c);
     u.searchParams.delete("invite");
-    history.replaceState(null, "", u.pathname + u.search + u.hash);
+    u.searchParams.delete("n");
+    history.replaceState(null, "", (p ? "/" : u.pathname) + u.search + u.hash);
   } catch { /* not a browser */ }
 }
 export const pendingInvite = () => { try { return localStorage.getItem(PENDING); } catch { return null; } };

@@ -61,7 +61,7 @@ export function newInviteCode(rand: () => number = Math.random): string {
 }
 /** Tidies a typed or pasted code (or a whole invite link) into the code, or null. */
 export function parseInviteCode(input: string): string | null {
-  const m = input.match(/invite=([A-Za-z0-9]+)/);
+  const m = input.match(/(?:invite=|\/i\/)([A-Za-z0-9]+)/);
   const raw = (m ? m[1] : input).toUpperCase().replace(/[^A-Z0-9]/g, "");
   return raw.length === 8 && [...raw].every((ch) => CODE_CHARS.includes(ch)) ? raw : null;
 }

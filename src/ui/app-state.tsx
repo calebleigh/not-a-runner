@@ -25,7 +25,8 @@ export type SheetSpec =
   | { kind: "health" }
   | { kind: "account" }
   | { kind: "friends" }
-  | { kind: "friend"; uid: string };
+  | { kind: "friend"; uid: string }
+  | { kind: "invite"; code: string };
 
 interface AppCtx {
   model: Model;

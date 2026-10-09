@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { cardIsToday, friendCard, kfmt, parseInviteCode, POKES, type FriendCard } from "../training";
+import { cardIsToday, friendCard, kfmt, parseInviteCode, POKES, streakOf, type FriendCard } from "../training";
+import { IS_NATIVE } from "./apk";
+import { Logo } from "./Logo";
 import type { Invite } from "../sync/social";
 import { useApp } from "./app-state";
 import { ConfirmButton } from "./cards";
@@ -124,7 +126,7 @@ function PendingInvite() {
 }
 
 function AddFriend() {
-  const { state, toast } = useApp();
+  const { state, toast, openSheet } = useApp();
   const sync = useSync();
   const f = useFriends();
   const [code, setCode] = useState<string | null>(f.code);
@@ -139,14 +141,6 @@ function AddFriend() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acct?.uid]);
 
-  const share = async () => {
-    if (!code) return;
-    const url = inviteLink(code), text = `Train with me on Not a Runner. My friend code is ${code}.`;
-    try {
-      if (navigator.share) { await navigator.share({ title: "Not a Runner", text, url }); return; }
-    } catch { /* closed the share sheet */ return; }
-    try { await navigator.clipboard.writeText(`${text} ${url}`); toast("Invite link copied"); } catch { toast(`Your code is ${code}`); }
-  };
   const find = async () => {
     const c = parseInviteCode(typed);
     setFound(null); setMsg(null);
@@ -174,7 +168,7 @@ function AddFriend() {
       <h3 className="lbl">Add a friend</h3>
       <div className="frcode">
         <div><small>Your code</small><b>{code ? `${code.slice(0, 4)} ${code.slice(4)}` : "…"}</b></div>
-        <button className="btn solid" disabled={!code} onClick={share}>Share invite</button>
+        <button className="btn solid" disabled={!code} onClick={() => code && openSheet({ kind: "invite", code })}>Share invite</button>
       </div>
       <div className="frenter">
         <input className="xt" placeholder="Friend's code" maxLength={60} value={typed} onChange={(e) => { setTyped(e.target.value); setFound(null); setMsg(null); }}
@@ -248,6 +242,53 @@ export function FriendSheetBody({ uid }: { uid: string }) {
       </section>
       <p className="setnote">Updated {ago(c.updatedAt)}.</p>
       <ConfirmButton className="btn small" label="Remove friend" confirmLabel={`Remove ${c.name}?`} onConfirm={async () => { await unfriend(uid).catch(() => {}); closeSheet(); }} />
+    </div>
+  );
+}
+
+/** Sharing your invite: a card like the one your friend will see, then Share, Text, Email or Copy. */
+export function InviteSheetBody({ code }: { code: string }) {
+  const { model, state, toast } = useApp();
+  const sync = useSync();
+  const name = (state.settings.name || sync.account?.name || "").trim().split(/\s+/)[0] || "";
+  const url = inviteLink(code, name);
+  const text = `Train with me on Not a Runner! Tap to add me as a friend: ${url}`;
+  const streak = streakOf(model).current;
+
+  const open = async (href: string) => {
+    if (IS_NATIVE) { const { AppLauncher } = await import("@capacitor/app-launcher"); await AppLauncher.openUrl({ url: href }); }
+    else location.href = href;
+  };
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(url); toast("Invite link copied"); } catch { toast(`Your code is ${code}`); }
+  };
+  const share = async () => {
+    try {
+      if (IS_NATIVE) { const { Share } = await import("@capacitor/share"); await Share.share({ title: "Not a Runner", text: "Train with me on Not a Runner!", url, dialogTitle: "Invite a friend" }); return; }
+      if (navigator.share) { await navigator.share({ title: "Not a Runner", text: "Train with me on Not a Runner!", url }); return; }
+    } catch { return; /* closed the share sheet */ }
+    copy();
+  };
+
+  return (
+    <div className="invsheet">
+      <div className="invcard" aria-label="Your invite card">
+        <div className="invtop"><span className="invlogo"><Logo size={30} /></span><b>Not a Runner</b></div>
+        <small>Friend invite</small>
+        <div className="invbig">{name ? `${name} invited you` : "You're invited"}</div>
+        <div className="invfoot">
+          <span>{streak > 0 ? <><Icon.flame /> {streak} week streak</> : "Streaks, pokes and a plan that eases you in."}</span>
+          <span className="invjoin">Tap to join</span>
+        </div>
+      </div>
+      <p className="setnote">This card shows up when you send your link in a text, email or chat.</p>
+      <button className="btn solid invshare" onClick={share}><Icon.share /> Share invite</button>
+      <div className="invways">
+        <button onClick={() => open(`sms:?&body=${encodeURIComponent(text)}`)}><Icon.chat /><span>Text</span></button>
+        <button onClick={() => open(`mailto:?subject=${encodeURIComponent("Train with me on Not a Runner")}&body=${encodeURIComponent(text)}`)}><Icon.mail /><span>Email</span></button>
+        <button onClick={copy}><Icon.link /><span>Copy link</span></button>
+      </div>
+      <div className="invcode"><small>Or they can type your code</small><b>{code.slice(0, 4)} {code.slice(4)}</b></div>
     </div>
   );
 }
