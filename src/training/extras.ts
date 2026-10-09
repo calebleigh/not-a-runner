@@ -1,4 +1,7 @@
-import type { CardioKind, Day, Extra, ExtraKind, Log, Model, State } from "./types";
+import { effKind } from "./adapt";
+import { dateOf, dayKey } from "./calendar";
+import { statKind } from "./stats";
+import type { CardioKind, Day, Extra, ExtraKind, Log, Model, State, SwapKind } from "./types";
 
 /** Extra types that can fill a planned cardio slot (counted as a walk or a ride). */
 export const CARDIO_EXTRA_KINDS: ExtraKind[] = ["walk", "hike", "bike"];
@@ -36,4 +39,30 @@ export function applyExtraAsCardio(draft: State, w: number, d: number, index: nu
   draft.logs[id] = { ...log, at };
   draft.done[id] = 1;
   return true;
+}
+
+/**
+ * Changing what a logged session was (say, a bike day that was really a walk). "swap" keeps it as
+ * the day's session and swaps the session to match; "extra" moves it out as an extra activity, so
+ * the planned session is open again. Mutates `draft`.
+ */
+export function changeLoggedKind(draft: State, model: Model, w: number, d: number, to: SwapKind, how: "swap" | "extra", newId: () => string): void {
+  const id = `${w}-${d}-c`, lg = draft.logs[id];
+  const e = effKind(draft, w, d);
+  if (!e || !draft.done[id]) return;
+  if (how === "swap") {
+    if (to === statKind(e.base)) delete draft.swaps[id];
+    else draft.swaps[id] = to;
+    if (lg?.kind) lg.kind = to;
+    return;
+  }
+  const key = dayKey(model.spec, dateOf(model.spec, w, d));
+  draft.extras[key] = [...(draft.extras[key] || []), {
+    id: newId(), kind: to === "bike" ? "bike" : "walk", dist: lg?.dist || 0, time: lg?.time || 0, at: lg?.at || Date.now(),
+    ...(to === "run" ? { label: "Walk/run" } : {}),
+    ...(lg?.steps ? { steps: lg.steps } : {}), ...(lg?.route ? { route: lg.route } : {}), ...(lg?.indoor ? { indoor: true } : {}),
+  }];
+  delete draft.done[id];
+  delete draft.logs[id];
+  delete draft.swaps[id];
 }

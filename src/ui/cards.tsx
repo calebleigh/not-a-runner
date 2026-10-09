@@ -6,7 +6,7 @@ import { trackKindFor } from "./trackFor";
 import { useEffect, useRef, useState } from "react";
 import {
   DN, FEEL, HOW, STEPS_PER_MI, cardioCal, dayAt, dayKey, extrasFor, fmtLong, fmtShort, hms, loggedFootSteps, mph, pace,
-  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, canUseAsCardio, makeUpTarget, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
+  CARDIO_EXTRA_KINDS, EXTRA_KINDS, applyExtraAsCardio, changeLoggedKind, type SwapKind, canUseAsCardio, makeUpTarget, extraCal, extraKind, parseDayKey, phaseOf, sameDay, statKind, type Cardio, type Extra, type ExtraKind, type Feel,
 } from "../training";
 import { useApp } from "./app-state";
 
@@ -64,8 +64,16 @@ export function FeelPicker({ value, onPick }: { value?: Feel; onPick: (f: Feel) 
 /** An extra being moved into this cardio slot. */
 export interface FromExtra { w: number; d: number; index: number; extra: Extra }
 
+const RELOG: [SwapKind, string][] = [["bike", "Bike"], ["walk", "Walk"], ["run", "Walk/run"]];
+
 function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () => void; from?: FromExtra }) {
-  const { state, update } = useApp();
+  const { model, state, update } = useApp();
+  // Editing a logged session can also change what it was (a bike day that was really a walk).
+  const editing = !from && !!state.done[id];
+  const cur = statKind(c.kind);
+  const [kind, setKind] = useState<SwapKind>(cur);
+  const [how, setHow] = useState<"swap" | "extra">("swap");
+  const kl = (k: SwapKind) => RELOG.find(([x]) => x === k)![1].toLowerCase();
   const lg = state.logs[id] ?? (from ? { dist: from.extra.dist, time: from.extra.time, at: 0 } : undefined);
   const t = lg?.time || 0;
   const [dist, setDist] = useState(lg?.dist ? String(lg.dist) : c.kind === "test" && !lg ? "1" : "");
@@ -79,13 +87,34 @@ function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () 
     const log = { dist: Math.round(d * 100) / 100, time: m * 60 + s, feel, ...(h ? { hr: h } : {}) };
     update((st) => {
       if (from && applyExtraAsCardio(st, from.w, from.d, from.index, from.extra, c.kind, log, Date.now(), Number(id.split("-")[1]))) return;
-      st.logs[id] = { ...log, at: Date.now() };
+      // Keep what the tracker saved (route, steps) when editing the numbers.
+      const old = st.logs[id];
+      st.logs[id] = { ...old, ...log, at: old?.at ?? Date.now() };
+      if (!h) delete st.logs[id].hr;
       st.done[id] = 1;
+      if (editing && kind !== cur) {
+        const [w, d] = id.split("-").map(Number);
+        changeLoggedKind(st, model, w, d, kind, how, newId);
+      }
     });
     onClose();
   };
   return (
     <div className="logform" ref={ref}>
+      {editing && (
+        <div className="relog">
+          <span className="lbl">What was it?</span>
+          <div className="seg">{RELOG.map(([k, l]) => <button key={k} type="button" className={kind === k ? "sel" : ""} aria-pressed={kind === k} onClick={() => setKind(k)}>{l}</button>)}</div>
+          {kind !== cur && (
+            <div className="relogwhy">
+              <label className={how === "swap" ? "sel" : ""}><input type="radio" name="relog" checked={how === "swap"} onChange={() => setHow("swap")} />
+                <span><b>Swap today's session for a {kl(kind)}</b><small>Counts as today's session instead of the {kl(cur)}.</small></span></label>
+              <label className={how === "extra" ? "sel" : ""}><input type="radio" name="relog" checked={how === "extra"} onChange={() => setHow("extra")} />
+                <span><b>Save it as an extra {kl(kind)}</b><small>{c.t} stays open to do.</small></span></label>
+            </div>
+          )}
+        </div>
+      )}
       <div className="fields">
         <label>Miles<input type="number" inputMode="decimal" step="0.01" min="0" value={dist} onChange={(e) => setDist(e.target.value)} /></label>
         <label>Minutes<input type="number" inputMode="numeric" min="0" value={min} onChange={(e) => setMin(e.target.value)} /></label>

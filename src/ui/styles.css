@@ -1245,3 +1245,12 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .tdstrip-dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
 .tdstrip-dots i.on{background:var(--accent)}
 .apphead .hicon.sel{color:var(--accent)}
+
+/* Editing a log: what it was */
+.relog{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.relogwhy{display:flex;flex-direction:column;gap:8px}
+.relogwhy label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:min(14px,var(--rmax));padding:10px 12px;cursor:pointer}
+.relogwhy label.sel{border-color:var(--accent);background:rgba(var(--accent-rgb),.08)}
+.relogwhy input{accent-color:var(--accent);margin-top:3px}
+.relogwhy b{display:block;font:700 15px var(--body)}
+.relogwhy small{color:var(--muted);font-size:13px}
