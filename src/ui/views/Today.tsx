@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { todayList, todayLogs, type TodayLog, type TodayTask } from "../../training";
+import { statKind, todayDay, todayList, todayLogs, type TodayLog, type TodayTask } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Grow } from "../motion";
@@ -25,7 +25,7 @@ function Row({ done, ic, title, detail, onClick, check }: { done: boolean; ic: R
 }
 
 const LOG_ICONS: Record<TodayLog["icon"], () => React.JSX.Element> = {
-  walk: Icon.shoe, run: Icon.bolt, bike: Icon.bike, strength: Icon.dumbbell, steps: Icon.steps, weigh: Icon.scale, extra: Icon.plus,
+  walk: Icon.shoe, run: Icon.run, bike: Icon.bike, strength: Icon.dumbbell, steps: Icon.steps, weigh: Icon.scale, extra: Icon.plus,
 };
 const clock = (ms: number) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
@@ -75,7 +75,8 @@ export function Today() {
     if (x.done) delete x.done; else x.done = Date.now();
   });
   const row = (t: TodayTask) => {
-    const I = t.kind === "cardio" && t.title.startsWith("Bike") ? Icon.bike : ICONS[t.kind];
+    const ck = t.kind === "cardio" ? statKind(todayDay(model)?.c.kind ?? "walk") : null;
+    const I = ck === "bike" ? Icon.bike : ck === "run" ? Icon.run : ICONS[t.kind];
     return <Row key={t.key} done={t.done} ic={<I />} title={t.title} detail={t.detail}
       onClick={() => (t.kind === "todo" ? toggle(t) : open(t))} check={t.kind === "todo" ? () => toggle(t) : undefined} />;
   };

@@ -97,7 +97,7 @@ export function TrackerScreen() {
           <span className="lbl">Activity</span>
           <div className="trk-kinds" role="radiogroup" aria-label="Activity">
             {KINDS.map(([k, l]) => {
-              const I = k === "bike" ? Icon.bike : Icon.shoe;
+              const I = k === "bike" ? Icon.bike : k === "run" ? Icon.run : Icon.shoe;
               return <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}><I /><b>{l}</b>{k === recKind && <small className="rec">Recommended</small>}</button>;
             })}
           </div>

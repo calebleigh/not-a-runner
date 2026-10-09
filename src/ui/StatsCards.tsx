@@ -11,7 +11,7 @@ import { RouteThumb } from "./RouteMap";
 import { hoursMin } from "./Totals";
 
 export const TYPE_LABEL = Object.fromEntries(ACT_TYPES) as Record<ActType, string>;
-const TYPE_ICON: Record<ActType, () => React.JSX.Element> = { walk: Icon.shoe, run: Icon.shoe, bike: Icon.bike, strength: Icon.dumbbell, other: Icon.bolt };
+const TYPE_ICON: Record<ActType, () => React.JSX.Element> = { walk: Icon.shoe, run: Icon.run, bike: Icon.bike, strength: Icon.dumbbell, other: Icon.bolt };
 const dayTxt = (d: Date) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
 /** Distance, time, pace or speed, heart rate: whatever the session has. */

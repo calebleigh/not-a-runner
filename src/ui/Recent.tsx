@@ -4,7 +4,7 @@ import { useApp } from "./app-state";
 import { Icon } from "./icons";
 
 const ICON: Record<RecentItem["icon"], () => ReactElement> = {
-  run: Icon.shoe, walk: Icon.shoe, bike: Icon.bike, strength: Icon.dumbbell, extra: Icon.plus, steps: Icon.steps, weigh: Icon.scale,
+  run: Icon.run, walk: Icon.shoe, bike: Icon.bike, strength: Icon.dumbbell, extra: Icon.plus, steps: Icon.steps, weigh: Icon.scale,
 };
 
 /** Home: the last few things logged. Tap one to open it. */

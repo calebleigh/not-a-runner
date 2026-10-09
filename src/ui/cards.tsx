@@ -158,7 +158,7 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
             <div className="trk-kinds kindpick" role="radiogroup" aria-label="Activity">
               {RELOG.map(([k, l]) => {
                 const locked = k === "run" && base !== "run" && runFrom > w;
-                const I = k === "bike" ? Icon.bike : Icon.shoe;
+                const I = k === "bike" ? Icon.bike : k === "run" ? Icon.run : Icon.shoe;
                 return (
                   <button key={k} role="radio" aria-checked={kind === k} className={kind === k ? "sel" : ""} disabled={locked} onClick={() => kind !== k && pick(k)}>
                     <I /><b>{l}</b>

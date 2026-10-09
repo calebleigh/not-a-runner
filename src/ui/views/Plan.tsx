@@ -121,7 +121,7 @@ export function Plan() {
 }
 
 const KIND_ICON: Partial<Record<CardioKind, () => React.JSX.Element>> = {
-  walk: Icon.shoe, run: Icon.bolt, long: Icon.bolt, test: Icon.bolt, bike: Icon.bike, race: Icon.flag,
+  walk: Icon.shoe, run: Icon.run, long: Icon.run, test: Icon.run, bike: Icon.bike, race: Icon.flag,
 };
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 

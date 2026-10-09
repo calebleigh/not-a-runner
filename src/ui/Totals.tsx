@@ -1,4 +1,4 @@
-import { addDays, dayAt, daysBetween, homeTotals, kfmt, nextMilestones, type Milestone, type SumUp } from "../training";
+import { addDays, dayAt, daysBetween, homeTotals, kfmt, nextMilestones, statKind, type Milestone, type SumUp } from "../training";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 import { Grow, Num } from "./motion";
@@ -77,7 +77,7 @@ export function ComingUp() {
       <span className="lbl">Coming up</span>
       {next && (
         <button className="cnext" onClick={() => openSheet({ kind: "day", w: next.w, d: next.day.d })}>
-          <span className="ric">{next.day.c.kind === "bike" ? <Icon.bike /> : <Icon.shoe />}</span>
+          <span className="ric">{next.day.c.kind === "bike" ? <Icon.bike /> : statKind(next.day.c.kind) === "run" ? <Icon.run /> : <Icon.shoe />}</span>
           <span className="rtx"><b>{next.day.c.t}</b><small>{when}{next.day.st && !next.day.st.light ? `, plus ${next.day.st.title.toLowerCase()}` : ""}</small></span>
         </button>
       )}
