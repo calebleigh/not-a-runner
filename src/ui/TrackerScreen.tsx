@@ -6,6 +6,7 @@ import { newId } from "../sync/engine";
 import { useApp } from "./app-state";
 import { ConfirmButton, FeelPicker } from "./cards";
 import { Icon } from "./icons";
+import { RouteMapView } from "./RouteMap";
 import {
   closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
@@ -126,6 +127,7 @@ export function TrackerScreen() {
             <div><span className="num">{miles.toFixed(2)}</span><small>{indoor && miles > 0 ? "Miles (est.)" : "Miles"}</small></div>
             <div><span className="num">{bike ? mph.toFixed(1) : pace(paceS)}</span><small>{bike ? "Avg mph" : "Avg pace /mi"}</small></div>
           </div>
+          {!indoor && t.track && <RouteMapView className="trk-map" points={t.track.route} live={t.status !== "done"} />}
           {t.error === "denied" ? (
             <div className="trk-msg bad">
               Location is off for Not a Runner, so distance can't be tracked. Time still counts.

@@ -878,7 +878,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .routethumb{flex:none;padding:0;border:0;background:none;cursor:pointer;border-radius:min(10px,var(--rmax));display:block}
 .routethumb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .routemap{position:fixed;inset:0;z-index:70;background:var(--paper)}
-.routemap .routemap-map{position:absolute;inset:0;background:var(--surface2)}
+.routemap .routemap-map{position:absolute;inset:0}
 .routemap-top{position:absolute;left:0;right:0;top:0;z-index:500;display:flex;align-items:center;gap:12px;padding:calc(12px + var(--sat)) 16px 12px;pointer-events:none}
 .routemap-top>*{pointer-events:auto}
 .routemap-close{background:var(--paper);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.3)}
@@ -887,3 +887,9 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .routemap-title b{font:800 18px/1.1 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .routemap-title small{font-size:13px;color:var(--muted)}
 .routemap .maplibregl-ctrl-bottom-right{margin-bottom:var(--sab)}
+
+/* Map view (route map and the tracker's live map) */
+.mapview{position:relative;background:var(--surface2);overflow:hidden}
+.mapview .mapview-map{position:absolute;inset:0}
+.mapview-recenter{position:absolute;right:10px;top:10px;z-index:2;background:var(--paper);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.trk-map{flex:none;height:clamp(180px,32vh,320px);border-radius:min(16px,var(--rmax));border:1px solid var(--line)}
