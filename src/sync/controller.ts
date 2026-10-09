@@ -171,7 +171,8 @@ function message(e: unknown): string {
   if (code === "auth/unauthorized-domain") return "Sign-in isn't set up for this address yet.";
   if (code === "auth/operation-not-allowed") return "That sign-in option isn't turned on yet.";
   // Keep the real cause visible (short) so problems can be tracked down.
-  const raw = code || (e as Error)?.message || String(e);
-  const detail = raw.replace(/\s+/g, " ").slice(0, 120);
+  const msg = (e as Error)?.message || String(e);
+  const raw = code && !msg.includes(code) ? `${code}: ${msg}` : msg || code;
+  const detail = raw.replace(/\s+/g, " ").slice(0, 220);
   return `Something went wrong with sync. Your data is safe on this device. (${detail})`;
 }

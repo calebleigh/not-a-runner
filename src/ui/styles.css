@@ -950,7 +950,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 @keyframes l-up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @keyframes l-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 .lticker{margin:0 -16px;border-block:1px solid var(--line);background:var(--surface);overflow:hidden;white-space:nowrap}
-.lticker-in{display:inline-flex;animation:l-tick 26s linear infinite}
+.lticker-in{display:inline-flex;animation:l-tick 78s linear infinite}
 .lticker span{display:inline-flex}
 .lticker i{font:800 italic 26px/1 var(--display);text-transform:uppercase;padding:14px 18px;color:var(--ink);font-style:italic}
 .lticker i::after{content:"/";margin-left:36px;color:var(--accent)}

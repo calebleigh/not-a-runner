@@ -96,7 +96,8 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
       {!heroOnly && <>
       <div className="lticker" aria-hidden="true">
         <div className="lticker-in">
-          {[0, 1].map((k) => <span key={k}>{MODES.map((m) => <i key={m}>{m}</i>)}</span>)}
+          {/* Two identical halves, each wide enough to cover a big desktop screen, so the loop never shows an end. */}
+          {[0, 1].map((k) => <span key={k}>{[0, 1, 2].flatMap((r) => MODES.map((m) => <i key={r + m}>{m}</i>))}</span>)}
         </div>
       </div>
 
