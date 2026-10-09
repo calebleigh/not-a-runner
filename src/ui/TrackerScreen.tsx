@@ -23,6 +23,13 @@ export function TrackerScreen() {
   // Distance typed on the summary (e.g. from a treadmill); empty means use the measured one.
   const [typed, setTyped] = useState("");
 
+  // The page behind the tracker stays still while it's open.
+  const open = !!t;
+  useEffect(() => {
+    document.body.classList.toggle("tracking", open);
+    return () => document.body.classList.remove("tracking");
+  }, [open]);
+
   // The clock moves every second while recording; GPS fixes don't arrive on a beat.
   useEffect(() => {
     if (t?.status !== "recording" && t?.status !== "paused") return;
