@@ -27,7 +27,7 @@ export const Icon = {
   flag: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>,
   user: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="12" cy="8.5" r="4" /><path d="M4 20.5c1.2-3.8 4.3-5.5 8-5.5s6.8 1.7 8 5.5" /></svg>,
   // Run: the walking shoe up on its toes. The forefoot stays flat on the ground; the heel half lifts.
-  run: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M14 16.5H21v-2.2a2 2 0 0 0-1.4-1.9L17.3 6.8 14.2 5.1 12.5 6.4 10.2 5.1 5.7 8.8 4.5 11z" /><path d="M3 19h18" /></svg>,
+  run: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M15 16.5H21v-2.2a2 2 0 0 0-1.4-1.9L16.8 12 16.3 7.6 13.3 5.9 11.8 7.1 9.4 5.8 5.4 9 4.4 10.9z" /><path d="M3 19h18" /></svg>,
   shoe: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M3 16.5h18v-2.2a2 2 0 0 0-1.4-1.9l-5.1-1.6-2.5-4.3H8.5l-.8 2H5L3 14z" /><path d="M3 19h18" /></svg>,
   home: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" /></svg>,
   plan: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>,
