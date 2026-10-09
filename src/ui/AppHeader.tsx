@@ -50,7 +50,7 @@ export function AppHeader() {
   return (
     <header className="apphead">
       {/* The logo shows on phones; on wide screens the side rail already has it. */}
-      <h1 className="apphead-title"><span className="apphead-logo"><Logo size={26} /></span>{tab === "home" ? "Not a Runner" : TITLES[tab]}</h1>
+      <h1 className="apphead-title"><span className="apphead-logo"><Logo size={30} /></span>{tab === "home" ? "Not a Runner" : TITLES[tab]}</h1>
       <span className="apphead-acts">
         <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
           <Icon.flame /><b>{streak.current}</b>

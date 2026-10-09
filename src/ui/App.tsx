@@ -63,7 +63,7 @@ function Shell() {
       </main>
     </div>
     <nav className="bnav" aria-label="Main">
-      <div className="railbrand"><Wordmark size={34} /></div>
+      <div className="railbrand"><Wordmark size={38} /></div>
       {TABS.slice(0, 2).map(navBtn)}
       <button className="logbtn" aria-label="Log a workout" onClick={() => openSheet({ kind: "log" })}><Icon.bigPlus /><span className="logtxt">Log workout</span></button>
       {TABS.slice(2).map(navBtn)}
