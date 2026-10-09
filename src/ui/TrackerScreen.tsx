@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DN, dayAt, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
+import { DN, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
 import { canCountSteps } from "../native/steps";
 import { newId } from "../sync/engine";
@@ -7,11 +7,12 @@ import { useApp } from "./app-state";
 import { ConfirmButton, FeelPicker } from "./cards";
 import { Icon } from "./icons";
 import { RouteMapView } from "./RouteMap";
+import { trackKindFor } from "./trackFor";
 import {
   closeTracker, finishTracking, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
 
-const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Walk/run"], ["bike", "Bike"]];
+const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Run"], ["bike", "Bike"]];
 const pace = (s: number | null) => (s ? hms(s) : "--:--");
 
 /** Full-screen workout tracker: ready, recording, then a summary to save. */
@@ -45,6 +46,8 @@ export function TrackerScreen() {
   if (!t) return null;
   const day = t.target ? dayAt(model, t.target.w, t.target.d) : undefined;
   const already = !!day && !!state.done[day.ids[0]];
+  const planned = t.target ? effKind(state, t.target.w, t.target.d) : null;
+  const recKind = planned ? trackKindFor(planned.base) : null;
   // A walk tracked on a bike day (or a ride on a walking day) isn't that session: it saves as an extra.
   const mismatch = !!day && (day.c.kind === "bike") !== (t.kind === "bike");
   const where = day && !mismatch ? `${DN[t.target!.d]} ${fmtShort(day.date)}: ${t.target!.title}` : "Extra activity, today";
@@ -97,7 +100,7 @@ export function TrackerScreen() {
           <div className="trk-kinds" role="radiogroup" aria-label="Activity">
             {KINDS.map(([k, l]) => {
               const I = k === "bike" ? Icon.bike : Icon.shoe;
-              return <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}><I /><b>{l}</b></button>;
+              return <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}><I /><b>{l}</b>{k === recKind && <small className="rec">Recommended</small>}</button>;
             })}
           </div>
 

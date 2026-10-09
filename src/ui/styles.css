@@ -1196,7 +1196,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-plan .ht{padding-right:0}
 .trk-plan p{margin:10px 0 0;font:600 15px/1.35 var(--body);opacity:.85}
 .trk-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.trk-kinds button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border:1px solid var(--line);background:var(--surface);border-radius:min(16px,var(--rmax));color:var(--muted);cursor:pointer;transition:transform .15s var(--ease)}
+.trk-kinds button{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:14px 6px;border:1px solid var(--line);background:var(--surface);border-radius:min(16px,var(--rmax));color:var(--muted);cursor:pointer;transition:transform .15s var(--ease)}
 .trk-kinds svg{width:28px;height:28px}
 .trk-kinds b{font:800 italic 20px/1 var(--display);text-transform:uppercase;color:var(--ink)}
 .trk-kinds button.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -1277,3 +1277,11 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .invcode small{color:var(--muted);font-size:13px}
 .invcode b{font:800 26px/1 var(--display);letter-spacing:.08em}
 .swaps .swapback{flex-basis:100%;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;text-align:left;margin-bottom:4px}
+
+/* A session's activity: the same tiles as the tracker; the plan's pick is tagged. */
+.kindpick{margin-top:12px}
+.trk-kinds small{display:block;font:700 10px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-height:12px;background:none;padding:0;margin:0;border:0;border-radius:0}
+.trk-kinds button.sel small{color:var(--on-accent)}
+.trk-kinds button:disabled{opacity:.45;cursor:default}
+.trk-kinds small.rec{color:var(--accent)}
+.trk-kinds button.sel small.rec{color:var(--on-accent)}

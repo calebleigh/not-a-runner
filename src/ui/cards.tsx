@@ -64,7 +64,7 @@ export function FeelPicker({ value, onPick }: { value?: Feel; onPick: (f: Feel) 
 /** An extra being moved into this cardio slot. */
 export interface FromExtra { w: number; d: number; index: number; extra: Extra }
 
-const RELOG: [SwapKind, string][] = [["bike", "Bike"], ["walk", "Walk"], ["run", "Walk/run"]];
+const RELOG: [SwapKind, string][] = [["walk", "Walk"], ["run", "Run"], ["bike", "Bike"]];
 
 function LogForm({ id, c, onClose, from }: { id: string; c: Cardio; onClose: () => void; from?: FromExtra }) {
   const { model, state, update } = useApp();
@@ -138,12 +138,13 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
   const extra = fromExtra !== undefined && !isDone ? extrasFor(state, w, srcD)[fromExtra] : undefined;
   const [from] = useState<FromExtra | undefined>(extra && { w, d: srcD, index: fromExtra!, extra });
   const [formOpen, setFormOpen] = useState<boolean>(startOpen && !isDone);
-  const swapOpts: [("bike" | "walk" | "run"), string][] = [["bike", "Bike"], ["walk", "Walk"]];
-  if (phaseOf(model.spec, w) >= 1) swapOpts.push(["run", "Walk/run"]);
   const kind = statKind(c.kind);
-  // What the plan had before any swap, so "Back to ..." can undo it.
+  // What the plan picked before any swap: it keeps the Recommended tag whatever you choose.
   const base = statKind(effKind(state, w, d)?.base ?? c.kind);
-  const others = swapOpts.filter(([k]) => !(k === c.kind || (k === "run" && ["run", "long", "test"].includes(c.kind)) || (c.orig && k === base)));
+  // Walk/run opens once the plan's first phase is over.
+  let runFrom = w;
+  while (runFrom <= model.spec.weeks && phaseOf(model.spec, runFrom) < 1) runFrom++;
+  const pick = (k: SwapKind) => update((s) => { if (k === base) delete s.swaps[id]; else s.swaps[id] = k; });
 
   return (
     <section className={"card" + (isDone ? " done" : "")}>
@@ -154,12 +155,17 @@ export function CardioCard({ w, d, startOpen = false, fromExtra, fromD }: { w: n
       {c.kind === "rest" || c.kind === "race" ? <MarkBtn id={id} /> : (
         <>
           {!isDone && !(formOpen && from) && (
-            <div className="swaps">
-              {c.orig && <button className="swapback" onClick={() => update((s) => { delete s.swaps[id]; })}>Back to {c.orig}</button>}
-              {others.length > 0 && <span>{c.orig ? "Or swap to" : "Swap to"}</span>}
-              {others.map(([k, l]) => (
-                <button key={k} onClick={() => update((s) => { s.swaps[id] = k; })}>{l}</button>
-              ))}
+            <div className="trk-kinds kindpick" role="radiogroup" aria-label="Activity">
+              {RELOG.map(([k, l]) => {
+                const locked = k === "run" && base !== "run" && runFrom > w;
+                const I = k === "bike" ? Icon.bike : Icon.shoe;
+                return (
+                  <button key={k} role="radio" aria-checked={kind === k} className={kind === k ? "sel" : ""} disabled={locked} onClick={() => kind !== k && pick(k)}>
+                    <I /><b>{l}</b>
+                    {k === base ? <small className="rec">Recommended</small> : locked ? <small>{runFrom <= model.spec.weeks ? `From week ${runFrom}` : "Later"}</small> : <small />}
+                  </button>
+                );
+              })}
             </div>
           )}
           {lg?.time && !formOpen ? (
