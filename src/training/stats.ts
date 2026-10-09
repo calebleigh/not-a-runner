@@ -198,13 +198,36 @@ export const timedCardioLogs = (state: State) => sortedLogs(state).filter(([id, 
 export interface SumUp { steps: number; miles: number; secs: number }
 
 /** Steps, miles and active time for the plan week, the calendar month and all time (Home's totals card). */
-export function homeTotals(model: Model): Record<"week" | "month" | "all", SumUp> {
+export function homeTotals(model: Model): Record<"week" | "lastWeek" | "month" | "all", SumUp> {
   const { today, curWeek, spec } = model;
-  const inWeek: DateRange = (d) => d >= dateOf(spec, curWeek, 0) && d <= dateOf(spec, curWeek, 6);
+  const weekOf = (w: number): DateRange => (d) => d >= dateOf(spec, w, 0) && d <= dateOf(spec, w, 6);
+  const inWeek = weekOf(curWeek);
   const inMonth: DateRange = (d) => d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
   const sum = (r: DateRange): SumUp => {
     const t = totals(model, r);
     return { steps: stepStats(model.state, r).sum, miles: Math.round((t.walk + t.run + t.bike + t.other) * 10) / 10, secs: t.secs };
   };
-  return { week: sum(inWeek), month: sum(inMonth), all: sum(ALL) };
+  return { week: sum(inWeek), lastWeek: sum(weekOf(curWeek - 1)), month: sum(inMonth), all: sum(ALL) };
+}
+
+/** Round numbers worth celebrating, per lifetime total. */
+export const MILESTONES = {
+  steps: [10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2000000, 5000000, 10000000],
+  miles: [10, 25, 50, 100, 250, 500, 1000, 2000, 5000, 10000],
+  hours: [5, 10, 25, 50, 100, 250, 500, 1000, 2500],
+} as const;
+export type MilestoneKind = keyof typeof MILESTONES;
+export interface Milestone { kind: MilestoneKind; target: number; left: number; frac: number }
+
+/** The next milestone for each total that has one left, closest to done first. */
+export function nextMilestones(t: { steps: number; miles: number; hours: number }): Milestone[] {
+  const out: Milestone[] = [];
+  for (const kind of Object.keys(MILESTONES) as MilestoneKind[]) {
+    const v = t[kind], ladder: readonly number[] = MILESTONES[kind];
+    const i = ladder.findIndex((m) => m > v);
+    if (i < 0) continue;
+    const from = i ? ladder[i - 1] : 0, target = ladder[i];
+    out.push({ kind, target, left: target - v, frac: (v - from) / (target - from) });
+  }
+  return out.sort((a, b) => b.frac - a.frac);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GoogleButton, useSync } from "./SyncSection";
+import { IS_NATIVE } from "./apk";
 import { useApp } from "./app-state";
 import { Icon } from "./icons";
 import { Logo } from "./Logo";
@@ -59,7 +60,7 @@ function Stat({ value, unit, label }: { value: number; unit?: string; label: str
 }
 
 /** What someone without an account sees first: what the app is, then a way in. */
-export function Landing({ onStart }: { onStart: () => void }) {
+export function Landing({ onStart, heroOnly = false }: { onStart: () => void; heroOnly?: boolean }) {
   const { openSheet } = useApp();
   const sync = useSync();
   const go = useAfterSplash();
@@ -88,9 +89,11 @@ export function Landing({ onStart }: { onStart: () => void }) {
           <p className="lsub">Bike, walk and lift your way to a 5K, a half marathon or just getting fit. Running comes in when your body is ready.</p>
           {ctas}
           <button className="btn small lback" onClick={() => openSheet({ kind: "import" })}>I have a backup code</button>
+          {heroOnly && <p className="ldisc lhero-disc">Not medical advice. Check with your doctor before starting a new exercise program.</p>}
         </div>
       </header>
 
+      {!heroOnly && <>
       <div className="lticker" aria-hidden="true">
         <div className="lticker-in">
           {[0, 1].map((k) => <span key={k}>{MODES.map((m) => <i key={m}>{m}</i>)}</span>)}
@@ -148,6 +151,12 @@ export function Landing({ onStart }: { onStart: () => void }) {
         <p className="ldisc">Not medical advice. Check with your doctor before starting a new exercise program.</p>
         <a className="lpriv" href="/privacypolicy.html">Privacy policy</a>
       </section>
+      </>}
     </div>
   );
+}
+
+/** First screen for someone with no data: the full landing page on the website, just the hero in the app. */
+export function Welcome({ onStart }: { onStart: () => void }) {
+  return <Landing onStart={onStart} heroOnly={IS_NATIVE} />;
 }

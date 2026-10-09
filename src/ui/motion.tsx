@@ -4,8 +4,8 @@ import { kfmt } from "../training";
 export const reducedMotion = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** A number that counts up when it first appears. */
-export function Num({ value, dec = 0, k = false }: { value: number; dec?: number; k?: boolean }) {
-  const show = (v: number) => (k ? kfmt(Math.round(v)) : v.toFixed(dec));
+export function Num({ value, dec = 0, k = false, comma = false }: { value: number; dec?: number; k?: boolean; comma?: boolean }) {
+  const show = (v: number) => (k ? kfmt(Math.round(v)) : comma ? Math.round(v).toLocaleString("en-US") : v.toFixed(dec));
   const ref = useRef<HTMLSpanElement>(null);
   const first = useRef(true);
   useEffect(() => {
@@ -23,7 +23,7 @@ export function Num({ value, dec = 0, k = false }: { value: number; dec?: number
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, dec, k]);
+  }, [value, dec, k, comma]);
   return <span ref={ref}>{show(value)}</span>;
 }
 

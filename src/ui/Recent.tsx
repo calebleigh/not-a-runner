@@ -10,7 +10,7 @@ const ICON: Record<RecentItem["icon"], () => ReactElement> = {
 /** Home: the last few things logged. Tap one to open it. */
 export function Recent() {
   const { model, openSheet, setTab } = useApp();
-  const items = recentActivity(model, 5);
+  const items = recentActivity(model, 3);
   const when = (d: Date) => {
     const n = daysBetween(d, model.today);
     return n === 0 ? "Today" : n === 1 ? "Yesterday" : n > 1 && n < 7 ? d.toLocaleDateString("en-US", { weekday: "short" }) : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -25,7 +25,7 @@ export function Recent() {
   };
   return (
     <section className="panelc recent">
-      <div className="top"><span className="lbl">Recent</span><button className="more" onClick={() => setTab("stats")}>History &rsaquo;</button></div>
+      <div className="top"><span className="lbl">Recent</span><button className="more" onClick={() => setTab("stats")}>See all &rsaquo;</button></div>
       {items.length ? (
         <ul>
           {items.map((it) => {

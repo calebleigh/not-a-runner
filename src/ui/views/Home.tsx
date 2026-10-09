@@ -7,7 +7,7 @@ import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Recent } from "../Recent";
 import { TodoCard } from "../TodoList";
-import { TotalsCard } from "../Totals";
+import { ComingUp, TotalsCard, WeekCompare } from "../Totals";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
 
@@ -94,10 +94,12 @@ export function Home() {
             );
           })}
         </div>
+        <WeekCompare />
       </section>
 
       <div className="o2"><TodayHero /></div>
       <div className="chips o3" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
+      <div className="o4"><ComingUp /></div>
       {(() => {
         const q = quoteForWeek(curWeek);
         return (

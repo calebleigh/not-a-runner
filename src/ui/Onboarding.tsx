@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { DN, WHY_IDEAS, addDays, buildSpec, fmtLong, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
 import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
-import { Landing } from "./Landing";
+import { Welcome } from "./Landing";
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -104,7 +104,7 @@ export function Onboarding() {
   let title = "", sub: ReactNode = null, body: ReactNode = null, canNext = true, cta = "Next";
   switch (at) {
     case "welcome":
-      return <Landing onStart={next} />;
+      return <Welcome onStart={next} />;
     case "goal":
       title = "What are you training for?";
       body = <div className="onbopts" role="radiogroup">{GOALS.map(([g, t, s]) => <Option key={g} on={d.goal === g} title={t} sub={s} onClick={() => set({ goal: g })} />)}</div>;
