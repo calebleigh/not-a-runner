@@ -12,7 +12,8 @@ export const Icon = {
   close: () => <svg viewBox="0 0 24 24" {...S} strokeWidth="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>,
   clock: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2.5M9 2h6" /></svg>,
   flame: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M12 22c4 0 7-2.7 7-6.8 0-4.2-3.3-6.6-4.2-10.2-2.4 1.5-3.6 3.6-3.4 6.2-1.3-.6-2.2-1.9-2.4-3.4C7 9.6 5 12.2 5 15.2 5 19.3 8 22 12 22z" /></svg>,
-  bike: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><g transform="matrix(-1 0 0 1 24 0)"><circle cx="5.5" cy="16.5" r="3.5" /><circle cx="18.5" cy="16.5" r="3.5" /><path d="M5.5 16.5L9 9h6l3.5 7.5M9 9l3 7.5L15 9M8 6h3" /></g></svg>,
+  // Bike: faces right like the shoes, a touch smaller so its wheels sit on the same ground line.
+  bike: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><g transform="matrix(-.9 0 0 .9 22.8 -.85)"><circle cx="5.5" cy="16.5" r="3.5" /><circle cx="18.5" cy="16.5" r="3.5" /><path d="M5.5 16.5L9 9h6l3.5 7.5M9 9l3 7.5L15 9M8 6h3" /></g><path d="M3 19h18" /></svg>,
   bell: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0" /></svg>,
   cloud: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.5 10a4.25 4.25 0 0 0 .5 8.5z" /></svg>,
   cloudOff: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M7 18.5h10.5M20.5 15.5a4 4 0 0 0-2.4-4.95A6 6 0 0 0 9 6.3M6.3 10.1A4.25 4.25 0 0 0 7 18.5M3 3l18 18" /></svg>,
