@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
-import { extraLine, todayList, type TodayTask } from "../../training";
+import { todayList, todayLogs, type TodayLog, type TodayTask } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Grow } from "../motion";
+import { RouteThumb } from "../RouteMap";
 import { TodayHero } from "../TodayHero";
 
 const ICONS: Record<TodayTask["kind"], () => React.JSX.Element> = {
@@ -23,15 +24,46 @@ function Row({ done, ic, title, detail, onClick, check }: { done: boolean; ic: R
   );
 }
 
+const LOG_ICONS: Record<TodayLog["icon"], () => React.JSX.Element> = {
+  walk: Icon.shoe, run: Icon.bolt, bike: Icon.bike, strength: Icon.dumbbell, steps: Icon.steps, weigh: Icon.scale, extra: Icon.plus,
+};
+const clock = (ms: number) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+/** One thing logged today: its numbers up top, then what you entered. Tap to open or edit it. */
+function LogCard({ x, onOpen }: { x: TodayLog; onOpen: () => void }) {
+  const I = LOG_ICONS[x.icon];
+  return (
+    <article className="panelc tdlog">
+      <button className="tdlhead" onClick={onOpen}>
+        <span className="tdic"><I /></span>
+        <span className="tdlt"><b>{x.title}</b>{x.at && x.at > 1e12 ? <small>Logged {clock(x.at)}</small> : null}</span>
+        <span className="tdgo" aria-hidden="true">&rsaquo;</span>
+      </button>
+      {(x.stats.length > 0 || x.route) && (
+        <div className="tdlbody">
+          <div className="tdlstats">{x.stats.map((s) => <div key={s.u}><b>{s.v}</b><small>{s.u}</small></div>)}</div>
+          <RouteThumb route={x.route} size={56} title={x.title} detail={x.stats.map((s) => `${s.v} ${s.u}`).join(", ")} />
+        </div>
+      )}
+      {x.tags.length > 0 && <div className="tdltags">{x.tags.map((t) => <span key={t}>{t}</span>)}</div>}
+    </article>
+  );
+}
+
 /** Today: everything on for today, as a list to check off, and what's already done. */
 export function Today() {
   const { model, update, openSheet, now } = useApp();
   const { curWeek, todayIdx, today } = model;
   const l = todayList(model);
-  const todo = l.tasks.filter((t) => !t.done), done = l.tasks.filter((t) => t.done);
+  const todo = l.tasks.filter((t) => !t.done), checked = l.tasks.filter((t) => t.done && t.kind === "todo");
+  const logs = todayLogs(model);
   const pct = l.total ? Math.round((100 * l.done) / l.total) : 0;
 
-  const open = (t: TodayTask) => {
+  const openLog = (x: TodayLog) => {
+    if (x.kind === "extra") openSheet({ kind: "extra", date: today });
+    else open({ kind: x.kind } as TodayTask);
+  };
+  const open = (t: Pick<TodayTask, "kind">) => {
     if (t.kind === "cardio") openSheet({ kind: "cardio", w: curWeek, d: todayIdx });
     else if (t.kind === "strength") openSheet({ kind: "strength", w: curWeek, d: todayIdx });
     else if (t.kind === "steps") openSheet({ kind: "steps", date: today });
@@ -65,17 +97,14 @@ export function Today() {
         <div className="slhead"><span className="lbl">To do</span><b>{todo.length ? `${todo.length} left` : "Nothing left"}</b></div>
         {todo.map(row)}
         {!todo.length && <p className="setnote tdempty">Everything for today is done. Nice work.</p>}
+        {checked.map(row)}
       </section>
 
-      <section className="panelc slist tdlist" aria-label="Done today">
-        <div className="slhead"><span className="lbl">Done</span><b>{done.length + l.extras.length || ""}</b></div>
-        {done.map(row)}
-        {l.extras.map((x, i) => {
-          const e = extraLine(x);
-          return <Row key={x.id ?? i} done ic={null} title={e.title} detail={`Extra, ${e.detail}`} onClick={() => openSheet({ kind: "extra", date: today })} />;
-        })}
-        {!done.length && !l.extras.length && <p className="setnote tdempty">Nothing yet. Check things off as you go.</p>}
-        <button className="more" onClick={() => openSheet({ kind: "log" })}>Did something else? Log it &rsaquo;</button>
+      <section className="tdlogs" aria-label="Logged today">
+        <div className="slhead"><span className="lbl">Logged today</span><b>{logs.length || ""}</b></div>
+        {logs.map((x) => <LogCard key={x.key} x={x} onOpen={() => openLog(x)} />)}
+        {!logs.length && <p className="setnote tdempty">Nothing yet. What you log shows up here.</p>}
+        <button className="btn" onClick={() => openSheet({ kind: "log" })}>+ Log something</button>
       </section>
     </section>
   );

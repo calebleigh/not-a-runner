@@ -1,8 +1,8 @@
 // The Today tab: what's on for today (session, strength, steps, weigh-in, to-dos due) and what's done.
 import { dayKey } from "./calendar";
-import { hms, kfmt } from "./format";
+import { FEEL, hms, kfmt } from "./format";
 import { todayDay } from "./model";
-import { EXTRA_KINDS } from "./stats";
+import { EXTRA_KINDS, cardioCal, extraCal, extraKind, statKind } from "./stats";
 import type { Extra, Model } from "./types";
 
 export type TodayKind = "cardio" | "strength" | "steps" | "weigh" | "todo";
@@ -63,3 +63,61 @@ export const extraLine = (x: Extra) => ({
   title: x.label || EXTRA_KINDS[x.kind].label,
   detail: [x.dist ? `${x.dist} mi` : "", x.time ? hms(x.time) : "", x.steps ? `${kfmt(x.steps)} steps` : ""].filter(Boolean).join(", ") || "Logged",
 });
+
+/** One thing logged today, as a card: what it was, its numbers, and the details you entered. */
+export interface TodayLog {
+  key: string;
+  kind: "cardio" | "strength" | "steps" | "weigh" | "extra";
+  /** For the icon. */
+  icon: "walk" | "run" | "bike" | "strength" | "steps" | "weigh" | "extra";
+  title: string;
+  /** Big numbers: "2.1" "mi". */
+  stats: { v: string; u: string }[];
+  /** Smaller details: how it felt, steps, heart rate, calories, indoors. */
+  tags: string[];
+  route?: string;
+  /** When it was logged (ms), if known. */
+  at?: number;
+  /** For extras: which one of the day's list. */
+  index?: number;
+}
+
+const KIND_LABEL = { walk: "Walk", run: "Run", bike: "Bike" } as const;
+const speed = (kind: string, time?: number, dist?: number) =>
+  !time || !dist ? null : kind === "bike" ? { v: (dist / (time / 3600)).toFixed(1), u: "mph" } : { v: hms(time / dist), u: "/mi" };
+
+/** Everything logged today, one card each: the session, strength, extras, steps and the weigh-in. */
+export function todayLogs(model: Model): TodayLog[] {
+  const { state, today, dow, curWeek } = model;
+  const out: TodayLog[] = [];
+  const day = todayDay(model), w = curWeek;
+  if (day && day.c.kind !== "rest" && state.done[day.ids[0]]) {
+    const lg = state.logs[day.ids[0]], kind = lg?.kind ?? statKind(day.c.kind);
+    const stats = lg ? [lg.dist ? { v: String(lg.dist), u: "mi" } : null, lg.time ? { v: hms(lg.time), u: "time" } : null, speed(kind, lg.time, lg.dist)] : [];
+    const cal = cardioCal(state, kind, lg, w), other = kind !== statKind(day.c.kind);
+    out.push({
+      // Logged as something else than planned (a walk on a bike day): say what it was, and for what.
+      key: day.ids[0], kind: "cardio", icon: kind, title: other ? KIND_LABEL[kind] : day.c.t, stats: stats.filter((x) => x != null),
+      tags: lg ? [other ? `For ${day.c.t}` : "", lg.feel ? `Felt ${FEEL[lg.feel].toLowerCase()}` : "", lg.steps ? `${kfmt(lg.steps)} steps` : "", lg.hr ? `${lg.hr} bpm` : "", cal ? `~${cal} cal` : "", lg.indoor ? "Indoors" : lg.route ? "GPS" : "", lg.hc ? "Health Connect" : ""].filter(Boolean) : ["Checked off"],
+      route: lg?.route, at: lg?.at || undefined,
+    });
+  }
+  if (day?.st && state.done[day.ids[1]]) {
+    out.push({ key: day.ids[1], kind: "strength", icon: "strength", title: day.st.title, stats: [{ v: String(day.st.min), u: "min" }], tags: ["Strength"] });
+  }
+  (state.extras[dayKey(model.spec, today)] || []).forEach((x, i) => {
+    const k = extraKind(x.kind), cal = extraCal(state, x, w);
+    out.push({
+      key: x.id ?? `x${i}`, kind: "extra", icon: x.kind === "bike" ? "bike" : x.kind === "walk" || x.kind === "hike" ? "walk" : "extra",
+      title: x.label || k.label,
+      stats: [x.dist ? { v: String(x.dist), u: "mi" } : null, x.time ? { v: hms(x.time), u: "time" } : null, speed(x.kind, x.time, x.dist)].filter((v) => v != null),
+      tags: ["Extra", x.label ? k.label : "", x.steps ? `${kfmt(x.steps)} steps` : "", cal ? `~${cal} cal` : "", x.indoor ? "Indoors" : x.route ? "GPS" : ""].filter(Boolean),
+      route: x.route, at: x.at, index: i,
+    });
+  });
+  const steps = state.steps[dayKey(model.spec, today)] || 0, goal = state.settings.stepGoal;
+  if (steps) out.push({ key: "steps", kind: "steps", icon: "steps", title: "Steps", stats: [{ v: kfmt(steps), u: "steps" }], tags: goal ? [`${Math.round((100 * steps) / goal)}% of ${kfmt(goal)}`] : [] });
+  const wv = dow === 0 ? state.weights[curWeek] : undefined;
+  if (wv) out.push({ key: "weigh", kind: "weigh", icon: "weigh", title: "Weigh-in", stats: [{ v: String(wv), u: "lb" }], tags: [] });
+  return out;
+}

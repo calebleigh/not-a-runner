@@ -138,7 +138,7 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "extra": {
       const [w, d] = parseDayKey(dayKey(model.spec, spec.date));
       title = "Extra activity";
-      body = <ExtraSection w={w} d={d} startOpen />;
+      body = <ExtraSection w={w} d={d} startOpen={!!spec.add} />;
       break;
     }
     case "log":
@@ -232,7 +232,7 @@ function LogTiles() {
         <Tile onClick={() => (missed ? openSheet({ kind: "day", w: curWeek, d: missed.d }) : closeSheet())} ic={<Icon.shoe />} title="Make-up workout" sub="Pick a missed day" />
       )}
       <Tile onClick={() => openSheet({ kind: "steps", date: today })} ic={<Icon.steps />} title={st ? kfmt(st) + " steps" : "Steps"} sub={st ? "Tap to update" : "From Samsung Health"} ok={!!st} />
-      <Tile onClick={() => openSheet({ kind: "extra", date: today })} ic={<Icon.plus />} title="Extra activity" sub="Walk, hike, ride" />
+      <Tile onClick={() => openSheet({ kind: "extra", date: today, add: true })} ic={<Icon.plus />} title="Extra activity" sub="Walk, hike, ride" />
       {dow === 0 && rawWeek >= 1 && (() => {
         const wv = state.weights[curWeek];
         return <Tile onClick={() => openSheet({ kind: "weigh" })} ic={<Icon.scale />} title={wv ? wv + " lb" : "Weigh-in"} sub={wv ? "Tap to update" : "Monday check-in"} ok={!!wv} wide />;

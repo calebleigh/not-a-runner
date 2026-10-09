@@ -13,7 +13,7 @@ export type SheetSpec =
   | { kind: "strength"; w: number; d: number }
   | { kind: "steps"; date: Date }
   | { kind: "weigh" }
-  | { kind: "extra"; date: Date }
+  | { kind: "extra"; date: Date; add?: boolean }
   | { kind: "log" }
   | { kind: "export" }
   | { kind: "import" }

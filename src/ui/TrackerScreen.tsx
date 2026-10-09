@@ -21,7 +21,6 @@ export function TrackerScreen() {
   const { model, state, update, toast } = useApp();
   const [, tick] = useState(0);
   const [feel, setFeel] = useState<Feel | undefined>();
-  const [saveAsExtra, setSaveAsExtra] = useState(false);
   // Distance typed on the summary (e.g. from a treadmill); empty means use the measured one.
   const [typed, setTyped] = useState("");
 
@@ -39,9 +38,7 @@ export function TrackerScreen() {
     return () => clearInterval(id);
   }, [t?.status]);
   useEffect(() => { resumeAfterReload(); }, []);
-  useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setSaveAsExtra(false); setTyped(""); } }, [t?.status]);
-  const planKind = t?.target ? dayAt(model, t.target.w, t.target.d)?.c.kind : undefined;
-  useEffect(() => { if (t?.status === "done") setSaveAsExtra(!!planKind && (planKind === "bike") !== (t.kind === "bike")); }, [t?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setTyped(""); } }, [t?.status]);
 
   if (!t) return null;
   const day = t.target ? dayAt(model, t.target.w, t.target.d) : undefined;
@@ -65,9 +62,9 @@ export function TrackerScreen() {
   const stride = strideFor(state, t.kind === "run" ? "run" : "walk");
   const autoPause = autoPausePref();
 
-  const save = () => {
+  const save = (asExtra: boolean) => {
     if (!t.track || !t.finishedAt) return;
-    const target = saveAsExtra || !t.target ? null : t.target;
+    const target = asExtra || !t.target ? null : t.target;
     update((draft) => { saveTrack(draft, model, { track: t.track!, finishedAt: t.finishedAt!, feel, target, date: new Date(t.track!.startedAt), newId, ...extras }); });
     toast(target && day ? "Saved to your plan. Nice work." : "Saved as an extra activity.");
     closeTracker();
@@ -186,13 +183,19 @@ export function TrackerScreen() {
               </label>
               <span className="lbl">How did it feel?</span>
               <FeelPicker value={feel} onPick={setFeel} />
-              {day && (
-                <label className="trk-extra"><input type="checkbox" checked={saveAsExtra} onChange={(e) => setSaveAsExtra(e.target.checked)} /> Save as an extra activity instead</label>
+              {day ? (
+                // Two ways to save: the day's goal, or an extra. The likely one is orange.
+                <div className="trk-saveto">
+                  <button className={mismatch ? "" : "solid"} onClick={() => save(false)}>
+                    <b>Daily goal</b><small>{already ? "Replaces your log" : t.target!.title}</small>
+                  </button>
+                  <button className={mismatch ? "solid" : ""} onClick={() => save(true)}>
+                    <b>Extra</b><small>Goal stays open</small>
+                  </button>
+                </div>
+              ) : (
+                <button className="btn solid" onClick={() => save(true)}>Save as extra activity</button>
               )}
-              {already && !saveAsExtra && <p className="warn">You already logged this session. Saving replaces that log.</p>}
-              <button className="btn solid" onClick={save}>
-                {saveAsExtra || !day ? "Save as extra activity" : already ? "Replace the log" : "Save to your plan"}
-              </button>
               {(() => { const r = trackResult(state, t.track!, now, extras); return <p className="setnote">Saving logs {r.dist ? `${r.dist} mi in ` : ""}{hms(r.time)}{t.steps ? `, ${t.steps.toLocaleString("en-US")} steps` : ""}.</p>; })()}
               <ConfirmButton className="btn small" label="Discard" confirmLabel="Discard this workout?" onConfirm={() => closeTracker()} />
             </div>
