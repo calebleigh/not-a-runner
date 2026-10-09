@@ -1,89 +1,101 @@
-import { useState } from "react";
 import {
-  FEEL, GOALS, isBirthdayOn, TARGET_PACE, addDays, dayAt, dayKey, hms, idParts, kfmt, mph, pace, pctTxt, phaseOf, predict, bestFor,
-  runLogs, stepStats, timedCardioLogs, totals, weekFrac, type AdaptKey,
+  GOALS, PERIODS, TARGET_PACE, ACT_TYPES, activities, bestFor, canGoBack, change, hms, pctTxt, periodOf, phaseOf, predict, runLogs, stepsByDay,
+  summarize, weekFrac, inPeriod, type ActType, type AdaptKey, type PeriodKind,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { useMirroredState } from "../mirror";
-import { Grow, Num } from "../motion";
+import { Num } from "../motion";
+import { BreakdownCard, ConsistencyCard, HistoryCard, RecordsCard, RoutesCard, SpeedCard, TrendCard } from "../StatsCards";
+import { hoursMin } from "../Totals";
 
-const RANGE_KEY = "sgOvRange";
-type Range = "month" | "all";
-function loadRange(): Range {
-  try { return localStorage.getItem(RANGE_KEY) === "all" ? "all" : "month"; } catch { return "month"; }
+const PERIOD_KEY = "statsPeriod";
+function loadPeriod(): PeriodKind {
+  try { const v = localStorage.getItem(PERIOD_KEY) as PeriodKind; return PERIODS.some(([k]) => k === v) ? v : "month"; } catch { return "month"; }
+}
+
+function Delta({ now, before, label }: { now: number; before: number; label: string }) {
+  const c = change(now, before);
+  if (c === null) return null;
+  const pct = Math.round(c * 100);
+  return <span className={"sdelta " + (pct > 0 ? "up" : pct < 0 ? "down" : "")}>{pct > 0 ? "▲" : pct < 0 ? "▼" : ""} {Math.abs(pct)}% <em>vs {label}</em></span>;
 }
 
 export function Stats() {
-  const { model, state, openSheet } = useApp();
-  const { today, curWeek } = model;
-  const [range, setRangeRaw] = useMirroredState<Range>("statsRange", loadRange);
-  const [showAll, setShowAll] = useState(false);
-  const setRange = (r: Range) => { setRangeRaw(r); try { localStorage.setItem(RANGE_KEY, r); } catch { /* per-device preference only */ } };
+  const { model, state } = useApp();
+  const { curWeek } = model;
+  const [kind, setKindRaw] = useMirroredState<PeriodKind>("statsPeriod", loadPeriod);
+  const [offset, setOffset] = useMirroredState<number>("statsOffset", 0);
+  const [type, setType] = useMirroredState<ActType | "all">("statsType", "all");
+  const setKind = (k: PeriodKind) => { setKindRaw(k); setOffset(0); try { localStorage.setItem(PERIOD_KEY, k); } catch { /* per-device preference only */ } };
 
-  const mStart = new Date(today.getFullYear(), today.getMonth(), 1), mEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  const inR = range === "month" ? (d: Date) => d >= mStart && d < mEnd : () => true;
-  const T = totals(model, inR), S = stepStats(state, inR), mi = T.walk + T.run + T.bike + T.other;
-  const wDone = Object.keys(state.done).filter((id) => { const p = idParts(id); return inR(addDays(model.spec.start, (p.w - 1) * 7 + p.d)); }).length;
+  const all = activities(model), steps = stepsByDay(model);
+  const first = [model.spec.start, ...all.map((a) => a.date), ...[...steps.keys()].map((ms) => new Date(ms))].reduce((a, b) => (b < a ? b : a));
+  const p = periodOf(kind, model.today, offset, first), prev = periodOf(kind, model.today, offset - 1, first);
+  const types = ACT_TYPES.filter(([t]) => all.some((a) => a.type === t));
+  const picked = type === "all" || types.some(([t]) => t === type) ? type : "all";
+  const ofType = picked === "all" ? all : all.filter((a) => a.type === picked);
+  const inP = inPeriod(p), acts = ofType.filter((a) => inP(a.date));
+  const withSteps = picked === "all";
+  const S = summarize(ofType, withSteps ? steps : new Map(), p), B = summarize(ofType, withSteps ? steps : new Map(), prev);
+  const prevLabel = kind === "week" ? "last week" : kind === "month" ? "last month" : kind === "quarter" ? "the 3 months before" : "last year";
+  const cmp = kind !== "all";
 
   return (
-    // Remount on range change so the big numbers count up again.
-    <section className="view stack" aria-label="Stats" key={range}>
-      <div className="pagehead">
-      <div className="seg" role="group" aria-label="Range">
-        <button className={range === "month" ? "sel" : ""} aria-pressed={range === "month"} onClick={() => setRange("month")}>{today.toLocaleDateString("en-US", { month: "long" })}</button>
-        <button className={range === "all" ? "sel" : ""} aria-pressed={range === "all"} onClick={() => setRange("all")}>All time</button>
-      </div>
-      </div>
-
-      <div className="cols statstop">
-      <section className="panelc bigstat">
-        <span className="lbl">Total distance</span>
-        <div><span className="num"><Num value={mi} dec={1} /></span><span className="unit">mi</span></div>
-        <div className="split"><span>Walk <b>{T.walk.toFixed(1)}</b></span><span>Walk/run <b>{T.run.toFixed(1)}</b></span><span>Bike <b>{T.bike.toFixed(1)}</b></span>{T.other > 0 && <span>Other <b>{T.other.toFixed(1)}</b></span>}</div>
-      </section>
-
-      <div className="tiles">
-        <div className="tile"><span className="ti"><Icon.clock /></span><span className="lbl">Active time</span><span className="num"><Num value={T.secs / 3600} dec={1} /><span className="unit">hr</span></span></div>
-        <div className="tile"><span className="ti"><Icon.flame /></span><span className="lbl">Calories</span><span className="num"><Num value={T.cal} k /></span></div>
-        <div className="tile"><span className="ti"><Icon.bolt /></span><span className="lbl">Workouts</span><span className="num"><Num value={wDone} /></span></div>
-        <div className="tile"><span className="ti"><Icon.steps /></span><span className="lbl">Steps</span><span className="num"><Num value={S.sum} k /></span></div>
-      </div>
+    <section className="view stack" aria-label="Stats">
+      <div className="stfilters">
+        <div className="seg" role="radiogroup" aria-label="Period">
+          {PERIODS.map(([k, l]) => <button key={k} role="radio" aria-checked={kind === k} className={kind === k ? "sel" : ""} onClick={() => setKind(k)}>{l}</button>)}
+        </div>
+        <div className="stnav">
+          <button className="hicon" aria-label="Earlier" disabled={!canGoBack(p, first)} onClick={() => setOffset(offset - 1)}><span aria-hidden="true">&lsaquo;</span></button>
+          <b>{p.label}</b>
+          <button className="hicon" aria-label="Later" disabled={offset >= 0 || kind === "all"} onClick={() => setOffset(offset + 1)}><span aria-hidden="true">&rsaquo;</span></button>
+        </div>
+        {types.length > 1 && (
+          <div className="stchips" role="radiogroup" aria-label="Activity">
+            <button role="radio" aria-checked={picked === "all"} className={"chip" + (picked === "all" ? " on" : "")} onClick={() => setType("all")}>All</button>
+            {types.map(([t, l]) => <button key={t} role="radio" aria-checked={picked === t} className={"chip" + (picked === t ? " on" : "")} onClick={() => setType(t)}>{l}</button>)}
+          </div>
+        )}
       </div>
 
+      {/* Remount on filter change so the numbers count up again. */}
+      <div className="stack" key={`${kind}:${offset}:${picked}`}>
+        <div className="cols statstop">
+          <section className="panelc bigstat">
+            <span className="lbl">{picked === "all" ? "Distance" : `${ACT_TYPES.find(([t]) => t === picked)![1]} distance`}</span>
+            <div><span className="num"><Num value={S.miles} dec={1} /></span><span className="unit">mi</span></div>
+            {cmp && <Delta now={S.miles} before={B.miles} label={prevLabel} />}
+          </section>
+          <div className="tiles">
+            <div className="tile"><span className="ti"><Icon.clock /></span><span className="lbl">Active time</span><span className="num tsmall">{hoursMin(S.secs)}</span>{cmp && <Delta now={S.secs} before={B.secs} label="before" />}</div>
+            <div className="tile"><span className="ti"><Icon.bolt /></span><span className="lbl">Workouts</span><span className="num"><Num value={S.workouts} /></span>{cmp && <Delta now={S.workouts} before={B.workouts} label="before" />}</div>
+            <div className="tile"><span className="ti"><Icon.flame /></span><span className="lbl">Calories</span><span className="num"><Num value={S.cal} k /></span>{cmp && <Delta now={S.cal} before={B.cal} label="before" />}</div>
+            {withSteps
+              ? <div className="tile"><span className="ti"><Icon.steps /></span><span className="lbl">Steps</span><span className="num"><Num value={S.steps} k /></span>{cmp && <Delta now={S.steps} before={B.steps} label="before" />}</div>
+              : <div className="tile"><span className="ti"><Icon.check /></span><span className="lbl">Active days</span><span className="num"><Num value={S.activeDays} /></span>{cmp && <Delta now={S.activeDays} before={B.activeDays} label="before" />}</div>}
+          </div>
+        </div>
+
+        <div className="statgrid">
+          <TrendCard acts={ofType} steps={steps} p={p} withSteps={withSteps} />
+          <ConsistencyCard acts={ofType} p={p} />
+          <BreakdownCard acts={acts} />
+          <RecordsCard acts={acts} steps={withSteps ? steps : new Map()} p={p} />
+          <SpeedCard acts={acts} />
+          <RoutesCard acts={acts} />
+        </div>
+        <HistoryCard acts={acts} />
+      </div>
+
+      <h2 className="stsec">Your plan</h2>
       {yearChart()}
-      {/* Pairs share a row on wide screens, so each pair is the same height and the rows line up. */}
       <div className="statgrid">
-        {stepsStrip((dt) => openSheet({ kind: "steps", date: dt }))}
-        {weight()}
         {goals()}
+        {weight()}
         {adjustments()}
       </div>
-
-      {(() => {
-        const all = timedCardioLogs(state).reverse();
-        return (
-          <section className="ocard">
-            <div className="ohead"><h3>History</h3><span>{all.length} sessions</span></div>
-            {!all.length && <p className="foot" style={{ margin: 0 }}>Nothing logged yet. Tap the orange button after your next session.</p>}
-            {(showAll ? all : all.slice(0, 4)).map(([id, l]) => {
-              const p = idParts(id), day = dayAt(model, p.w, p.d);
-              if (!day) return null;
-              const b = day.c;
-              return (
-                <div className="adjrow" key={id}>
-                  <div>
-                    <b>{day.date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}: {b.t}</b>
-                    <small>{[l.dist ? `${l.dist} mi in ${hms(l.time!)}` : hms(l.time!), l.dist ? (b.kind === "bike" ? mph(l.time!, l.dist) : pace(l.time!, l.dist)) : null, l.hr ? `${l.hr} bpm` : null].filter(Boolean).join(", ")}</small>
-                  </div>
-                  <span className={"pill " + (l.feel === "easy" ? "up" : l.feel === "hard" ? "down" : "")}>{l.feel ? FEEL[l.feel] : ""}</span>
-                </div>
-              );
-            })}
-            {all.length > 4 && <button className="more" onClick={() => setShowAll(!showAll)}>{showAll ? "Show less" : `Show all ${all.length}`}</button>}
-          </section>
-        );
-      })()}
     </section>
   );
 
@@ -91,7 +103,7 @@ export function Stats() {
     const max = Math.max(...model.weeks.map((w) => w.load)), bw = 520 / model.spec.weeks, H = 90;
     return (
       <section className="ocard chartc">
-        <div className="ohead"><h3>The year</h3><span>Week {curWeek} of {model.spec.weeks}</span></div>
+        <div className="ohead"><h3>Plan progress</h3><span>Week {curWeek} of {model.spec.weeks}</span></div>
         <svg viewBox={`0 0 520 ${H}`} preserveAspectRatio="none" style={{ height: H }} role="img" aria-label="Planned training load by week, completed portion filled">
           <defs><linearGradient id="og" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent-hi)" }} /><stop offset="1" style={{ stopColor: "var(--accent-lo)" }} /></linearGradient></defs>
           {model.weeks.map((w, i) => {
@@ -106,30 +118,6 @@ export function Stats() {
           })}
         </svg>
         <div className="split" style={{ justifyContent: "space-between", marginTop: 6 }}><span>Oct</span><span>Jan</span><span>Apr</span><span>Jul</span><span>Race</span></div>
-      </section>
-    );
-  }
-
-  function stepsStrip(onPick: (d: Date) => void) {
-    const days = [6, 5, 4, 3, 2, 1, 0].map((i) => addDays(today, -i));
-    const mx = Math.max(8000, ...days.map((dt) => state.steps[dayKey(model.spec, dt)] || 0)), SA = stepStats(state);
-    return (
-      <section className="ocard">
-        <div className="ohead"><h3>Steps</h3><span>{SA.days ? `${kfmt(SA.avg)} avg a day` : "Tap a day to add"}</span></div>
-        <div className="weekstrip">
-          {days.map((dt, i) => {
-            const before = dt < model.spec.start, v = before ? 0 : state.steps[dayKey(model.spec, dt)] || 0;
-            return (
-              <button key={i} className={(i === 6 ? "today " : "") + (!v && !before ? "missing" : "")} disabled={before} onClick={() => onPick(dt)}
-                aria-label={`${dt.toLocaleDateString("en-US", { weekday: "long" })}: ${v ? v + " steps" : "not logged"}`}>
-                <span className="v">{isBirthdayOn(state.settings.birthday, dt) ? <span className="inlinecake" title="Your birthday"><Icon.cake /></span> : v ? kfmt(v) : ""}</span>
-                <span className="bar"><Grow dir="h" pct={Math.round(100 * v / mx)} /></span>
-                <span className="lbl2">{i === 6 ? "Today" : dt.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2)}</span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="foot">Striped days are missing. Tap one to fill it in.</p>
       </section>
     );
   }
