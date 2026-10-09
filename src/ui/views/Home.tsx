@@ -1,7 +1,6 @@
-import { ReactNode } from "react";
 import {
-  LONGDAY, birthdayInfo, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, dayKey, kfmt, phaseOf, phases, todayDay,
-  dayAt, whyForDay,
+  LONGDAY, birthdayInfo, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, phaseOf, phases,
+  dayAt, whyForDay, todayList,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -11,40 +10,15 @@ import { ComingUp, TotalsCard, WeekCompare } from "../Totals";
 import { TodayHero } from "../TodayHero";
 import { Grow, Num } from "../motion";
 
-function Chip({ ok, ic, big, sub, onClick }: { ok: boolean; ic: ReactNode; big: string; sub: string; onClick: () => void }) {
-  return (
-    <button className={"qchip" + (ok ? " ok" : "")} onClick={onClick}>
-      <span className="ic">{ok ? <Icon.check /> : ic}</span>
-      <b>{big}</b>
-      <span>{sub}</span>
-    </button>
-  );
-}
-
 export function Home() {
-  const { model, state, openSheet, now } = useApp();
-  const { curWeek, rawWeek, dow, todayIdx, today } = model;
+  const { model, state, openSheet, setTab, now } = useApp();
+  const { curWeek, rawWeek, dow } = model;
   const wk = model.weeks[curWeek - 1];
   const name = (state.settings.name || "").trim();
   const prog = weekProgress(state, wk);
   const pct = prog.cardioTotal ? Math.round(100 * prog.cardioDone / prog.cardioTotal) : 0;
-  const day = todayDay(model);
 
-  const chips: ReactNode[] = [];
-  const st = state.steps[dayKey(model.spec, today)];
-  chips.push(<Chip key="steps" ok={!!st} ic={<Icon.steps />} big={st ? kfmt(st) : "Add"} sub="Steps today" onClick={() => openSheet({ kind: "steps", date: today })} />);
-  if (dow === 0 && rawWeek >= 1) {
-    const wv = state.weights[curWeek];
-    chips.push(<Chip key="wt" ok={!!wv} ic={<Icon.scale />} big={wv ? wv + " lb" : "Weigh in"} sub="Monday check-in" onClick={() => openSheet({ kind: "weigh" })} />);
-  }
-  const xs = state.extras[dayKey(model.spec, today)] || [];
-  const xmi = xs.reduce((a, x) => a + (x.dist || 0), 0);
-  chips.push(<Chip key="extra" ok={xs.length > 0} ic={<Icon.plus />} big={xs.length ? xmi.toFixed(1) + " mi" : "Extra"} sub={xs.length ? `${xs.length} extra logged` : "Walk, hike, ride"} onClick={() => openSheet({ kind: "extra", date: today })} />);
-  // Strength sits last, on the far right.
-  if (day?.st) {
-    const sd = !!state.done[day.ids[1]];
-    chips.push(<Chip key="str" ok={sd} ic={<Icon.dumbbell />} big={sd ? "Done" : "Strength"} sub={`${day.st.title}, ${day.st.min} min`} onClick={() => openSheet({ kind: "strength", w: curWeek, d: todayIdx })} />);
-  }
+  const tl = todayList(model), left = tl.total - tl.done;
 
   const bday = birthdayInfo(state.settings.birthday, now);
   const why = whyForDay(state.settings, now);
@@ -97,8 +71,13 @@ export function Home() {
         <WeekCompare />
       </section>
 
-      <div className="o2"><TodayHero /></div>
-      <div className="chips o3" style={{ ["--n" as string]: chips.length === 4 ? 2 : chips.length }}>{chips}</div>
+      <div className="o2"><TodayHero onTap={() => setTab("today")} /></div>
+      <button className="tdstrip o3" onClick={() => setTab("today")}>
+        <span className="tdstrip-ic"><Icon.today /></span>
+        <span className="tdstrip-t"><b>{left ? `${left} left today` : "Today is done"}</b><small>{tl.done} of {tl.total} checked off</small></span>
+        <span className="tdstrip-dots" aria-hidden="true">{tl.tasks.map((t, i) => <i key={t.key} className={i < tl.done ? "on" : ""} />)}</span>
+        <span className="tdgo" aria-hidden="true">&rsaquo;</span>
+      </button>
       <div className="o4"><ComingUp /></div>
       {(() => {
         const q = quoteForWeek(curWeek);

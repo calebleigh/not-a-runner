@@ -5,7 +5,7 @@ import { mirrorSend, onMirror } from "./mirror";
 import { applyAccent, applyMode, applyShape, isLight, type Shape } from "./theme";
 import { computeModel, emptyState, mergeState, startOfDay, type Model, type State } from "../training";
 
-export type Tab = "home" | "plan" | "stats" | "settings";
+export type Tab = "home" | "today" | "plan" | "stats" | "settings";
 export type SheetSpec =
   | { kind: "day"; w: number; d: number }
   /** fromExtra: index of an extra to move into this slot; fromD: the day that extra was logged on (a make-up). */
@@ -47,7 +47,7 @@ interface AppCtx {
 
 const Ctx = createContext<AppCtx | null>(null);
 const TAB_KEY = "tab";
-const TABS: Tab[] = ["home", "plan", "stats", "settings"];
+const TABS: Tab[] = ["home", "today", "plan", "stats", "settings"];
 
 // A refresh keeps the current tab; opening the app fresh starts on Home (sessionStorage is per launch).
 function savedTab(): Tab {

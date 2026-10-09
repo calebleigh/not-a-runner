@@ -37,11 +37,11 @@ export function useNotes(): Note[] {
   return update ? [{ key: `update:${model.today.toDateString()}`, kind: "tip", text: "A new version of the app is ready.", action: { label: "Update", to: { type: "plan" } } }, ...list] : list;
 }
 
-const TITLES = { home: "Home", plan: "Plan", stats: "Stats", settings: "Settings" } as const;
+const TITLES = { home: "Home", today: "Today", plan: "Plan", stats: "Stats", settings: "Settings" } as const;
 
-/** Top bar: the app's name on Home, the page name elsewhere; then streak, sync and notifications. */
+/** Top bar: the app's name on Home, the page name elsewhere; then streak, notifications, friends and settings. */
 export function AppHeader() {
-  const { model, tab, openSheet } = useApp();
+  const { model, tab, setTab, openSheet } = useApp();
   const streak = streakOf(model);
   const lit = streak.current > 0;
   const notes = useNotes(), seen = useSeen();
@@ -62,6 +62,9 @@ export function AppHeader() {
         <button className="hicon frbtn" aria-label={pokes ? `Friends, ${pokes} new pokes` : "Friends"} onClick={() => openSheet({ kind: "friends" })}>
           <Icon.friends />
           {pokes > 0 && <span className="badge">{pokes > 9 ? "9+" : pokes}</span>}
+        </button>
+        <button className={"hicon" + (tab === "settings" ? " sel" : "")} aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => setTab("settings")}>
+          <Icon.settings />
         </button>
       </span>
     </header>

@@ -329,8 +329,6 @@ html,body{overscroll-behavior:none}
   .wrap{max-width:none;margin:0 0 0 var(--rail);padding:24px var(--gutter) 40px}
   .wrap>main{max-width:640px;margin:0 auto}
   .bnav{top:0;bottom:0;right:auto;width:var(--rail);max-width:none;margin:0;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:calc(20px + var(--sat)) 10px calc(20px + var(--sab));border-top:0;border-right:1px solid var(--line)}
-  /* Settings sits at the bottom of the rail. */
-  .bnav button:last-child{margin-top:auto}
   .bnav button{padding:10px 0;border-radius:min(14px,var(--rmax))}
   .bnav button.sel{background:var(--accent-soft)}
   .bnav button.sel svg{transform:none}
@@ -1217,3 +1215,33 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-go-ic{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--on-accent);color:var(--accent)}
 .trk-go-ic svg{width:24px;height:24px;margin-left:3px}
 @keyframes trk-glow{50%{box-shadow:0 16px 46px -8px rgba(var(--accent-rgb),.95)}}
+
+/* Today tab */
+.tdcount{display:flex;align-items:baseline;gap:6px;font-family:var(--display)}
+.tdcount b{font-size:40px;font-weight:800;color:var(--accent);line-height:1}
+.tdcount span{color:var(--muted);font-weight:600}
+.tdmeter{height:10px;margin-top:-6px}
+.tdlist{padding-bottom:0}
+.tdlist .more{padding:12px 16px;text-align:left}
+.tdempty{padding:12px 16px}
+.tdrow{display:flex;align-items:center;gap:12px;padding:0 0 0 16px;border-top:1px solid var(--line)}
+.slhead+.tdrow{border-top:0}
+.tdic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.tdic svg{width:20px;height:20px}
+.tdbox{border:2px solid var(--line);background:none;cursor:pointer;padding:0}
+.tdrow.done .tdic{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.tdbody{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;background:none;border:0;color:inherit;text-align:left;padding:13px 16px 13px 0;cursor:pointer;font:inherit}
+.tdbody b{font:700 16px var(--body);grid-column:1}
+.tdbody small{grid-column:1;color:var(--muted);font-size:13px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tdgo{grid-column:2;grid-row:1/span 2;color:var(--muted);font-size:24px;line-height:1}
+.tdrow.done .tdbody b{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(var(--accent-rgb),.6)}
+.tdstrip{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:min(22px,var(--rmax));padding:12px 14px;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.tdstrip-ic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(var(--accent-rgb),.14);color:var(--accent)}
+.tdstrip-ic svg{width:20px;height:20px}
+.tdstrip-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.tdstrip-t b{font:700 16px var(--body)}
+.tdstrip-t small{color:var(--muted);font-size:13px}
+.tdstrip-dots{display:flex;gap:5px}
+.tdstrip-dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.tdstrip-dots i.on{background:var(--accent)}
+.apphead .hicon.sel{color:var(--accent)}
