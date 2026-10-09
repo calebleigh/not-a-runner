@@ -18,6 +18,7 @@ export const Icon = {
   cloudOff: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M7 18.5h10.5M20.5 15.5a4 4 0 0 0-2.4-4.95A6 6 0 0 0 9 6.3M6.3 10.1A4.25 4.25 0 0 0 7 18.5M3 3l18 18" /></svg>,
   pause: () => <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2" /><rect x="14" y="5" width="4" height="14" rx="1.2" /></svg>,
   friends: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="9" cy="8.5" r="3.5" /><path d="M2.5 20c.9-3.4 3.4-5 6.5-5s5.6 1.6 6.5 5" /><path d="M15.5 5.3a3.5 3.5 0 0 1 0 6.4M18 15.4c1.8.7 3 2.2 3.5 4.6" /></svg>,
+  pin: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M12 21.5s-7-6.2-7-11.5a7 7 0 0 1 14 0c0 5.3-7 11.5-7 11.5z" /><circle cx="12" cy="10" r="2.6" /></svg>,
   user: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="12" cy="8.5" r="4" /><path d="M4 20.5c1.2-3.8 4.3-5.5 8-5.5s6.8 1.7 8 5.5" /></svg>,
   shoe: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M3 16.5h18v-2.2a2 2 0 0 0-1.4-1.9l-5.1-1.6-2.5-4.3H8.5l-.8 2H5L3 14z" /><path d="M3 19h18" /></svg>,
   home: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" /></svg>,

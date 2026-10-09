@@ -205,8 +205,8 @@ function LogTiles() {
   const { curWeek, todayIdx, today, dow, rawWeek } = model;
   const day = todayDay(model);
   const wk = model.weeks[curWeek - 1];
-  const Tile = ({ onClick, ic, title, sub, ok, wide }: { onClick: () => void; ic: ReactNode; title: string; sub: string; ok?: boolean; wide?: boolean }) => (
-    <button className={"ltile" + (ok ? " ok" : "") + (wide ? " wide" : "")} onClick={onClick}>
+  const Tile = ({ onClick, ic, title, sub, ok, wide, hot }: { onClick: () => void; ic: ReactNode; title: string; sub: string; ok?: boolean; wide?: boolean; hot?: boolean }) => (
+    <button className={"ltile" + (ok ? " ok" : "") + (wide ? " wide" : "") + (hot ? " hot" : "")} onClick={onClick}>
       <span className="ic">{ok ? <Icon.check /> : ic}</span>
       <span><b>{title}</b><span>{sub}</span></span>
     </button>
@@ -215,17 +215,18 @@ function LogTiles() {
   const missed = wk.days.find((x) => x.date < today && !state.done[x.ids[0]]);
   return (
     <div className="lgrid">
+      {/* Tracking is the main action, so it leads, in the same orange as the start button. */}
+      <Tile wide hot onClick={() => {
+        closeSheet();
+        const open = day && day.c.kind !== "rest" && day.c.kind !== "race" && !state.done[day.ids[0]];
+        openTracker(open ? trackKindFor(day.c.kind) : "walk", open ? { w: curWeek, d: todayIdx, title: day.c.t, instructions: day.c.d } : null);
+      }} ic={<Icon.play />} title="Track a workout" sub={day && !state.done[day.ids[0]] && day.c.kind !== "rest" ? `GPS: ${day.c.t}` : "GPS: time, distance, pace"} />
       {day ? <>
         <Tile onClick={() => openSheet({ kind: "cardio", w: curWeek, d: todayIdx })} ic={<Icon.shoe />} title={day.c.t} sub={state.done[day.ids[0]] ? "Logged, tap to edit" : "Today's cardio"} ok={!!state.done[day.ids[0]]} />
         {day.st && <Tile onClick={() => openSheet({ kind: "strength", w: curWeek, d: todayIdx })} ic={<Icon.dumbbell />} title={day.st.title} sub={state.done[day.ids[1]] ? "Done" : "Today's strength"} ok={!!state.done[day.ids[1]]} />}
       </> : (
         <Tile onClick={() => (missed ? openSheet({ kind: "day", w: curWeek, d: missed.d }) : closeSheet())} ic={<Icon.shoe />} title="Make-up workout" sub="Pick a missed day" />
       )}
-      <Tile wide onClick={() => {
-        closeSheet();
-        const open = day && day.c.kind !== "rest" && day.c.kind !== "race" && !state.done[day.ids[0]];
-        openTracker(open ? trackKindFor(day.c.kind) : "walk", open ? { w: curWeek, d: todayIdx, title: day.c.t, instructions: day.c.d } : null);
-      }} ic={<Icon.play />} title="Track a workout" sub={day && !state.done[day.ids[0]] && day.c.kind !== "rest" ? `GPS: ${day.c.t}` : "GPS: time, distance, pace"} />
       <Tile onClick={() => openSheet({ kind: "steps", date: today })} ic={<Icon.steps />} title={st ? kfmt(st) + " steps" : "Steps"} sub={st ? "Tap to update" : "From Samsung Health"} ok={!!st} />
       <Tile onClick={() => openSheet({ kind: "extra", date: today })} ic={<Icon.plus />} title="Extra activity" sub="Walk, hike, ride" />
       {dow === 0 && rawWeek >= 1 && (() => {

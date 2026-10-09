@@ -77,15 +77,35 @@ export function TrackerScreen() {
 
       {t.status === "ready" ? (
         <div className="trk-ready">
-          <div className="seg" role="radiogroup" aria-label="Activity">
-            {KINDS.map(([k, l]) => <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}>{l}</button>)}
+          {/* What you're about to do, as the same orange card Home uses for today's session. */}
+          {(() => {
+            const m = t.target?.title.match(/^(.*?)\s([\d.]+)\s(min|mi)$/);
+            return (
+              <section className="hero trk-plan">
+                <span className="lbl">{t.target ? "Today's session" : "Free workout"}</span>
+                <span className="ht">{m ? <>{m[1]} <span className="nw">{m[2]}<small>{m[3]}</small></span></> : t.target?.title ?? KINDS.find(([k]) => k === t.kind)![1]}</span>
+                {t.target?.instructions ? <p>{t.target.instructions}</p> : <p>Track anything. It saves as an extra activity.</p>}
+              </section>
+            );
+          })()}
+
+          <span className="lbl">Activity</span>
+          <div className="trk-kinds" role="radiogroup" aria-label="Activity">
+            {KINDS.map(([k, l]) => {
+              const I = k === "bike" ? Icon.bike : Icon.shoe;
+              return <button key={k} role="radio" aria-checked={t.kind === k} className={t.kind === k ? "sel" : ""} onClick={() => setTrackKind(k)}><I /><b>{l}</b></button>;
+            })}
           </div>
+
+          <span className="lbl">Where</span>
           <div className="trk-modes" role="radiogroup" aria-label="Where">
             <button role="radio" aria-checked={!indoor} className={!indoor ? "sel" : ""} onClick={() => setTrackMode("gps")}>
-              <b>Outdoors</b><small>GPS: distance, pace and route</small>
+              <span className="ic"><Icon.pin /></span>
+              <b>Outdoors</b><small>GPS: distance, pace, route</small>
             </button>
             <button role="radio" aria-checked={indoor} className={indoor ? "sel" : ""} onClick={() => setTrackMode("indoor")}>
-              <b>Indoors or in place</b><small>{bike ? "Trainer: time, type the distance after" : canCountSteps ? "Treadmill, pacing: counts steps, no GPS" : "Treadmill, pacing: time, type the distance after"}</small>
+              <span className="ic"><Icon.home /></span>
+              <b>Indoors</b><small>{bike ? "Trainer: type the distance after" : canCountSteps ? "Treadmill or pacing: counts steps" : "Treadmill: type the distance after"}</small>
             </button>
           </div>
           <p className="setnote">
@@ -103,7 +123,7 @@ export function TrackerScreen() {
             </div>
           )}
           {import.meta.env.DEV && !indoor && <label className="trk-sim"><input type="checkbox" checked={t.simulate} onChange={(e) => setSimulate(e.target.checked)} /> Simulated walk (testing)</label>}
-          <button className="trk-go" onClick={() => startTracking()}><Icon.play /><span>Start</span></button>
+          <button className="trk-go" onClick={() => startTracking()}><span className="trk-go-ic"><Icon.play /></span><span>Start</span></button>
         </div>
       ) : (
         <>
