@@ -122,8 +122,9 @@ export function TrackerScreen() {
             <span className="num">{hms(s?.elapsedS ?? 0)}</span>
             <small>{!indoor && s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</small>
           </div>
-          <div className={"trk-nums" + (indoor && !bike && canCountSteps ? " three" : "")}>
-            {indoor && !bike && canCountSteps && <div><span className="num">{t.steps.toLocaleString("en-US")}</span><small>Steps</small></div>}
+          {/* Steps count on foot in both modes (the phone's step counter; the website can't read it). */}
+          <div className={"trk-nums" + (!bike && canCountSteps ? " three" : "")}>
+            {!bike && canCountSteps && <div><span className="num">{t.steps.toLocaleString("en-US")}</span><small>Steps</small></div>}
             <div><span className="num">{miles.toFixed(2)}</span><small>{indoor && miles > 0 ? "Miles (est.)" : "Miles"}</small></div>
             <div><span className="num">{bike ? mph.toFixed(1) : pace(paceS)}</span><small>{bike ? "Avg mph" : "Avg pace /mi"}</small></div>
           </div>
