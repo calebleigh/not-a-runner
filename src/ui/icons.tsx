@@ -26,6 +26,7 @@ export const Icon = {
   link: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1" /><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1" /></svg>,
   share: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" /></svg>,
   flag: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>,
+  star: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" /></svg>,
   user: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><circle cx="12" cy="8.5" r="4" /><path d="M4 20.5c1.2-3.8 4.3-5.5 8-5.5s6.8 1.7 8 5.5" /></svg>,
   // Run: the walking shoe up on its toes. The forefoot stays flat on the ground; the heel half lifts.
   run: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M15 16.5H21v-2.2a2 2 0 0 0-1.4-1.9L16.8 12 16.3 7.6 13.3 5.9 11.8 7.1 9.4 5.8 5.4 9 4.4 10.9z" /><path d="M3 19h18" /></svg>,

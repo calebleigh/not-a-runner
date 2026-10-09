@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  DN, dateOf, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, monthGrid, phaseOf, phases, planMonths, sameDay, weekProgress,
+  DN, dateOf, dayGrade, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, monthGrid, phaseOf, phases, planMonths, sameDay, weekProgress,
   type CardioKind, type Day, type MonthCell,
 } from "../../training";
 import { useApp } from "../app-state";
@@ -12,11 +12,11 @@ import { TodoList } from "../TodoList";
 const KC: Record<CardioKind, string> = { bike: "var(--accent-hi)", walk: "var(--muted)", run: "var(--accent)", long: "var(--accent)", test: "var(--gold)", race: "var(--gold)", rest: "var(--bar)" };
 const DAY_SHORT = DN.map((d) => d.toUpperCase());
 
-type Status = "done" | "part" | "today" | "missed" | "up" | "rest";
+type Status = "great" | "done" | "today" | "missed" | "up" | "rest";
 
 const STATUS: Record<Status, () => ReactNode> = {
   done: () => <span className="sstat done" aria-label="Done"><Icon.check /></span>,
-  part: () => <span className="sstat part" aria-label="Partly done" />,
+  great: () => <span className="sstat done great" aria-label="Great day, all done"><Icon.star /></span>,
   today: () => <span className="sstat todaytag">Today</span>,
   missed: () => <span className="sstat missed">Missed</span>,
   up: () => <span className="sstat up" aria-hidden="true">›</span>,
@@ -56,8 +56,10 @@ export function Plan() {
       const status: Status = xs.length ? "done" : isToday ? "today" : "rest";
       return { d, date, isToday, status, kind: "rest" as CardioKind, title: "Rest", sub: xs.length ? `${xs.length} extra, ${mi.toFixed(1)} mi` : "Log a walk if you go", rest: true };
     }
-    const c = day.c, lg = state.logs[day.ids[0]], cd = !!state.done[day.ids[0]], sd = day.ids[1] ? !!state.done[day.ids[1]] : true;
-    const status: Status = cd && sd ? "done" : isToday ? "today" : cd || sd ? "part" : date < today ? "missed" : "up";
+    const c = day.c, lg = state.logs[day.ids[0]], sd = day.ids[1] ? !!state.done[day.ids[1]] : true;
+    // Cardio done is a good day (a check); everything done is a great one (a star).
+    const g = dayGrade(model, day, date);
+    const status: Status = g === "great" ? "great" : g ? "done" : isToday ? "today" : date < today ? "missed" : "up";
     const parts: string[] = [];
     if (lg?.time) parts.push(lg.dist ? `${lg.dist} mi in ${hms(lg.time)}` : hms(lg.time));
     else if (c.m && c.kind !== "rest") parts.push(`${c.m} min`);
@@ -149,20 +151,21 @@ function MonthCalendar({ planWeek, onDay, onToday }: { planWeek: number; onDay: 
         {grid.flat().map((c) => {
           const inPlan = c.status !== "out" && c.w >= 1 && c.w <= model.spec.weeks;
           const I = c.race ? Icon.flag : c.status === "rest" || c.status === "extra" || c.status === "out" ? null : KIND_ICON[c.kind];
-          const cls = ["calc", c.status, c.inMonth ? "" : "dim", c.today ? "today" : "", inPlan && c.w === planWeek ? "wk" : "", c.race ? "race" : ""].filter(Boolean).join(" ");
+          const cls = ["calc", c.status, c.great ? "great" : "", c.inMonth ? "" : "dim", c.today ? "today" : "", inPlan && c.w === planWeek ? "wk" : "", c.race ? "race" : ""].filter(Boolean).join(" ");
           return (
             <button key={c.date.getTime()} className={cls} disabled={!inPlan}
-              aria-label={`${c.date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}, ${c.race ? "race day" : c.status === "rest" ? "rest" : c.status}`}
+              aria-label={`${c.date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}, ${c.race ? "race day" : c.status === "rest" ? "rest" : c.great ? "great day" : c.status === "done" ? "good day" : c.status}`}
               onClick={() => onDay(c)}>
               <b>{c.date.getDate()}</b>
               <span className="calic">{I ? <I /> : c.status === "extra" ? <i className="caldot" /> : null}</span>
+              {c.great && <span className="calstar" aria-hidden="true"><Icon.star /></span>}
               {isBirthdayOn(state.settings.birthday, c.date) && <span className="calcake"><Icon.cake /></span>}
             </button>
           );
         })}
       </div>
       <div className="calkey" aria-hidden="true">
-        <span><i className="k done" />Done</span><span><i className="k missed" />Missed</span><span><i className="k up" />Planned</span><span><i className="caldot" />Extra</span>
+        <span><i className="k done" />Good</span><span><i className="k done great" />Great</span><span><i className="k missed" />Missed</span><span><i className="k up" />Planned</span><span><i className="caldot" />Extra</span>
       </div>
     </section>
   );

@@ -2,9 +2,22 @@
 import { addDays, dayKey, parseDayKey, sameDay } from "./calendar";
 import { dayAt } from "./model";
 import { extrasFor } from "./stats";
-import type { CardioKind, Model } from "./types";
+import type { CardioKind, Day, Model } from "./types";
 
-export type CellStatus = "done" | "part" | "missed" | "up" | "rest" | "extra" | "out";
+export type CellStatus = "done" | "missed" | "up" | "rest" | "extra" | "out";
+
+/**
+ * How a planned day went. Cardio is the main thing: doing it makes a good day. A great day also
+ * has everything else that day asked for (strength, if planned, and the step goal, if you set one).
+ * Strength without the cardio isn't a done day, and an unfinished extra never shows as a shortfall.
+ */
+export function dayGrade(model: Model, day: Day, date: Date): "great" | "good" | null {
+  const { state, spec } = model;
+  if (!state.done[day.ids[0]]) return null;
+  const strength = !day.ids[1] || !!state.done[day.ids[1]];
+  const goal = state.settings.stepGoal, steps = goal ? (state.steps[dayKey(spec, date)] || 0) >= goal : true;
+  return strength && steps ? "great" : "good";
+}
 export interface MonthCell {
   date: Date;
   /** Plan week and day, when the date is inside the plan. */
@@ -14,6 +27,8 @@ export interface MonthCell {
   inMonth: boolean;
   kind: CardioKind;
   status: CellStatus;
+  /** A done day with everything else done too (see dayGrade). */
+  great: boolean;
   today: boolean;
   race: boolean;
 }
@@ -32,15 +47,16 @@ export function monthGrid(model: Model, year: number, month: number): MonthCell[
       const inPlan = w >= 1 && w <= spec.weeks;
       const day = inPlan ? dayAt(model, w, d) : undefined;
       const xs = inPlan ? extrasFor(state, w, d) : [];
-      let status: CellStatus, kind: CardioKind = "rest";
+      let status: CellStatus, kind: CardioKind = "rest", great = false;
       if (!inPlan) status = xs.length ? "extra" : "out";
       else if (!day || day.c.kind === "rest") status = xs.length ? "extra" : "rest";
       else {
         kind = day.c.kind;
-        const cd = !!state.done[day.ids[0]], sd = day.ids[1] ? !!state.done[day.ids[1]] : true;
-        status = cd && sd ? "done" : cd || sd ? "part" : date < today && !sameDay(date, today) ? "missed" : "up";
+        const g = dayGrade(model, day, date);
+        great = g === "great";
+        status = g ? "done" : date < today && !sameDay(date, today) ? "missed" : "up";
       }
-      row.push({ date, w, d, inMonth: date.getMonth() === month, kind, status, today: sameDay(date, today), race: !!spec.race && sameDay(date, spec.race) });
+      row.push({ date, w, d, inMonth: date.getMonth() === month, kind, status, great, today: sameDay(date, today), race: !!spec.race && sameDay(date, spec.race) });
     }
     rows.push(row);
     d0 = addDays(d0, 7);
