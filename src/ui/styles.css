@@ -652,7 +652,7 @@ input[type="date"].txtin{width:150px}
 /* Home: on phones one column in reading order; on wide screens "now" on the left, "what happened" on the right. */
 @media (max-width:899px){
   .homecols>.col{display:contents}
-  .homecols .o1{order:1}.homecols .o2{order:2}.homecols .o3{order:3}.homecols .o4{order:4}.homecols .o5{order:5}.homecols .o6{order:6}.homecols .o7{order:7}
+  .homecols .o0{order:0}.homecols .o1{order:1}.homecols .o2{order:2}.homecols .o3{order:3}.homecols .o4{order:4}.homecols .o5{order:5}.homecols .o6{order:6}.homecols .o7{order:7}
 }
 @media (min-width:900px){
   .homecols{gap:22px}

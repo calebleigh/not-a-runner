@@ -10,7 +10,9 @@ const READ = ["steps", "workouts", "weight", "heartRate", "distance"] as const;
 const KG_TO_LB = 2.20462;
 const M_PER_MI = 1609.344;
 
-const plugin = async () => (await import("@capgo/capacitor-health")).Health;
+// Returns the module, not the plugin: a Capacitor plugin looks like a promise (it answers to
+// `.then`), so returning it from an async function would wait forever.
+const mod = () => import("@capgo/capacitor-health");
 
 export interface HealthAvailability {
   available: boolean;
@@ -21,7 +23,7 @@ export interface HealthAvailability {
 export async function healthAvailable(): Promise<HealthAvailability> {
   if (!Capacitor.isNativePlatform()) return { available: false };
   try {
-    const r = await (await plugin()).isAvailable();
+    const r = await (await mod()).Health.isAvailable();
     return r.available ? { available: true } : { available: false, reason: r.reason };
   } catch (e) {
     return { available: false, reason: String(e) };
@@ -30,7 +32,7 @@ export async function healthAvailable(): Promise<HealthAvailability> {
 
 /** Shows the permission screen. True when at least steps or workouts can be read. */
 export async function connectHealth(): Promise<boolean> {
-  const h = await plugin();
+  const h = (await mod()).Health;
   const r = await h.requestAuthorization({ read: [...READ] });
   return r.readAuthorized.includes("steps") || r.readAuthorized.includes("workouts");
 }
@@ -38,7 +40,7 @@ export async function connectHealth(): Promise<boolean> {
 /** Whether reading is still allowed (it can be turned off in the phone's settings). */
 export async function healthAllowed(): Promise<boolean> {
   try {
-    const r = await (await plugin()).checkAuthorization({ read: [...READ] });
+    const r = await (await mod()).Health.checkAuthorization({ read: [...READ] });
     return r.readAuthorized.includes("steps") || r.readAuthorized.includes("workouts");
   } catch {
     return false;
@@ -46,7 +48,7 @@ export async function healthAllowed(): Promise<boolean> {
 }
 
 export async function openHealthSettings() {
-  try { await (await plugin()).openHealthConnectSettings(); } catch { /* not on this phone */ }
+  try { await (await mod()).Health.openHealthConnectSettings(); } catch { /* not on this phone */ }
 }
 
 const iso = (d: Date) => d.toISOString();
@@ -54,7 +56,7 @@ const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.le
 
 /** Steps per day, workouts and weigh-ins from `days` days ago through now. Parts you didn't allow come back empty. */
 export async function readHealth(days: number, now = new Date()): Promise<HealthData> {
-  const h = await plugin();
+  const h = (await mod()).Health;
   const today = startOfDay(now);
   const from = addDays(today, -days + 1);
 

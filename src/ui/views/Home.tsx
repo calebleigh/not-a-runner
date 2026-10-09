@@ -111,7 +111,7 @@ export function Home() {
       </div>
 
       <div className="col">
-      <div className="o4"><TotalsCard /></div>
+      <div className="o0"><TotalsCard /></div>
       <div className="o6"><Recent /></div>
       <div className="o5"><TodoCard /></div>
 
