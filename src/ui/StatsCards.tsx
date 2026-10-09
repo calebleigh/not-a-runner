@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   ACT_TYPES, FEEL, addDays, dayKey, parseDayKey, breakdown, bucketsOf, consistency, feelCounts, hms, mph, pace, recordsOf, seriesOf, speedSeries, inPeriod,
   type Activity, type ActType, type Metric, type Period,
@@ -97,9 +97,13 @@ export function ConsistencyCard({ acts, p }: { acts: Activity[]; p: Period }) {
   // A strip of weeks, one column per week, Monday on top (the Plan tab has the calendar). Short periods get bigger squares.
   const big = c.days.length <= 62;
   const lead = c.days.length ? (c.days[0].date.getDay() + 6) % 7 : 0;
-  // Long strips open on the latest weeks.
-  const strip = useRef<HTMLDivElement>(null);
-  useEffect(() => { const el = strip.current; if (el) el.scrollLeft = el.scrollWidth; }, [c.days.length]);
+  // Newest week first, on the left; each column still runs Monday to Sunday (empty slots pad the ends).
+  const weeks: (typeof c.days[number] | null)[][] = [];
+  c.days.forEach((x, i) => {
+    const k = Math.floor((lead + i) / 7);
+    (weeks[k] ??= Array(7).fill(null))[(lead + i) % 7] = x;
+  });
+  weeks.reverse();
   return (
     <section className="ocard consc">
       <div className="ohead"><h3>Consistency</h3><span>{c.activeDays} of {c.dayCount} days active</span></div>
@@ -109,17 +113,16 @@ export function ConsistencyCard({ acts, p }: { acts: Activity[]; p: Period }) {
         <div><b className="num">{pct === null ? "None" : <><Num value={pct} />%</>}</b><small>Planned done</small></div>
       </div>
       {c.days.length > 0 && (
-        <div ref={strip} className={c.days.length <= 7 ? "heat row" : "heat strip" + (big ? " big" : "")} role="img" aria-label={`${c.activeDays} active days`}>
-          {c.days.length > 7 && Array.from({ length: lead }, (_, i) => <span key={"p" + i} className="hc pad" />)}
-          {c.days.map((x) => (
+        <div className={c.days.length <= 7 ? "heat row" : "heat strip" + (big ? " big" : "")} role="img" aria-label={`${c.activeDays} active days`}>
+          {(c.days.length > 7 ? weeks.flat() : c.days).map((x, i) => x ? (
             <button key={x.date.getTime()} className={"hc l" + lvl(x.mins)} title={`${dayTxt(x.date)}: ${x.mins ? x.mins + " min" : "rest"}`}
               aria-label={`${dayTxt(x.date)}: ${x.mins ? x.mins + " minutes" : "nothing logged"}`} onClick={() => open(x.date)}>
             </button>
-          ))}
+          ) : <span key={"p" + i} className="hc pad" />)}
         </div>
       )}
       <div className="heatkey" aria-hidden="true"><span>Less</span>{[0, 1, 2, 3, 4].map((l) => <i key={l} className={"hc l" + l} />)}<span>More</span></div>
-      <p className="foot">{c.days.length <= 7 ? "Tap a day to open it." : "Each column is a week, Monday on top. Tap a day to open it."}</p>
+      <p className="foot">{c.days.length <= 7 ? "Tap a day to open it." : "Newest week on the left. Each column is a week, Monday on top. Tap a day to open it."}</p>
     </section>
   );
 }
