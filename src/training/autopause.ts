@@ -66,3 +66,29 @@ export function autoPauseDue(o: { now: number; lastMoveAt: number; secs: number;
   const secs = o.background && o.kind !== "bike" ? Math.max(o.secs, 30) : o.secs;
   return shouldAutoPause({ now: o.now, lastMoveAt: o.lastMoveAt, secs });
 }
+
+/** Steps so far, and when that count arrived. */
+export interface StepMark { t: number; n: number }
+/** How far back steps are judged: a few steps in this long is walking; one or two is fidgeting. */
+export const STEP_WINDOW_MS = 6_000;
+const MOVING_STEPS = 3;
+
+/** The step counts worth keeping: this one, plus enough before it to look back a full window. */
+export function keepSteps(log: StepMark[] | undefined, e: StepMark): StepMark[] {
+  const all = [...(log ?? []), e], cut = e.t - STEP_WINDOW_MS;
+  let base = 0;
+  for (let i = 0; i < all.length; i++) if (all[i].t <= cut) base = i;
+  return all.slice(base);
+}
+
+/**
+ * Moving by steps: at least 3 in the last few seconds. Shifting your weight or turning around
+ * while you stand counts a step or two, and that shouldn't keep a pause from starting.
+ */
+export function stepsMoving(log: StepMark[]): boolean {
+  if (log.length < 2) return false;
+  const last = log[log.length - 1], cut = last.t - STEP_WINDOW_MS;
+  let base = log[0];
+  for (const x of log) if (x.t <= cut) base = x;
+  return last.n - base.n >= MOVING_STEPS;
+}

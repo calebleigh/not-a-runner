@@ -236,23 +236,30 @@ export function TrackerScreen() {
 function MiniTracker() {
   const t = useTracker();
   const { state } = useApp();
-  // Sits just under the header and lines up with the page's edges, so it follows both.
+  // Sits just under the header and lines up with the page's edges, so it follows both. Each tab
+  // brings a new page, so the page is looked up again whenever it changes.
   useEffect(() => {
-    const h = document.querySelector(".apphead"), m = document.querySelector(".wrap > main");
-    if (!h || !m) return;
+    const wrap = document.querySelector(".wrap");
+    if (!wrap) return;
     const root = document.documentElement.style;
-    const fit = () => {
-      const r = m.getBoundingClientRect();
-      root.setProperty("--headh", `${h.getBoundingClientRect().height}px`);
+    const ro = new ResizeObserver(() => fit());
+    let page: Element | null = null;
+    function fit() {
+      const h = document.querySelector(".apphead"), m = wrap!.querySelector(":scope > main");
+      if (h) root.setProperty("--headh", `${h.getBoundingClientRect().height}px`);
+      if (m && m !== page) { if (page) ro.unobserve(page); ro.observe(m); page = m; }
+      const r = m?.getBoundingClientRect();
+      if (!r || !r.width) return; // a page on its way out
       root.setProperty("--minil", `${r.left}px`);
       root.setProperty("--miniw", `${r.width}px`);
-    };
+    }
     fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(h);
-    ro.observe(m);
+    const head = document.querySelector(".apphead");
+    if (head) ro.observe(head);
+    const mo = new MutationObserver(() => fit());
+    mo.observe(wrap, { childList: true });
     addEventListener("resize", fit);
-    return () => { ro.disconnect(); removeEventListener("resize", fit); };
+    return () => { ro.disconnect(); mo.disconnect(); removeEventListener("resize", fit); };
   }, []);
   if (!t?.track) return null;
   const s = trackStats(t.track, Date.now());

@@ -6,7 +6,7 @@ import { cue } from "../native/cues";
 import { watchSteps, type StepFeed } from "../native/steps";
 import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
 import { addFix, newTrack, pause, resume, trackStats, type Fix, type Track, type TrackKind } from "../training/track";
-import { AUTO_PAUSE_DEFAULT, autoPauseDue, autoPauseWake, gpsMoving, keepRecent } from "../training/autopause";
+import { AUTO_PAUSE_DEFAULT, autoPauseDue, autoPauseWake, gpsMoving, keepRecent, keepSteps, stepsMoving, type StepMark } from "../training/autopause";
 import { hideNotice, liveInBackground, onNoticeAction, onNoticeTick, showNotice } from "../native/workoutNotice";
 
 /** Where a finished workout gets saved: a planned session, or an extra activity for today. */
@@ -48,6 +48,8 @@ export interface ActiveTrack {
   min?: boolean;
   /** The last 20 seconds of GPS fixes, to tell walking from GPS drift. */
   recent?: Fix[];
+  /** Recent step counts, to tell walking from a stray step while standing. */
+  stepLog?: StepMark[];
 }
 
 const KEY = "activeTrack";
@@ -199,10 +201,12 @@ async function startFeed() {
     set({ ...active, stepBase: active.steps });
     stepFeed = await watchSteps((n) => {
       if (!active || active.status === "done") return;
-      const moved = active.stepBase + n > active.steps;
       // Steps out of an auto-pause count (they're what wakes it); during a tapped pause they don't.
       if (active.status === "paused" && !active.autoPaused) { set({ ...active, stepBase: active.steps - n }, false); return; }
-      set({ ...active, steps: active.stepBase + n, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
+      // Walking is a few steps in a few seconds; a stray one while standing doesn't count as moving.
+      const steps = active.stepBase + n, stepLog = keepSteps(active.stepLog, { t: Date.now(), n: steps });
+      const moved = steps > active.steps && stepsMoving(stepLog);
+      set({ ...active, steps, stepLog, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
       if (moved) checkAutoPause(true);
     });
   }

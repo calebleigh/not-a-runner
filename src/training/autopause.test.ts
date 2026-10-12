@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPauseDue, autoPauseWake, gpsMoving, keepRecent, shouldAutoPause, type Fix } from "./index";
+import { autoPauseDue, autoPauseWake, gpsMoving, keepRecent, keepSteps, shouldAutoPause, stepsMoving, type Fix, type StepMark } from "./index";
 
 describe("auto-pause", () => {
   it("pauses after the set time without movement, not before", () => {
@@ -51,5 +51,22 @@ describe("auto-pause", () => {
     // Outdoors there, GPS alone waits at least 30 seconds.
     expect(autoPauseDue({ ...o, indoor: false, background: true })).toBe(false);
     expect(autoPauseDue({ ...o, indoor: false, background: true, now: 130_000 })).toBe(true);
+  });
+  const steps = (events: [number, number][]) => events.reduce<StepMark[]>((log, [t, n]) => keepSteps(log, { t: t * 1000, n }), []);
+  it("counts walking as moving, but not a stray step or two while standing", () => {
+    // Walking: two steps a second.
+    expect(stepsMoving(steps([[0, 0], [1, 2], [2, 4]]))).toBe(true);
+    // Standing for half a minute, then shifting your weight once, then again 10 seconds later.
+    expect(stepsMoving(steps([[0, 100], [30, 101]]))).toBe(false);
+    expect(stepsMoving(steps([[0, 100], [30, 101], [40, 102]]))).toBe(false);
+    // Starting to walk again after standing: moving within a couple of steps.
+    expect(stepsMoving(steps([[0, 100], [30, 101], [31, 103]]))).toBe(true);
+    // A late batch from the step counter still counts.
+    expect(stepsMoving(steps([[0, 100], [30, 112]]))).toBe(true);
+  });
+  it("keeps only what it needs to look back", () => {
+    const log = steps(Array.from({ length: 60 }, (_, i) => [i, i * 2] as [number, number]));
+    expect(log.length).toBeLessThanOrEqual(8);
+    expect(stepsMoving(log)).toBe(true);
   });
 });
