@@ -123,6 +123,7 @@ public class WorkoutNoticePlugin extends Plugin {
         shownAt = SystemClock.elapsedRealtime();
         showing = true;
         if (!signature().equals(shown)) render();
+        keepAwake(true);
         if (!serviceOn) {
             serviceOn = true;
             try {
@@ -139,9 +140,21 @@ public class WorkoutNoticePlugin extends Plugin {
         getBridge().executeOnMainThread(() -> { stop(); call.resolve(); });
     }
 
+    /**
+     * The app's own code runs in the web view's separate process, which Android lowers (and on newer
+     * phones freezes) once the screen is off, even with the workout service running: steps then wait
+     * for the unlock and auto-pause can't happen. During a workout it keeps the app's priority.
+     */
+    private void keepAwake(boolean on) {
+        try {
+            getBridge().getWebView().setRendererPriorityPolicy(android.webkit.WebView.RENDERER_PRIORITY_IMPORTANT, !on);
+        } catch (Exception ignored) { }
+    }
+
     private void stop() {
         showing = false;
         shown = null;
+        keepAwake(false);
         if (serviceOn) {
             serviceOn = false;
             getContext().stopService(new Intent(getContext(), WorkoutService.class));

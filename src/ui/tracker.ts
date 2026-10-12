@@ -155,6 +155,12 @@ function checkAutoPause(moved = false) {
   logTrack(`auto-pause, ${Math.round((now - (a.lastMoveAt ?? a.track.startedAt)) / 1000)}s since moving, ${a.steps} steps`);
   cue("Paused", { voice: false });
 }
+// The log notes the screen locking or the app leaving sight (and coming back) during a workout.
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (active?.status === "recording" || active?.status === "paused") logTrack(document.visibilityState === "hidden" ? "app out of sight (screen off or another app)" : "app back in sight");
+  });
+}
 // Back on the website the step count catches up; give it a moment before judging you stopped.
 if (typeof document !== "undefined" && !liveInBackground) {
   document.addEventListener("visibilitychange", () => {
