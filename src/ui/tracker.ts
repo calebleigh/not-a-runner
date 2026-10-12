@@ -73,11 +73,17 @@ function set(next: ActiveTrack | null, force = true) {
   notice();
 }
 
-/** The theme's accent colors (set as CSS variables by the theme), for the notification's card. */
+/** A session's planned length ("Bike 21 min" is 21 minutes), for the player bar; 0 when it's miles or a free workout. */
+function goalMs(target: TrackTarget | null) {
+  const m = target?.title.match(/([\d.]+)\s*min\b/);
+  return m ? Math.round(parseFloat(m[1]) * 60_000) : 0;
+}
+
+/** The theme's accent (set as a CSS variable by the theme), for the notification's background. */
 function themeColors() {
   if (typeof document === "undefined") return {};
   const css = getComputedStyle(document.documentElement);
-  return { accent: css.getPropertyValue("--accent").trim(), onAccent: css.getPropertyValue("--on-accent").trim() };
+  return { accent: css.getPropertyValue("--accent").trim() };
 }
 
 // The lock screen and notification shade show the workout with a Pause button (Android).
@@ -100,6 +106,7 @@ function notice() {
     paused: a.status === "paused",
     line1: [dist, speed].filter(Boolean).join("  ·  ") || "Indoors",
     line2: a.steps ? `${a.steps.toLocaleString("en-US")} steps` : "",
+    goalMs: goalMs(a.target),
     ...themeColors(),
   });
 }
