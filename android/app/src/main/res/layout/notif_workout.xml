@@ -1,12 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The workout notification: an orange card with the app's drifting stripes, the
+<!-- The workout notification: a card in the theme's accent with the app's drifting stripes, the
      activity icon, the clock, distance / pace / steps, and a Pause / Resume button. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/nw_card"
     android:layout_width="match_parent"
     android:layout_height="108dp"
-    android:background="@drawable/notif_card"
+    android:background="@drawable/notif_card_clip"
     android:clipToOutline="true">
+
+    <!-- The theme's accent (tinted in code), then a light-to-dark wash for its gradient. -->
+    <ImageView
+        android:id="@+id/nw_fill"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/notif_card" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/notif_card_shade" />
 
     <!-- An endless "progress bar" is the one thing a notification animates: it runs the stripes. -->
     <ProgressBar
@@ -93,7 +107,6 @@
             android:background="@drawable/notif_btn"
             android:padding="15dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_notif_pause"
-            android:tint="#FF6A13" />
+            android:src="@drawable/ic_notif_pause" />
     </LinearLayout>
 </FrameLayout>

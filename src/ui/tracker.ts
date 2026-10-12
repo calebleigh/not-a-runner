@@ -73,6 +73,13 @@ function set(next: ActiveTrack | null, force = true) {
   notice();
 }
 
+/** The theme's accent colors (set as CSS variables by the theme), for the notification's card. */
+function themeColors() {
+  if (typeof document === "undefined") return {};
+  const css = getComputedStyle(document.documentElement);
+  return { accent: css.getPropertyValue("--accent").trim(), onAccent: css.getPropertyValue("--on-accent").trim() };
+}
+
 // The lock screen and notification shade show the workout with a Pause button (Android).
 let noticeAt = 0, noticeKey = "";
 function notice() {
@@ -93,6 +100,7 @@ function notice() {
     paused: a.status === "paused",
     line1: [dist, speed].filter(Boolean).join("  ·  ") || "Indoors",
     line2: a.steps ? `${a.steps.toLocaleString("en-US")} steps` : "",
+    ...themeColors(),
   });
 }
 onNoticeAction((action) => { if (action === "pause") pauseTracking(); else if (action === "resume") resumeTracking(); });

@@ -33,8 +33,8 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * The workout being tracked, on the lock screen and in the notification shade: an orange card with
- * the app's drifting stripes, the clock (it counts on its own), distance, pace and steps, and a
+ * The workout being tracked, on the lock screen and in the notification shade: a card in the
+ * theme's accent with the app's drifting stripes, the clock (it counts on its own), distance, pace and steps, and a
  * Pause / Resume button. WorkoutService keeps it alive with the screen off, and this also counts
  * steps itself, since the step plugin stops listening when the app is in the background.
  */
@@ -44,7 +44,8 @@ public class WorkoutNoticePlugin extends Plugin {
     /** The same id as the GPS service's notification, so a workout only ever shows one. */
     static final int ID = 28351;
     private static final String ACTION = "com.notarunner.app.WORKOUT_NOTICE";
-    private static final int ORANGE = 0xFFFF6A13;
+    /** The theme's accent and the text that sits on it (the app sends them; Ember until then). */
+    private int accent = 0xFFFF6A13, onAccent = 0xFF141210;
 
     private static WorkoutNoticePlugin instance;
 
@@ -115,6 +116,8 @@ public class WorkoutNoticePlugin extends Plugin {
         line1 = call.getString("line1", "");
         line2 = call.getString("line2", "");
         paused = Boolean.TRUE.equals(call.getBoolean("paused", false));
+        accent = color(call.getString("accent"), accent);
+        onAccent = color(call.getString("onAccent"), onAccent);
         Double ms = call.getDouble("elapsedMs", 0.0);
         elapsedMs = ms == null ? 0 : ms.longValue();
         shownAt = SystemClock.elapsedRealtime();
@@ -210,7 +213,19 @@ public class WorkoutNoticePlugin extends Plugin {
 
     /** What the card shows; the clock's own count isn't part of it. */
     private String signature() {
-        return kind + "|" + title + "|" + status + "|" + line1 + "|" + line2 + "|" + paused;
+        return kind + "|" + title + "|" + status + "|" + line1 + "|" + line2 + "|" + paused + "|" + accent + "|" + onAccent;
+    }
+
+    private static int color(String hex, int fallback) {
+        try { return hex == null ? fallback : android.graphics.Color.parseColor(hex.trim()); } catch (Exception e) { return fallback; }
+    }
+
+    /** a blended toward b by t (0 is a, 1 is b). */
+    private static int mix(int a, int b, float t) {
+        int r = (int) (((a >> 16) & 255) + ((((b >> 16) & 255) - ((a >> 16) & 255)) * t));
+        int g = (int) (((a >> 8) & 255) + ((((b >> 8) & 255) - ((a >> 8) & 255)) * t));
+        int bl = (int) ((a & 255) + (((b & 255) - (a & 255)) * t));
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
     private Notification build() {
@@ -247,10 +262,7 @@ public class WorkoutNoticePlugin extends Plugin {
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_track)
-            // The whole notification is the app's orange (allowed for a running workout), not a white
-            // or grey box around the card.
-            .setColor(paused ? 0xFFB8714A : 0xFFF26A1F)
-            .setColorized(true)
+            .setColor(accent)
             .setContentTitle(title + "  ·  " + status)
             .setContentText(sub.toString())
             .setCustomContentView(small)
@@ -270,7 +282,13 @@ public class WorkoutNoticePlugin extends Plugin {
     /** One size of the card: the stripes drift while recording and hold still (faded) while paused. */
     private RemoteViews card(int layout, String sub, PendingIntent button) {
         RemoteViews v = new RemoteViews(getContext().getPackageName(), layout);
-        v.setInt(R.id.nw_card, "setBackgroundResource", paused ? R.drawable.notif_card_paused : R.drawable.notif_card);
+        // The theme's accent; faded toward grey while paused, like the app's card.
+        v.setInt(R.id.nw_fill, "setColorFilter", paused ? mix(accent, 0xFF8F8A84, 0.5f) : accent);
+        int text = paused ? mix(onAccent, 0xFF8F8A84, 0.25f) : onAccent;
+        v.setTextColor(R.id.nw_time, text);
+        v.setTextColor(R.id.nw_line, (text & 0x00FFFFFF) | 0xD9000000);
+        if (layout == R.layout.notif_workout) v.setTextColor(R.id.nw_status, (text & 0x00FFFFFF) | 0xB8000000);
+        v.setInt(R.id.nw_btn, "setColorFilter", accent);
         v.setViewVisibility(R.id.nw_stripes, paused ? View.GONE : View.VISIBLE);
         v.setViewVisibility(R.id.nw_stripes_still, paused ? View.VISIBLE : View.GONE);
         v.setImageViewBitmap(R.id.nw_icon, icon());
@@ -282,9 +300,9 @@ public class WorkoutNoticePlugin extends Plugin {
         return v;
     }
 
-    /** The activity's icon (the app's shoe, toes-up shoe or bike) in orange, for the card's dark tile. */
+    /** The activity's icon (the app's shoe, toes-up shoe or bike) in the accent, for the card's dark tile. */
     private Bitmap icon() {
-        if (art != null && kind.equals(artKind)) return art;
+        if (art != null && (kind + accent).equals(artKind)) return art;
         int size = 144;
         Bitmap bm = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bm);
@@ -315,10 +333,10 @@ public class WorkoutNoticePlugin extends Plugin {
         stroke.setStrokeWidth(2f * scale);
         stroke.setStrokeCap(Paint.Cap.ROUND);
         stroke.setStrokeJoin(Paint.Join.ROUND);
-        stroke.setColor(ORANGE);
+        stroke.setColor(accent);
         c.drawPath(icon, stroke);
         art = bm;
-        artKind = kind;
+        artKind = kind + accent;
         return bm;
     }
 }

@@ -14,6 +14,9 @@ export interface NoticeState {
   paused: boolean;
   line1: string;
   line2: string;
+  /** The theme's accent and the text color on it, so the card matches the app. */
+  accent?: string;
+  onAccent?: string;
 }
 
 type Remove = Promise<{ remove(): Promise<void> }>;
