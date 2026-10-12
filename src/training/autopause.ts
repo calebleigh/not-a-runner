@@ -4,7 +4,7 @@
 // The phone's step counter reports late (in bursts, and not at all while the phone is locked), so a
 // pause can be a mistake. When it ends, the steps and distance during it tell which it was: moving
 // the whole time means the pause is erased, as if it never happened.
-import type { TrackKind } from "./track";
+import { meters, type Fix, type TrackKind } from "./track";
 
 /** Choices for the setting, in seconds (0 is off). */
 export const AUTO_PAUSE_CHOICES = [0, 10, 15, 30] as const;
@@ -28,4 +28,41 @@ export function autoPauseWake(o: { pausedS: number; steps: number; meters: numbe
   if ((o.steps >= 3 && o.steps >= s * KEPT_STEPS) || (o.meters >= 10 && o.meters >= s * KEPT_MPS[o.kind])) return "erase";
   if (o.steps >= 3 || o.meters >= 10) return "resume";
   return null;
+}
+
+/** How far back GPS looks to judge whether you're moving, and how many fixes to keep for it. */
+export const MOVE_WINDOW_MS = 20_000;
+const MIN_SPAN_MS = 4_000;
+const MOVING_MPS: Record<TrackKind, number> = { walk: 0.45, run: 0.45, bike: 1.2 };
+
+/** The recent fixes worth keeping (the last 20 seconds), with this one added. */
+export function keepRecent(recent: Fix[] | undefined, f: Fix): Fix[] {
+  return [...(recent ?? []), f].filter((x) => x.t >= f.t - MOVE_WINDOW_MS && x.t <= f.t);
+}
+
+/**
+ * Moving by GPS: the newest fix is clearly away from where you were a few seconds ago. Standing
+ * still, GPS drifts a few meters at a time; that stays under both the fixes' own error and a
+ * walking speed, so it never counts.
+ */
+export function gpsMoving(recent: Fix[], kind: TrackKind): boolean {
+  if (recent.length < 2) return false;
+  const b = recent[recent.length - 1];
+  const a = recent.find((x) => b.t - x.t <= MOVE_WINDOW_MS);
+  if (!a || b.t - a.t < MIN_SPAN_MS) return false;
+  const d = meters(a, b), need = Math.min(Math.max((a.acc ?? 10) + (b.acc ?? 10), 8), 25);
+  return d >= need && d / ((b.t - a.t) / 1000) >= MOVING_MPS[kind];
+}
+
+/**
+ * Time to auto-pause, everything considered. `background` is the app out of sight where nothing
+ * keeps it going (the website): steps stop arriving there, so indoors it waits, and outdoors GPS
+ * alone gets at least 30 seconds. The Android app keeps counting steps and ticking in a pocket, so
+ * it judges the same way whether it's open or not.
+ */
+export function autoPauseDue(o: { now: number; lastMoveAt: number; secs: number; kind: TrackKind; indoor: boolean; background: boolean }): boolean {
+  if (!o.secs) return false;
+  if (o.background && o.indoor) return false;
+  const secs = o.background && o.kind !== "bike" ? Math.max(o.secs, 30) : o.secs;
+  return shouldAutoPause({ now: o.now, lastMoveAt: o.lastMoveAt, secs });
 }

@@ -1,6 +1,7 @@
 // Step counting during a workout, behind one small interface like location: the phone's step
 // counter in the app (Android now, iPhone later); browsers can't read it, so the website has none.
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
+import { watchNativeSteps } from "./workoutNotice";
 
 export interface StepFeed { stop(): Promise<void> }
 
@@ -18,6 +19,9 @@ export async function watchSteps(onSteps: (n: number) => void): Promise<StepFeed
     let perm = await CapacitorPedometer.checkPermissions();
     if (perm.activityRecognition !== "granted") perm = await CapacitorPedometer.requestPermissions();
     if (perm.activityRecognition !== "granted") return null;
+    // Android: the app's own counter, which (unlike the plugin's) keeps going with the screen off.
+    const native = await watchNativeSteps(onSteps);
+    if (native) return native;
     const sub: PluginListenerHandle = await CapacitorPedometer.addListener("measurement", (m) => onSteps(m.numberOfSteps ?? 0));
     await CapacitorPedometer.startMeasurementUpdates();
     return {

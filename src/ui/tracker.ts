@@ -5,9 +5,9 @@ import { watchLocation, type LocationError, type LocationFeed } from "../native/
 import { cue } from "../native/cues";
 import { watchSteps, type StepFeed } from "../native/steps";
 import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
-import { addFix, newTrack, pause, resume, trackStats, type Track, type TrackKind } from "../training/track";
-import { AUTO_PAUSE_DEFAULT, autoPauseWake, shouldAutoPause } from "../training/autopause";
-import { hideNotice, onNoticeAction, showNotice } from "../native/workoutNotice";
+import { addFix, newTrack, pause, resume, trackStats, type Fix, type Track, type TrackKind } from "../training/track";
+import { AUTO_PAUSE_DEFAULT, autoPauseDue, autoPauseWake, gpsMoving, keepRecent } from "../training/autopause";
+import { hideNotice, liveInBackground, onNoticeAction, onNoticeTick, showNotice } from "../native/workoutNotice";
 
 /** Where a finished workout gets saved: a planned session, or an extra activity for today. */
 export interface TrackTarget { w: number; d: number; title: string; /** The session's instructions (for intervals). */ instructions?: string }
@@ -44,6 +44,8 @@ export interface ActiveTrack {
   lastMoveAt?: number;
   /** Steps and meters when the auto-pause began, to tell a real stop from a late step count. */
   apFrom?: { steps: number; distM: number };
+  /** The last 20 seconds of GPS fixes, to tell walking from GPS drift. */
+  recent?: Fix[];
 }
 
 const KEY = "activeTrack";
@@ -75,13 +77,14 @@ function notice() {
   const a = active;
   if (!a?.track || (a.status !== "recording" && a.status !== "paused")) { if (noticeKey) { noticeKey = ""; hideNotice(); } return; }
   const key = a.status + (a.autoPaused ? "a" : "");
-  if (key === noticeKey && Date.now() - noticeAt < 3000) return;
+  if (key === noticeKey && Date.now() - noticeAt < 1000) return;
   noticeKey = key; noticeAt = Date.now();
   const s = trackStats(a.track, Date.now());
   const what = a.kind === "bike" ? "Bike" : a.kind === "run" ? "Run" : "Walk";
   const dist = a.mode === "indoor" ? "" : `${s.miles.toFixed(2)} mi`;
   const speed = a.mode === "indoor" ? "" : a.kind === "bike" ? (s.mph ? `${s.mph.toFixed(1)} mph` : "") : s.paceS ? `${Math.floor(s.paceS / 60)}:${String(s.paceS % 60).padStart(2, "0")} /mi` : "";
   showNotice({
+    kind: a.kind,
     title: what,
     status: a.status === "paused" ? (a.autoPaused ? "Auto-paused" : "Paused") : "Recording",
     elapsedMs: s.elapsedS * 1000,
@@ -91,6 +94,8 @@ function notice() {
   });
 }
 onNoticeAction((action) => { if (action === "pause") pauseTracking(); else if (action === "resume") resumeTracking(); });
+// The app's own timers crawl in a pocket, so on Android a native tick keeps these on time.
+onNoticeTick(() => { checkAutoPause(); checkCue(); notice(); });
 
 // Auto-pause setting (seconds; 0 is off).
 export function autoPausePref(): number {
@@ -120,18 +125,14 @@ function checkAutoPause(moved = false) {
     return;
   }
   if (a.status !== "recording") return;
-  // Locked or in another app, the phone stops reporting steps: indoors that leaves nothing to go
-  // on, and outdoors GPS alone gets more time.
-  const hidden = typeof document !== "undefined" && document.visibilityState === "hidden";
-  if (hidden && a.mode === "indoor") return;
-  const secs = hidden && a.kind !== "bike" ? Math.max(a.track.autoPause, 30) : a.track.autoPause;
-  if (!shouldAutoPause({ now, lastMoveAt: a.lastMoveAt ?? a.track.startedAt, secs })) return;
+  const background = !liveInBackground && typeof document !== "undefined" && document.visibilityState === "hidden";
+  if (!autoPauseDue({ now, lastMoveAt: a.lastMoveAt ?? a.track.startedAt, secs: a.track.autoPause, kind: a.kind, indoor: a.mode === "indoor", background })) return;
   // The clock stops now, not back when you stopped, so it never jumps backward.
   set({ ...a, status: "paused", autoPaused: true, apFrom: { steps: a.steps, distM: a.track.distM }, track: pause(a.track, now) });
   cue("Paused", { voice: false });
 }
-// Back in the app the step count catches up; give it a moment before judging you stopped.
-if (typeof document !== "undefined") {
+// Back on the website the step count catches up; give it a moment before judging you stopped.
+if (typeof document !== "undefined" && !liveInBackground) {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && active?.status === "recording") set({ ...active, lastMoveAt: Date.now() }, false);
   });
@@ -200,13 +201,16 @@ async function startFeed() {
     simulate: active.simulate,
     onFix: (f) => {
       if (!active?.track || active.status === "done") return;
-      const before = active.track.distM;
       // During an auto-pause distance still counts (it may be a mistake, and gets erased); a real
       // stop adds nothing, since GPS wobble in one spot never adds up.
       const ap = active.status === "paused" && active.autoPaused;
       const track = ap ? { ...addFix({ ...active.track, pausedAt: null }, f), pausedAt: active.track.pausedAt } : addFix(active.track, f);
-      const moved = track.distM > before;
-      set({ ...active, track, lastFixAt: Date.now(), error: null, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
+      // Moving is judged by steps when they're counting (GPS drifts while you stand still), and
+      // otherwise by GPS clearly getting somewhere.
+      const recent = f.acc != null && f.acc > 30 ? active.recent ?? [] : keepRecent(active.recent, f);
+      const bySteps = !!stepFeed && active.steps > 0;
+      const moved = !bySteps && gpsMoving(recent, active.kind);
+      set({ ...active, track, recent, lastFixAt: Date.now(), error: null, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
       checkAutoPause(moved);
       checkCue();
     },

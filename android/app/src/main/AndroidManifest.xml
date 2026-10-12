@@ -20,6 +20,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Keeps a workout's clock, steps and auto-pause going with the phone locked. -->
+        <service
+            android:name=".WorkoutService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Workout tracking: live clock, steps and auto-pause while recording" />
+        </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -34,4 +42,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Lets the app hand a downloaded update to Android's installer (it still asks you first). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- A workout keeps recording with the screen off. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 </manifest>
