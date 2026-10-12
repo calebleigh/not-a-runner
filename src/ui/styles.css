@@ -748,11 +748,14 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 @media (prefers-reduced-motion: reduce){.hicon svg{animation:none!important}}
 
 /* Day streak: the flame in three layers (lit from the inside out, unlit ones faint) */
-.sflame path{fill:rgba(var(--accent-rgb),.1);stroke:none;transition:fill .4s}
-.sflame.l0 path{fill:rgba(128,128,128,.22)}
-.sflame.l3 .f3,.sflame.l2 .f2,.sflame.l1 .f1{fill:var(--accent)}
-.sflame.l3 .f2{fill:color-mix(in srgb,var(--accent) 55%,#fff)}
-.sflame.l3 .f1,.sflame.l2 .f1{fill:color-mix(in srgb,var(--accent) 15%,#fff)}
+.sflame path{fill:none;stroke:rgba(var(--accent-rgb),.22);stroke-width:1.7px;stroke-linejoin:round;vector-effect:non-scaling-stroke;transition:stroke .4s,fill .4s}
+.sflame .f1{fill:rgba(var(--accent-rgb),.22);stroke:none}
+/* Lit layers: the outlines in the accent (the middle one tinted like the old icon), the core filled. */
+.sflame.l3 .f3,.sflame.l3 .f2,.sflame.l2 .f2{stroke:var(--accent)}
+.sflame.l3 .f2,.sflame.l2 .f2{fill:rgba(var(--accent-rgb),.18)}
+.sflame.l3 .f1,.sflame.l2 .f1,.sflame.l1 .f1{fill:var(--accent)}
+.sflame.l0 path{stroke:rgba(128,128,128,.45)}
+.sflame.l0 .f1{fill:rgba(128,128,128,.3)}
 .streakbtn{width:auto;min-width:42px;padding:0 10px 0 8px;grid-auto-flow:column;gap:4px;color:var(--muted)}
 .streakbtn b{font:800 19px/1 var(--display)}
 .streakbtn.lit{color:var(--ink)}

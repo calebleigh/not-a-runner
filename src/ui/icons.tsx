@@ -8,10 +8,11 @@ const S = { fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap:
 export function StreakFlame({ level }: { level: number }) {
   const f = "M12 22c4 0 7-2.7 7-6.8 0-4.2-3.3-6.6-4.2-10.2-2.4 1.5-3.6 3.6-3.4 6.2-1.3-.6-2.2-1.9-2.4-3.4C7 9.6 5 12.2 5 15.2 5 19.3 8 22 12 22z";
   return (
-    <svg viewBox="0 0 24 24" className={"sflame l" + level} aria-hidden="true">
-      <path className="f3" d={f} />
-      <path className="f2" d={f} transform="translate(12 22) scale(.74) translate(-12 -22)" />
-      <path className="f1" d={f} transform="translate(12 22) scale(.48) translate(-12 -22)" />
+    <svg viewBox="-1.5 -1.5 27 27" className={"sflame l" + level} aria-hidden="true">
+      {/* Outside in: a bigger outline, the app's flame outline, and a small filled core, all centered. */}
+      <path className="f3" d={f} transform="translate(12 14.6) scale(1.32) translate(-12 -14.6)" />
+      <path className="f2" d={f} />
+      <path className="f1" d={f} transform="translate(12 16.4) scale(.46) translate(-12 -16.4)" />
     </svg>
   );
 }
