@@ -7,7 +7,7 @@
 import { meters, type Fix, type TrackKind } from "./track";
 
 /** Choices for the setting, in seconds (0 is off). */
-export const AUTO_PAUSE_CHOICES = [0, 10, 15, 30] as const;
+export const AUTO_PAUSE_CHOICES = [0, 5, 10, 15, 30] as const;
 export const AUTO_PAUSE_DEFAULT = 15;
 
 /** Time to pause: `secs` without movement (0 is off). */
