@@ -124,22 +124,22 @@ export function TrackerScreen() {
             })}
           </div>
 
-          <span className="lbl">Where</span>
-          <div className="trk-modes" role="radiogroup" aria-label="Where">
+          <span className="lbl">Tracking</span>
+          <div className="trk-modes" role="radiogroup" aria-label="Tracking">
             <button role="radio" aria-checked={!indoor} className={!indoor ? "sel" : ""} onClick={() => setTrackMode("gps")}>
               <span className="ic"><Icon.pin /></span>
-              <b>Outdoors</b><small>GPS: distance, pace, route</small>
+              <b>GPS</b><small>Distance, pace and your route</small>
             </button>
             <button role="radio" aria-checked={indoor} className={indoor ? "sel" : ""} onClick={() => setTrackMode("indoor")}>
-              <span className="ic"><Icon.home /></span>
-              <b>Indoors</b><small>{bike ? "Trainer: type the distance after" : canCountSteps ? "Treadmill or pacing: counts steps" : "Treadmill: type the distance after"}</small>
+              <span className="ic">{!bike && canCountSteps ? <Icon.steps /> : <Icon.home />}</span>
+              <b>No GPS</b><small>{bike ? "Trainer: type the distance after" : canCountSteps ? "Treadmill or a small loop: counts steps" : "Treadmill: type the distance after"}</small>
             </button>
           </div>
           <p className="setnote">
             {indoor
               ? bike || !canCountSteps ? "No GPS. You can type the distance from the machine when you finish."
-                : stride.learned ? `Distance comes from your steps (your stride: ${Math.round(stride.meters * 100)} cm, learned from your outdoor walks). You can correct it at the end.`
-                  : "Distance comes from your steps, using an average stride until a couple of outdoor walks teach the app yours. You can correct it at the end."
+                : stride.learned ? `Distance comes from your steps (your stride: ${Math.round(stride.meters * 100)} cm, learned from your GPS walks). You can correct it at the end.`
+                  : "Distance comes from your steps, using an average stride until a couple of GPS walks teach the app yours. You can correct it at the end."
               : canTrackInBackground ? "Keeps recording with your screen off. Android shows a notice while it does." : "On the website, keep this screen open while you go. The Android app records with the screen off."}
           </p>
           <button className="trk-prefs" onClick={toSettings}>
@@ -174,7 +174,7 @@ export function TrackerScreen() {
           })()}
           {/* The live card: distance big, the rest underneath, like Home's today card. Stripes drift while moving. */}
           <section className={"hero trk-hero " + t.status}>
-            <span className="lbl">{bike ? "Ride" : t.kind === "run" ? "Walk/run" : "Walk"}{indoor ? ", indoors" : ""}</span>
+            <span className="lbl">{bike ? "Ride" : t.kind === "run" ? "Walk/run" : "Walk"}{indoor ? ", no GPS" : ""}</span>
             <span className="ht"><span className="nw">{miles.toFixed(2)}<small>{indoor && miles > 0 ? "mi est." : "mi"}</small></span></span>
             <div className="hstats trk-hstats">
               <div><span className="num">{hms(s?.elapsedS ?? 0)}</span><span className="lbl">{!indoor && s && s.movingS !== s.elapsedS ? `${hms(s.movingS)} moving` : "Time"}</span></div>

@@ -98,7 +98,7 @@ export function todayLogs(model: Model): TodayLog[] {
     out.push({
       // Logged as something else than planned (a walk on a bike day): say what it was, and for what.
       key: day.ids[0], kind: "cardio", icon: kind, title: other ? KIND_LABEL[kind] : day.c.t, stats: stats.filter((x) => x != null),
-      tags: lg ? [other ? `For ${day.c.t}` : "", lg.feel ? `Felt ${FEEL[lg.feel].toLowerCase()}` : "", lg.steps ? `${kfmt(lg.steps)} steps` : "", lg.hr ? `${lg.hr} bpm` : "", cal ? `~${cal} cal` : "", lg.indoor ? "Indoors" : lg.route ? "GPS" : "", lg.hc ? "Health Connect" : ""].filter(Boolean) : ["Checked off"],
+      tags: lg ? [other ? `For ${day.c.t}` : "", lg.feel ? `Felt ${FEEL[lg.feel].toLowerCase()}` : "", lg.steps ? `${kfmt(lg.steps)} steps` : "", lg.hr ? `${lg.hr} bpm` : "", cal ? `~${cal} cal` : "", lg.indoor ? "No GPS" : lg.route ? "GPS" : "", lg.hc ? "Health Connect" : ""].filter(Boolean) : ["Checked off"],
       route: lg?.route, at: lg?.at || undefined,
     });
   }
@@ -111,7 +111,7 @@ export function todayLogs(model: Model): TodayLog[] {
       key: x.id ?? `x${i}`, kind: "extra", icon: x.kind === "bike" ? "bike" : x.kind === "walk" || x.kind === "hike" ? "walk" : "extra",
       title: x.label || k.label,
       stats: [x.dist ? { v: String(x.dist), u: "mi" } : null, x.time ? { v: hms(x.time), u: "time" } : null, speed(x.kind, x.time, x.dist)].filter((v) => v != null),
-      tags: ["Extra", x.label ? k.label : "", x.steps ? `${kfmt(x.steps)} steps` : "", cal ? `~${cal} cal` : "", x.indoor ? "Indoors" : x.route ? "GPS" : ""].filter(Boolean),
+      tags: ["Extra", x.label ? k.label : "", x.steps ? `${kfmt(x.steps)} steps` : "", cal ? `~${cal} cal` : "", x.indoor ? "No GPS" : x.route ? "GPS" : ""].filter(Boolean),
       route: x.route, at: x.at, index: i,
     });
   });

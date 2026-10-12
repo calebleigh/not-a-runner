@@ -110,7 +110,7 @@ function notice() {
     status: a.status === "paused" ? (a.autoPaused ? "Auto-paused" : "Paused") : "Recording",
     elapsedMs: s.elapsedS * 1000,
     paused: a.status === "paused",
-    line1: [dist, speed].filter(Boolean).join("  ·  ") || "Indoors",
+    line1: [dist, speed].filter(Boolean).join("  ·  ") || "No GPS",
     // The phone counts steps on the card itself when it can, so they stay live with the screen off.
     line2: phoneSteps || !a.steps ? "" : `${a.steps.toLocaleString("en-US")} steps`,
     ...(phoneSteps ? { steps: a.steps } : {}),
