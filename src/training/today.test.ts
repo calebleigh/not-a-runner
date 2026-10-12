@@ -19,6 +19,21 @@ describe("today totals", () => {
   });
 });
 
+describe("active minutes goal", () => {
+  it("adds a to-do that fills from everything logged today", () => {
+    const s = emptyState();
+    s.settings.activeGoal = 30;
+    const task = () => todayList(computeModel(s, WEEK3)).tasks.find((t) => t.kind === "active");
+    expect(task()).toMatchObject({ title: "30 active minutes", done: false });
+    s.extras["3-2"] = [{ kind: "hike", dist: 0, time: 1200 }];
+    expect(task()).toMatchObject({ detail: "20 so far", done: false });
+    s.extras["3-2"].push({ kind: "hike", dist: 0, time: 600 });
+    expect(task()!.done).toBe(true);
+    delete s.settings.activeGoal;
+    expect(task()).toBeUndefined();
+  });
+});
+
 describe("today list", () => {
   it("lists today's session, steps and to-dos due, and counts what's done", () => {
     const s = emptyState();

@@ -30,6 +30,8 @@ const LEVELS: [StartLevel, string, string][] = [
   ["run_3_miles", "I can run 3 miles", "Slowly counts."],
   ["run_6_plus", "I can run 6 miles or more", "You'll start further in."],
 ];
+const STEP_GOALS = [0, 4000, 6000, 8000, 10000];
+const ACTIVE_GOALS = [0, 15, 30, 45, 60];
 const GEAR_OPTIONS: [string, string][] = [
   ["shoes", "Running shoes"], ["mat", "Exercise mat"], ["bands", "Resistance bands"],
   ["kettlebell", "Kettlebell"], ["roller", "Foam roller"], ["fitband", "Heart rate band"],
@@ -58,6 +60,8 @@ interface Draft {
   hasBike: boolean;
   impactSensitive: boolean;
   strength: boolean | null;
+  stepGoal: number;
+  activeGoal: number;
   weight: string;
   goalWeight: string;
   gear: string[];
@@ -102,7 +106,7 @@ export function Onboarding() {
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Draft>({
     name: "", birthday: "", wants: [], wantText: "", plan: null, race: null, raceName: "", raceDate: "", startLevel: null,
-    walkMin: 20, days: null, hasBike: true, impactSensitive: false, strength: null, weight: "", goalWeight: "", gear: [],
+    walkMin: 20, days: null, hasBike: true, impactSensitive: false, strength: null, stepGoal: 6000, activeGoal: 30, weight: "", goalWeight: "", gear: [],
   });
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
   const plan = d.plan ?? suggest(d.wants);
@@ -127,7 +131,7 @@ export function Onboarding() {
   const steps = [
     "welcome", "you", "wants", "plan",
     ...(walking ? ["walk"] : plan === "race" ? ["race", "level", "date", "days", "body"] : ["level", "days", "body"]),
-    ...(walking ? ["strength"] : []), "extras", "done",
+    ...(walking ? ["strength"] : []), "goals", "extras", "done",
   ] as const;
   const at = steps[Math.min(step, steps.length - 1)];
   const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
@@ -144,6 +148,8 @@ export function Onboarding() {
       if (gw > 50 && gw < 600) s.settings.goalWt = Math.round(gw * 10) / 10;
       if (whys.length) s.settings.whys = whys;
       if (!strengthOn) s.settings.strength = false;
+      if (d.stepGoal) s.settings.stepGoal = d.stepGoal;
+      if (d.activeGoal) s.settings.activeGoal = d.activeGoal;
       for (const g of d.gear) s.gear[g] = 1;
     });
     setTab("home");
@@ -234,6 +240,24 @@ export function Onboarding() {
         <YesNo on={strengthOn} title="Strength workouts?" sub="About 13 minutes of bodyweight moves on training days, no gym." onChange={(v) => set({ strength: v })} />
       </>;
       break;
+    case "goals":
+      title = "Daily goals";
+      sub = "Something to aim for each day. Off is fine too. Hitting your step goal also keeps your streak going.";
+      body = <>
+        <div className="onbyn">
+          <div><b>Steps</b><small>{d.stepGoal ? `${d.stepGoal.toLocaleString("en-US")} a day, from your phone or watch.` : "No step goal."}</small></div>
+          <div className="seg onbseg" role="radiogroup" aria-label="Step goal">
+            {STEP_GOALS.map((v) => <button key={v} role="radio" aria-checked={d.stepGoal === v} className={d.stepGoal === v ? "sel" : ""} onClick={() => set({ stepGoal: v })}>{v ? `${v / 1000}k` : "Off"}</button>)}
+          </div>
+        </div>
+        <div className="onbyn">
+          <div><b>Active minutes</b><small>{d.activeGoal ? `${d.activeGoal} minutes a day. Every workout you log counts.` : "No active minutes goal."}</small></div>
+          <div className="seg onbseg" role="radiogroup" aria-label="Active minutes goal">
+            {ACTIVE_GOALS.map((v) => <button key={v} role="radio" aria-checked={d.activeGoal === v} className={d.activeGoal === v ? "sel" : ""} onClick={() => set({ activeGoal: v })}>{v ? `${v} min` : "Off"}</button>)}
+          </div>
+        </div>
+      </>;
+      break;
     case "extras":
       title = "A few extras";
       sub = "All optional. Skip this if you like; it's all in Settings later.";
@@ -262,7 +286,7 @@ export function Onboarding() {
           {walking ? <div><b>{d.walkMin}</b><small>{plan === "walk" ? "minute walks" : "minutes to start"}</small></div> : <div><b>{spec.weeks}</b><small>weeks</small></div>}
           <div><b>{days.length}</b><small>{days.length === 1 ? "day a week" : "days a week"}</small></div>
         </div>
-        <p className="onbnote">Starts {fmtLong(spec.start)}. {days.length === 7 ? "Every day" : `On ${days.map((x) => DN[x]).join(", ")}`}{strengthOn ? ", with a little strength." : "."}</p>
+        <p className="onbnote">Starts {fmtLong(spec.start)}. {days.length === 7 ? "Every day" : `On ${days.map((x) => DN[x]).join(", ")}`}{strengthOn ? ", with a little strength." : "."}{[d.stepGoal ? `${d.stepGoal.toLocaleString("en-US")} steps` : "", d.activeGoal ? `${d.activeGoal} active minutes` : ""].filter(Boolean).map((x, i, a) => (i ? " and " : " Aiming for ") + x + (i === a.length - 1 ? " a day." : "")).join("")}</p>
         <p className="onbdisclaimer">This app is a training guide, not medical advice. Check with a doctor before you start, especially if you have heart, joint or other health conditions. Stop and rest if something hurts.</p>
       </>;
       cta = "Let's go";

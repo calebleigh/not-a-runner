@@ -70,6 +70,8 @@ export interface Settings {
   shape?: "round" | "square";
   /** Optional daily step goal; the bell mentions days that came in under it. */
   stepGoal?: number;
+  /** Optional daily active minutes goal (everything logged that day counts). */
+  activeGoal?: number;
   /** Missing means dark. */
   mode?: "light" | "system";
 }

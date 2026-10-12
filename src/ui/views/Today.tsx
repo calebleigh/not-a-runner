@@ -7,7 +7,7 @@ import { RouteThumb } from "../RouteMap";
 import { TodayHero } from "../TodayHero";
 
 const ICONS: Record<TodayTask["kind"], () => React.JSX.Element> = {
-  cardio: Icon.shoe, strength: Icon.dumbbell, steps: Icon.steps, weigh: Icon.scale, todo: Icon.today,
+  cardio: Icon.shoe, strength: Icon.dumbbell, steps: Icon.steps, active: Icon.clock, weigh: Icon.scale, todo: Icon.today,
 };
 
 function Row({ done, ic, title, detail, onClick, check }: { done: boolean; ic: ReactNode; title: string; detail: string; onClick: () => void; check?: () => void }) {
@@ -75,6 +75,7 @@ export function Today() {
     else if (t.kind === "strength") openSheet({ kind: "strength", w: curWeek, d: todayIdx });
     else if (t.kind === "steps") openSheet({ kind: "steps", date: today });
     else if (t.kind === "weigh") openSheet({ kind: "weigh" });
+    else if (t.kind === "active") openSheet({ kind: "log" });
   };
   const toggle = (t: TodayTask) => update((s) => {
     const x = s.todos[t.todoId!];

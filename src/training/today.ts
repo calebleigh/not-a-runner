@@ -6,7 +6,7 @@ import { todayDay } from "./model";
 import { EXTRA_KINDS, cardioCal, extraCal, extraKind, statKind } from "./stats";
 import type { Extra, Model } from "./types";
 
-export type TodayKind = "cardio" | "strength" | "steps" | "weigh" | "todo";
+export type TodayKind = "cardio" | "strength" | "steps" | "active" | "weigh" | "todo";
 export interface TodayTask {
   key: string;
   kind: TodayKind;
@@ -43,6 +43,11 @@ export function todayList(model: Model): TodayList {
   const steps = state.steps[dayKey(model.spec, today)] || 0, goal = state.settings.stepGoal;
   if (goal) tasks.push({ key: "steps", kind: "steps", title: `${kfmt(goal)} steps`, detail: steps ? `${kfmt(steps)} so far` : "None logged yet", done: steps >= goal });
   else tasks.push({ key: "steps", kind: "steps", title: "Log your steps", detail: steps ? `${kfmt(steps)} steps` : "From your phone or watch", done: steps > 0 });
+  const ag = state.settings.activeGoal;
+  if (ag) {
+    const m = Math.round(todayTotals(model).secs / 60);
+    tasks.push({ key: "active", kind: "active", title: `${ag} active minutes`, detail: m ? `${m} so far` : "Every workout you log counts", done: m >= ag });
+  }
   if (dow === 0 && rawWeek >= 1) {
     const wv = state.weights[curWeek];
     tasks.push({ key: "weigh", kind: "weigh", title: "Weigh in", detail: wv ? `${wv} lb` : "Monday check-in", done: !!wv });

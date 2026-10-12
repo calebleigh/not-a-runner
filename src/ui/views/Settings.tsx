@@ -117,6 +117,7 @@ function AboutYou() {
   const [wt, setWt] = useField(st.startWt ? String(st.startWt) : "");
   const [goal, setGoal] = useField(st.goalWt ? String(st.goalWt) : "");
   const [stepGoal, setStepGoal] = useField(st.stepGoal ? String(st.stepGoal) : "");
+  const [activeGoal, setActiveGoal] = useField(st.activeGoal ? String(st.activeGoal) : "");
   const b = birthdayInfo(st.birthday, now);
   const bdayNote = !b ? "We'll have cake on the day" : b.isToday ? `Happy birthday! ${b.age} today` : `Turning ${b.turning} in ${b.daysUntil} day${b.daysUntil === 1 ? "" : "s"}`;
   const weight = (v: string, key: "startWt" | "goalWt") => update((s) => { const n = parseFloat(v); if (n > 50 && n < 600) s.settings[key] = n; else delete s.settings[key]; });
@@ -159,6 +160,14 @@ function AboutYou() {
             <input type="number" inputMode="numeric" id="stepGoal" min="1000" max="50000" step="500" placeholder="none" value={stepGoal} onChange={(e) => setStepGoal(e.target.value)}
               onBlur={() => update((s) => { const n = parseInt(stepGoal); if (n >= 1000 && n <= 50000) s.settings.stepGoal = n; else delete s.settings.stepGoal; })} />
             <em>steps</em>
+          </span>
+        </label>
+        <label className="setrow" htmlFor="activeGoal">
+          <span>Daily active minutes<small>Optional. Every workout you log counts toward it.</small></span>
+          <span className="unitin">
+            <input type="number" inputMode="numeric" id="activeGoal" min="5" max="300" step="5" placeholder="none" value={activeGoal} onChange={(e) => setActiveGoal(e.target.value)}
+              onBlur={() => update((s) => { const n = parseInt(activeGoal); if (n >= 5 && n <= 300) s.settings.activeGoal = n; else delete s.settings.activeGoal; })} />
+            <em>min</em>
           </span>
         </label>
       </section>
