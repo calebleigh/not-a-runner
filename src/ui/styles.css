@@ -1082,6 +1082,7 @@ a.lstore:hover{border-color:var(--accent)}
 .acctbtn.error .acctdot{background:var(--bad)}
 .acct{display:flex;flex-direction:column;gap:12px}
 .acct .gbtn{width:100%}
+.area-sync .acct{padding:10px 0 16px}
 .acct-who{display:flex;align-items:center;gap:14px}
 .acct-who b{display:block;font:800 24px/1.1 var(--display)}
 .acct-who small{color:var(--muted);font-size:14px}
