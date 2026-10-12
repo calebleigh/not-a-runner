@@ -247,7 +247,10 @@ public class WorkoutNoticePlugin extends Plugin {
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_track)
-            .setColor(ORANGE)
+            // The whole notification is the app's orange (allowed for a running workout), not a white
+            // or grey box around the card.
+            .setColor(paused ? 0xFFB8714A : 0xFFF26A1F)
+            .setColorized(true)
             .setContentTitle(title + "  ·  " + status)
             .setContentText(sub.toString())
             .setCustomContentView(small)
