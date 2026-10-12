@@ -17,7 +17,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.os.SystemClock;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -41,7 +47,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  * Android still puts the app's own code to sleep after a minute or so with the screen off, so on
  * foot this also keeps the step count on the card live and does auto-pause itself (the same rule
  * as the app: moving is 3 steps in about 6 seconds). It tells the app what it decided and when, and
- * the app applies that when it wakes.
+ * the app applies that when it wakes. For the same reason it speaks the workout's updates itself
+ * ("1 mile", "10 minutes", "3,000 steps"), lowering any music while it talks.
  */
 @CapacitorPlugin(name = "WorkoutNotice")
 public class WorkoutNoticePlugin extends Plugin {
@@ -82,6 +89,15 @@ public class WorkoutNoticePlugin extends Plugin {
     /** Counts the decisions made here, so a late check-in from the app can't undo a newer one. */
     private int autoSeq = 0;
     private final StepAutoPause ap = new StepAutoPause();
+
+    // Spoken updates. Distance is the app's at its last check-in, plus steps since times the stride.
+    private final Milestones ms = new Milestones();
+    private String cuePrefs = "";
+    private double distM = 0, stride = 0;
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private String pendingSay = null;
+    private AudioFocusRequest focus;
 
     @Override
     public void load() {
@@ -145,6 +161,9 @@ public class WorkoutNoticePlugin extends Plugin {
         showSteps = steps != null;
         if (showSteps) { appSteps = steps; totalAtCheckIn = lastTotal; }
         autoSecs = call.getInt("autoPauseSecs", 0);
+        Double d = call.getDouble("distM", 0.0), st = call.getDouble("stride", 0.0), cm = call.getDouble("cueMiles", 0.0);
+        distM = d == null ? 0 : d;
+        stride = st == null ? 0 : st;
         // The app hasn't heard about a pause or resume decided here yet: keep that, not its older idea.
         boolean stale = call.getInt("autoSeq", 0) < autoSeq;
         if (!stale) {
@@ -159,6 +178,16 @@ public class WorkoutNoticePlugin extends Plugin {
             if (!showing) ap.reset(now); else if (wasPaused && !paused) ap.restart(now);
             if (autoPaused && autoPausedAt == 0) { autoPausedAt = now; totalAtPause = lastTotal; }
             if (!autoPaused) autoPausedAt = 0;
+        }
+        // New settings (or a new workout): start from where it is, so nothing already passed is said.
+        String prefs = cm + "|" + call.getInt("cueMins", 0) + "|" + call.getInt("cueSteps", 0);
+        if (!showing || !prefs.equals(cuePrefs)) {
+            cuePrefs = prefs;
+            ms.everyMi = cm == null ? 0 : cm;
+            ms.everyMin = call.getInt("cueMins", 0);
+            ms.everySteps = call.getInt("cueSteps", 0);
+            ms.start(milesNow(), elapsedNow() / 1000, cueSteps());
+            if (ms.everyMi > 0 || ms.everyMin > 0 || ms.everySteps > 0) startVoice();
         }
         showing = true;
         if (!signature().equals(shown)) render();
@@ -197,6 +226,8 @@ public class WorkoutNoticePlugin extends Plugin {
         autoPaused = false;
         autoPausedAt = 0;
         autoSeq = 0;
+        cuePrefs = "";
+        stopVoice();
         keepAwake(false);
         if (serviceOn) {
             serviceOn = false;
@@ -251,6 +282,10 @@ public class WorkoutNoticePlugin extends Plugin {
         if (p == null || !p.showing) return;
         long now = SystemClock.elapsedRealtime();
         if (p.ap.due(now, p.autoSecs, p.paused)) p.autoPause(now);
+        if (!p.paused) {
+            String say = p.ms.check(p.milesNow(), p.elapsedNow() / 1000, p.cueSteps());
+            if (say != null) p.say(say);
+        }
         if (!p.signature().equals(p.shown)) p.render();
         p.notifyListeners("tick", new JSObject());
     }
@@ -306,6 +341,77 @@ public class WorkoutNoticePlugin extends Plugin {
         d.put("erase", erase);
         d.put("seq", ++autoSeq);
         notifyListeners("auto", d, true);
+    }
+
+    private int cueSteps() {
+        return showSteps ? stepsNow() : 0;
+    }
+
+    /** Miles so far: the app's distance when it last checked in, plus steps since (on foot). */
+    private double milesNow() {
+        double extra = showSteps && stride > 0 ? Math.max(0, stepsNow() - appSteps) * stride : 0;
+        return (distM + extra) / 1609.344;
+    }
+
+    private void startVoice() {
+        if (tts != null) return;
+        tts = new TextToSpeech(getContext(), status -> {
+            if (status != TextToSpeech.SUCCESS || tts == null) return;
+            tts.setLanguage(java.util.Locale.US);
+            tts.setAudioAttributes(speech());
+            // The most natural English voice on the phone that works offline (not the default robot).
+            Voice best = null;
+            try {
+                for (Voice v : tts.getVoices()) {
+                    if (!"en".equals(v.getLocale().getLanguage()) || v.isNetworkConnectionRequired()) continue;
+                    if (v.getFeatures() != null && v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+                    boolean us = "US".equals(v.getLocale().getCountry());
+                    if (best == null || v.getQuality() > best.getQuality()
+                        || (v.getQuality() == best.getQuality() && us && !"US".equals(best.getLocale().getCountry()))) best = v;
+                }
+            } catch (Exception ignored) { }
+            if (best != null) tts.setVoice(best);
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String id) { }
+                @Override public void onDone(String id) { if (tts != null && !tts.isSpeaking()) dropFocus(); }
+                @Override public void onError(String id) { dropFocus(); }
+            });
+            ttsReady = true;
+            if (pendingSay != null) { say(pendingSay); pendingSay = null; }
+        });
+    }
+
+    private static AudioAttributes speech() {
+        return new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+            .build();
+    }
+
+    /** Says it, with music lowered (not stopped) while it talks. */
+    private void say(String text) {
+        if (tts == null) { startVoice(); pendingSay = text; return; }
+        if (!ttsReady) { pendingSay = text; return; }
+        AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        if (am != null && focus == null) {
+            focus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(speech()).build();
+            am.requestAudioFocus(focus);
+        }
+        tts.speak(text, TextToSpeech.QUEUE_ADD, null, "cue" + SystemClock.elapsedRealtime());
+    }
+
+    private void dropFocus() {
+        AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        if (am != null && focus != null) am.abandonAudioFocusRequest(focus);
+        focus = null;
+    }
+
+    private void stopVoice() {
+        pendingSay = null;
+        if (tts != null) { tts.stop(); tts.shutdown(); }
+        tts = null;
+        ttsReady = false;
+        dropFocus();
     }
 
     static Notification currentNotification() {

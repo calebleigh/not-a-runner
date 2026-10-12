@@ -6,6 +6,7 @@ import { cue } from "../native/cues";
 import { watchSteps, type StepFeed } from "../native/steps";
 import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
 import { addFix, newTrack, pause, resume, trackStats, type Fix, type Track, type TrackKind } from "../training/track";
+import { MILESTONES_DEFAULT, milestoneCue, milestoneMarks, type MilestoneMarks, type MilestonePrefs } from "../training/milestones";
 import { AUTO_PAUSE_DEFAULT, autoPauseDue, autoPauseWake, gpsMoving, keepRecent, keepSteps, stepsMoving, type StepMark } from "../training/autopause";
 import { hideNotice, liveInBackground, onNoticeAction, onNoticeAuto, onNoticeTick, showNotice } from "../native/workoutNotice";
 import { logTrack } from "./trackLog";
@@ -53,6 +54,10 @@ export interface ActiveTrack {
   stepLog?: StepMark[];
   /** The last auto-pause decision from the phone that's been applied here. */
   autoSeq?: number;
+  /** Meters a step (from your outdoor walks), for distance indoors and the phone's spoken miles. */
+  stride?: number;
+  /** The spoken updates already said (on the website; the Android app keeps its own). */
+  marks?: MilestoneMarks;
 }
 
 const KEY = "activeTrack";
@@ -98,6 +103,7 @@ function notice() {
   const dist = a.mode === "indoor" ? "" : `${s.miles.toFixed(2)} mi`;
   const speed = a.mode === "indoor" ? "" : a.kind === "bike" ? (s.mph ? `${s.mph.toFixed(1)} mph` : "") : s.paceS ? `${Math.floor(s.paceS / 60)}:${String(s.paceS % 60).padStart(2, "0")} /mi` : "";
   const phoneSteps = !!stepFeed?.native && a.kind !== "bike";
+  const cues = cuesFor(a);
   showNotice({
     kind: a.kind,
     title: what,
@@ -111,6 +117,11 @@ function notice() {
     autoPauseSecs: phoneAutoPause(a) ? a.track.autoPause : 0,
     autoPaused: !!a.autoPaused,
     autoSeq: a.autoSeq ?? 0,
+    distM: distMeters(a),
+    stride: a.kind !== "bike" ? a.stride ?? 0 : 0,
+    cueMiles: cues.mi,
+    cueMins: cues.min,
+    cueSteps: cues.steps,
     ...themeColors(),
   });
 }
@@ -225,6 +236,36 @@ export function setVoice(on: boolean) {
   if (active) set({ ...active, voice: on });
 }
 
+// Spoken updates (every mile, every few minutes, every thousand steps).
+export function milestonePrefs(): MilestonePrefs {
+  try { return { ...MILESTONES_DEFAULT, ...JSON.parse(localStorage.getItem("voiceEvery") ?? "{}") }; } catch { return MILESTONES_DEFAULT; }
+}
+export function setMilestonePrefs(p: Partial<MilestonePrefs>) {
+  try { localStorage.setItem("voiceEvery", JSON.stringify({ ...milestonePrefs(), ...p })); } catch { /* blocked */ }
+  if (active) set({ ...active });
+}
+/** What gets spoken for this workout: nothing with voice off, no steps on a bike, no miles without a way to measure. */
+function cuesFor(a: ActiveTrack): MilestonePrefs {
+  const p = milestonePrefs();
+  if (!a.voice) return { mi: 0, min: 0, steps: 0 };
+  const bike = a.kind === "bike";
+  return { mi: bike && a.mode === "indoor" ? 0 : p.mi, min: p.min, steps: bike ? 0 : p.steps };
+}
+/** Distance so far: GPS outdoors, steps times stride indoors. */
+const distMeters = (a: ActiveTrack) => (a.mode === "indoor" ? (a.kind === "bike" ? 0 : a.steps * (a.stride ?? 0)) : a.track?.distM ?? 0);
+
+/** On the website, speaks the updates (the Android app speaks them itself, even with the screen off). */
+function checkMilestones() {
+  const a = active;
+  if (liveInBackground || !a?.track || a.status !== "recording") return;
+  const p = cuesFor(a);
+  const at = { miles: distMeters(a) / 1609.344, elapsedS: trackStats(a.track, Date.now()).elapsedS, steps: a.kind === "bike" ? 0 : a.steps };
+  const said = milestoneCue(p, a.marks ?? milestoneMarks(p, at), at);
+  if (!said) { if (!a.marks) set({ ...a, marks: milestoneMarks(p, at) }, false); return; }
+  set({ ...a, marks: said.marks }, false);
+  cue(said.text, { voice: true });
+}
+
 /** Announces the interval segment when it changes. Runs every second and on every GPS fix. */
 function checkCue() {
   if (!active?.intervals || active.status !== "recording" || !active.track) return;
@@ -238,11 +279,11 @@ let cueTimer: number | undefined;
 export function setTrackKind(kind: TrackKind) { if (active?.status === "ready") set({ ...active, kind, intervals: plansFor(kind, active.target) }); }
 export function setSimulate(simulate: boolean) { if (active?.status === "ready") set({ ...active, simulate }); }
 
-export async function startTracking() {
+export async function startTracking(stride?: number) {
   if (!active || active.status !== "ready") return;
   const now = Date.now(), ap = canAutoPause(active) ? autoPausePref() : 0;
   logTrack(`start ${active.kind} ${active.mode}, auto-pause ${ap ? `${ap}s` : "off"}`);
-  set({ ...active, status: "recording", track: { ...newTrack(active.kind, now), ...(ap ? { autoPause: ap } : {}) }, lastMoveAt: now, autoPaused: false, error: null });
+  set({ ...active, status: "recording", track: { ...newTrack(active.kind, now), ...(ap ? { autoPause: ap } : {}) }, lastMoveAt: now, autoPaused: false, error: null, stride, marks: { mi: 0, min: 0, steps: 0 } });
   await startFeed();
 }
 
@@ -294,7 +335,7 @@ async function startFeed() {
 function startClock() {
   keepAwake(true);
   clearInterval(cueTimer);
-  cueTimer = window.setInterval(() => { tick("app"); checkAutoPause(); checkCue(); notice(); }, 1000);
+  cueTimer = window.setInterval(() => { tick("app"); checkAutoPause(); checkCue(); checkMilestones(); notice(); }, 1000);
   checkCue();
 }
 

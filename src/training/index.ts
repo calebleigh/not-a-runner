@@ -26,3 +26,4 @@ export * from "./health";
 export * from "./today";
 export * from "./month";
 export * from "./autopause";
+export * from "./milestones";

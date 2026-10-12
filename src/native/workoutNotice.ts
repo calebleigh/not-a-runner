@@ -24,6 +24,13 @@ export interface NoticeState {
   autoPaused?: boolean;
   /** The last of the phone's auto-pause decisions the app has applied. */
   autoSeq?: number;
+  /** Distance so far and meters a step, so the phone can keep the distance going between check-ins. */
+  distM?: number;
+  stride?: number;
+  /** Spoken updates, spoken by the phone (0 is off): every so many miles, minutes, steps. */
+  cueMiles?: number;
+  cueMins?: number;
+  cueSteps?: number;
 }
 
 /** An auto-pause or resume the phone decided, and when. */

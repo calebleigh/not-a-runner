@@ -1317,6 +1317,10 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-auto>span{display:flex;flex-direction:column;gap:2px}
 .trk-auto b{font:700 15px var(--body)}
 .trk-auto small{color:var(--muted);font-size:13px}
+.trk-say .chip{align-self:flex-start}
+.trk-say-row{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px}
+.trk-say-row>span{font:600 13px var(--body);color:var(--muted)}
+.trk-say-row .seg button{padding:7px 0;font-size:13px}
 
 /* Tracker: save to the day's goal or as an extra, two equal buttons. */
 .trk-saveto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}

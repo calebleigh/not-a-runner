@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { AUTO_PAUSE_CHOICES, DN, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
+import { AUTO_PAUSE_CHOICES, DN, MILESTONE_CHOICES, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
 import { canCountSteps } from "../native/steps";
 import { newId } from "../sync/engine";
@@ -10,7 +10,7 @@ import { Icon } from "./icons";
 import { RouteMapView } from "./RouteMap";
 import { trackKindFor } from "./trackFor";
 import {
-  autoPausePref, closeTracker, expandTracker, finishTracking, minimizeTracker, setAutoPause, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
+  autoPausePref, closeTracker, milestonePrefs, setMilestonePrefs, expandTracker, finishTracking, minimizeTracker, setAutoPause, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
 
 const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Run"], ["bike", "Bike"]];
@@ -79,6 +79,9 @@ export function TrackerScreen() {
   const mph = indoor ? (s && s.elapsedS ? miles / (s.elapsedS / 3600) : 0) : s?.mph ?? 0;
   const stride = strideFor(state, t.kind === "run" ? "run" : "walk");
   const autoPause = autoPausePref();
+  const say = milestonePrefs();
+  const sayMi = !(bike && indoor) && say.mi, saySteps = !bike && say.steps;
+  const sayWhat = [sayMi ? (say.mi === 1 ? "each mile" : "each half mile") : "", say.min ? `every ${say.min} minutes` : "", saySteps ? `every ${say.steps.toLocaleString("en-US")} steps` : ""].filter(Boolean);
 
   const save = (asExtra: boolean) => {
     if (!t.track || !t.finishedAt) return;
@@ -145,6 +148,17 @@ export function TrackerScreen() {
               <div className="seg">{AUTO_PAUSE_CHOICES.map((v) => <button key={v} className={autoPause === v ? "sel" : ""} aria-pressed={autoPause === v} onClick={() => setAutoPause(v)}>{v ? `${v}s` : "Off"}</button>)}</div>
             </div>
           )}
+          <div className="trk-auto trk-say">
+            <span>
+              <b>Voice updates</b>
+              <small>{!t.voice ? "Voice is off for this workout." : sayWhat.length ? `Says ${sayWhat.length > 1 ? sayWhat.slice(0, -1).join(", ") + " and " + sayWhat.at(-1) : sayWhat[0]}, out loud.` : "Off."}</small>
+            </span>
+            {!t.voice ? <button className="chip" onClick={() => setVoice(true)}>Turn voice on</button> : <>
+              {!(bike && indoor) && <div className="trk-say-row"><span>Distance</span><div className="seg">{MILESTONE_CHOICES.mi.map((v) => <button key={v} className={say.mi === v ? "sel" : ""} aria-pressed={say.mi === v} onClick={() => setMilestonePrefs({ mi: v })}>{v ? (v === 1 ? "1 mi" : "½ mi") : "Off"}</button>)}</div></div>}
+              <div className="trk-say-row"><span>Time</span><div className="seg">{MILESTONE_CHOICES.min.map((v) => <button key={v} className={say.min === v ? "sel" : ""} aria-pressed={say.min === v} onClick={() => setMilestonePrefs({ min: v })}>{v ? `${v} min` : "Off"}</button>)}</div></div>
+              {!bike && <div className="trk-say-row"><span>Steps</span><div className="seg">{MILESTONE_CHOICES.steps.map((v) => <button key={v} className={say.steps === v ? "sel" : ""} aria-pressed={say.steps === v} onClick={() => setMilestonePrefs({ steps: v })}>{v ? `${v / 1000}k` : "Off"}</button>)}</div></div>}
+            </>}
+          </div>
           {t.intervals && (
             <div className="trk-ivinfo">
               <b>Interval coaching on</b>
@@ -153,7 +167,7 @@ export function TrackerScreen() {
             </div>
           )}
           {import.meta.env.DEV && !indoor && <label className="trk-sim"><input type="checkbox" checked={t.simulate} onChange={(e) => setSimulate(e.target.checked)} /> Simulated walk (testing)</label>}
-          <button className="trk-go" onClick={() => startTracking()}><span className="trk-go-ic"><Icon.play /></span><span>Start</span></button>
+          <button className="trk-go" onClick={() => startTracking(stride.meters)}><span className="trk-go-ic"><Icon.play /></span><span>Start</span></button>
         </div>
       ) : (
         <>
