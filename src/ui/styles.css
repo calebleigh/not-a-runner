@@ -1344,10 +1344,10 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .tdltags{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
 .tdltags span{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--muted)}
 
-/* A running workout tucked into a bar pinned to the top (like a music player's mini bar); the header sits under it. */
-:root{--minih:60px}
-.trk-mini{position:fixed;top:0;left:0;right:0;z-index:21;box-sizing:border-box;height:calc(var(--minih) + var(--sat));max-width:560px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:calc(6px + var(--sat)) 12px 6px 10px;
-  color:var(--on-accent);border-radius:0 0 min(18px,var(--rmax)) min(18px,var(--rmax));box-shadow:0 10px 24px -12px rgba(var(--accent-rgb),.55);
+/* A running workout tucked into a card pinned just under the header (like a music player's mini bar). */
+:root{--minih:60px;--headh:calc(56px + var(--sat))}
+.trk-mini{position:fixed;top:var(--headh);left:var(--minil,16px);width:var(--miniw,calc(100% - 32px));z-index:19;box-sizing:border-box;height:var(--minih);display:flex;align-items:center;gap:8px;padding:6px 8px 6px 8px;
+  color:var(--on-accent);border-radius:min(18px,var(--rmax));box-shadow:0 10px 24px -12px rgba(var(--accent-rgb),.55);
   /* The same drifting stripes as the orange workout cards; they hold still while paused. */
   background:repeating-linear-gradient(135deg,rgba(0,0,0,.07) 0 14px,transparent 14px 28px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));
   background-size:40px 40px,100% 100%;animation:stripes 3.5s linear infinite}
@@ -1363,12 +1363,9 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-mini-txt .trk-status::before{width:8px;height:8px;background:var(--on-accent);box-shadow:none}
 .trk-mini-btn{flex:none;width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;color:var(--accent);background:#1B1A19}
 .trk-mini-btn svg{width:20px;height:20px}
-body.has-mini{padding-top:calc(var(--minih) + var(--sat))}
-body.has-mini .apphead{top:calc(var(--minih) + var(--sat));padding-top:8px}
+/* Room under the header for the card, so it never covers the page. */
+body.has-mini .wrap{margin-top:calc(var(--minih) + 8px)}
 .trk-min{display:grid;place-items:center;color:var(--ink)}
 .trk-min svg{width:22px;height:22px}
-@media (min-width:700px){
-  .trk-mini{left:var(--rail);max-width:none;padding-left:max(20px,calc((100vw - var(--rail) - 640px) / 2));padding-right:max(20px,calc((100vw - var(--rail) - 640px) / 2))}
-}
 /* Log workout: the orange workout cards' drifting stripes, so it stands apart from the picked toggle. */
 .trk-btn.trk-log{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 14px,transparent 14px 28px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));background-size:40px 40px,100% 100%;animation:stripes 3.5s linear infinite;box-shadow:0 14px 30px -14px rgba(var(--accent-rgb),.6)}

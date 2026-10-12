@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { AUTO_PAUSE_CHOICES, DN, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
 import { canCountSteps } from "../native/steps";
@@ -42,6 +43,17 @@ export function TrackerScreen() {
     return () => clearInterval(id);
   }, [live]);
   useEffect(() => { document.body.classList.toggle("has-mini", mini); return () => document.body.classList.remove("has-mini"); }, [mini]);
+  // Back (Android's button, or Escape) tucks a running workout into the bar, or closes one not started yet.
+  const backAction = !open ? null : live ? "min" : t?.status === "ready" ? "close" : null;
+  useEffect(() => {
+    if (!backAction) return;
+    const go = () => { if (backAction === "min") minimizeTracker(); else closeTracker(); };
+    let back: { remove: () => Promise<void> } | null = null, done = false;
+    if (Capacitor.isNativePlatform()) import("@capacitor/app").then(({ App }) => App.addListener("backButton", go)).then((h) => { if (done) h.remove(); else back = h; });
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") go(); };
+    document.addEventListener("keydown", onKey);
+    return () => { done = true; document.removeEventListener("keydown", onKey); back?.remove(); };
+  }, [backAction]);
   useEffect(() => { resumeAfterReload(); }, []);
   useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setTyped(""); setPickExtra(undefined); } }, [t?.status]);
 
@@ -224,6 +236,24 @@ export function TrackerScreen() {
 function MiniTracker() {
   const t = useTracker();
   const { state } = useApp();
+  // Sits just under the header and lines up with the page's edges, so it follows both.
+  useEffect(() => {
+    const h = document.querySelector(".apphead"), m = document.querySelector(".wrap > main");
+    if (!h || !m) return;
+    const root = document.documentElement.style;
+    const fit = () => {
+      const r = m.getBoundingClientRect();
+      root.setProperty("--headh", `${h.getBoundingClientRect().height}px`);
+      root.setProperty("--minil", `${r.left}px`);
+      root.setProperty("--miniw", `${r.width}px`);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(h);
+    ro.observe(m);
+    addEventListener("resize", fit);
+    return () => { ro.disconnect(); removeEventListener("resize", fit); };
+  }, []);
   if (!t?.track) return null;
   const s = trackStats(t.track, Date.now());
   const indoor = t.mode === "indoor", paused = t.status === "paused";
