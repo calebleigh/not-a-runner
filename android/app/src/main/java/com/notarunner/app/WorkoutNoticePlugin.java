@@ -100,6 +100,10 @@ public class WorkoutNoticePlugin extends Plugin {
     /** Say "Workout paused" and "Workout resumed". */
     private boolean cuePause = false;
     private AudioFocusRequest focus;
+    /** Announcements still to finish; the music comes back up when it's none. */
+    private int talking = 0;
+    private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable musicBack = this::dropFocus;
 
     @Override
     public void load() {
@@ -381,8 +385,9 @@ public class WorkoutNoticePlugin extends Plugin {
             if (best != null) tts.setVoice(best);
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override public void onStart(String id) { }
-                @Override public void onDone(String id) { if (tts != null && !tts.isSpeaking()) dropFocus(); }
-                @Override public void onError(String id) { dropFocus(); }
+                @Override public void onDone(String id) { main.post(() -> finished()); }
+                @Override public void onError(String id) { main.post(() -> finished()); }
+                @Override public void onStop(String id, boolean interrupted) { main.post(() -> finished()); }
             });
             ttsReady = true;
             if (pendingSay != null) { say(pendingSay); pendingSay = null; }
@@ -411,10 +416,24 @@ public class WorkoutNoticePlugin extends Plugin {
             focus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(speech()).build();
             am.requestAudioFocus(focus);
         }
-        tts.speak(text, TextToSpeech.QUEUE_ADD, null, "cue" + SystemClock.elapsedRealtime());
+        talking++;
+        if (tts.speak(text, TextToSpeech.QUEUE_ADD, null, "cue" + SystemClock.elapsedRealtime()) != TextToSpeech.SUCCESS) finished();
+        // Whatever happens, the music comes back up (a voice that never reports back can't keep it low).
+        main.removeCallbacks(musicBack);
+        main.postDelayed(musicBack, 12_000);
+    }
+
+    /** One announcement done: once they all are, a moment later, the music comes back up. */
+    private void finished() {
+        talking = Math.max(0, talking - 1);
+        if (talking > 0) return;
+        main.removeCallbacks(musicBack);
+        main.postDelayed(musicBack, 300);
     }
 
     private void dropFocus() {
+        talking = 0;
+        main.removeCallbacks(musicBack);
         AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         if (am != null && focus != null) am.abandonAudioFocusRequest(focus);
         focus = null;
