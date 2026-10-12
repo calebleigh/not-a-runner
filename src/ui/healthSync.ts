@@ -43,10 +43,14 @@ type Update = (fn: (draft: State) => void) => void;
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
 /** What an import brought in, in a few words, or "" when nothing changed. */
-export function importSummary(r: HealthImportResult): string {
+/**
+ * What came in, for the toast. `quiet` (the imports that run on their own when the app opens) leaves
+ * out steps: today's count changes all day, so nearly every open would say "steps for 1 day".
+ */
+export function importSummary(r: HealthImportResult, quiet = false): string {
   const parts = [
     r.workouts ? plural(r.workouts, "workout") : "",
-    r.stepDays ? `steps for ${plural(r.stepDays, "day")}` : "",
+    r.stepDays && !quiet ? `steps for ${plural(r.stepDays, "day")}` : "",
     r.weights ? plural(r.weights, "weigh-in") : "",
   ].filter(Boolean);
   const asks = r.conflicts ? ` ${plural(r.conflicts, "workout needs", "workouts need")} a look (see the bell).` : "";
@@ -54,7 +58,7 @@ export function importSummary(r: HealthImportResult): string {
 }
 
 /** Reads the health store and brings it in. Returns the summary ("" when nothing changed). */
-export async function importHealthNow(update: Update, opts: { days?: number } = {}): Promise<string> {
+export async function importHealthNow(update: Update, opts: { days?: number; quiet?: boolean } = {}): Promise<string> {
   if (!status.on || status.busy) return "";
   set({ busy: true, error: undefined });
   try {
@@ -65,7 +69,7 @@ export async function importHealthNow(update: Update, opts: { days?: number } = 
     update((draft) => { result = importHealth(draft, computeModel(draft, now), data, mem); });
     trimHealthMemory(mem, now.getTime());
     set({ busy: false, last: Date.now(), mem });
-    return importSummary(result);
+    return importSummary(result, opts.quiet);
   } catch (e) {
     set({ busy: false, error: `Couldn't read ${healthName}. ${e instanceof Error ? e.message : ""}`.trim() });
     return "";
@@ -93,7 +97,7 @@ export function turnOffHealth() {
 export async function autoImportHealth(update: Update): Promise<string> {
   if (!status.on || status.busy || (status.last && Date.now() - status.last < STALE_MS)) return "";
   if (!(await healthAllowed())) { set({ on: false, error: `Not a Runner can't read ${healthName} anymore. Connect again to turn it back on.` }); return ""; }
-  return importHealthNow(update);
+  return importHealthNow(update, { quiet: true });
 }
 
 export function answerConflict(update: Update, c: HealthConflict, choice: ConflictChoice) {
