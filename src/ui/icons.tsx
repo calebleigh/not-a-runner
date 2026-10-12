@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 // Icon set from the prototype.
 const S = { fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -6,13 +8,27 @@ const S = { fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap:
  * outside in as training days go by without anything, and fills back up when you do something.
  */
 export function StreakFlame({ level }: { level: number }) {
+  // The ring and the core sit the same distance from the middle outline all the way round: each is
+  // cut from a band around the flame (a mask), not a scaled copy, so the gaps are even.
+  const id = "sf" + useId().replace(/[^a-zA-Z0-9]/g, "");
   const f = "M12 22c4 0 7-2.7 7-6.8 0-4.2-3.3-6.6-4.2-10.2-2.4 1.5-3.6 3.6-3.4 6.2-1.3-.6-2.2-1.9-2.4-3.4C7 9.6 5 12.2 5 15.2 5 19.3 8 22 12 22z";
+  const line = 1.5, d = line + 1.5; // each layer's thickness, and how far apart their centers are
+  const area = { x: -3, y: -3, width: 30, height: 32 };
   return (
-    <svg viewBox="-1.5 -1.5 27 27" className={"sflame l" + level} aria-hidden="true">
-      {/* Outside in: a bigger outline, the app's flame outline, and a small filled core, all centered. */}
-      <path className="f3" d={f} transform="translate(12 14.6) scale(1.32) translate(-12 -14.6)" />
-      <path className="f2" d={f} />
-      <path className="f1" d={f} transform="translate(12 16.4) scale(.46) translate(-12 -16.4)" />
+    <svg viewBox="-1.5 0 27 27" className={"sflame l" + level} aria-hidden="true">
+      <defs>
+        <mask id={id + "r"} maskUnits="userSpaceOnUse" {...area}>
+          <path d={f} fill="#fff" stroke="#fff" strokeWidth={2 * d + line} strokeLinejoin="round" />
+          <path d={f} fill="#000" stroke="#000" strokeWidth={2 * d - line} strokeLinejoin="round" />
+        </mask>
+        <mask id={id + "c"} maskUnits="userSpaceOnUse" {...area}>
+          <path d={f} fill="#fff" />
+          <path d={f} fill="none" stroke="#000" strokeWidth={2 * d - line} strokeLinejoin="round" />
+        </mask>
+      </defs>
+      <rect className="f3" mask={`url(#${id}r)`} {...area} />
+      <path className="f2" d={f} strokeWidth={line} />
+      <rect className="f1" mask={`url(#${id}c)`} {...area} />
     </svg>
   );
 }
