@@ -66,7 +66,7 @@ const PLANS: PlanInfo[] = [
   { name: "Marathon", tag: "26.2 miles, the long game", text: "A steady build over 5 months to a year, with walk breaks welcome the whole way.",
     facts: ["5 to 12 months", "3 to 6 days", "26.2 mi race"], week: ["Walk/run 40", "Bike 30", "Walk/run 40", "Bike 30", "Long 12 mi", "", ""] },
 ];
-const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** Pick a plan on the left; the card shows how it works and a typical week. */
 function PlanPicker() {

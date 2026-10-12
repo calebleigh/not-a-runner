@@ -1024,29 +1024,35 @@ a.lstore:hover{border-color:var(--accent)}
 .lgoals button{padding:12px 18px;border:1px solid var(--line);background:var(--surface2);border-radius:min(22px,var(--rmax));font:800 22px/1 var(--display);text-transform:uppercase;color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s}
 .lgoals button:hover{border-color:var(--accent)}
 .lgoals button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-/* Pick your pace: plans on the left (a swipeable row on phones), the picked one as a big card. */
+/* Pick your pace: plans in a grid on phones, a column on wide screens; the picked one as a big bright card. */
 .lpace{display:grid;gap:14px;max-width:960px;margin:0 auto}
 @media (min-width:760px){.lpace{grid-template-columns:260px 1fr;gap:20px;align-items:start}}
-.lpace-list{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 2px;scroll-snap-type:x proximity}
-.lpace-list::-webkit-scrollbar{display:none}
-@media (min-width:760px){.lpace-list{flex-direction:column;overflow:visible;margin:0;padding:0}}
-.lpace-list button{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 16px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax));color:var(--ink);cursor:pointer;transition:border-color .2s,background .2s}
+.lpace-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (min-width:760px){.lpace-list{grid-template-columns:1fr}}
+.lpace-list button{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:11px 14px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax));color:var(--ink);cursor:pointer;transition:border-color .2s,background .2s}
 .lpace-list button:hover{border-color:var(--accent)}
-.lpace-list button b{font:800 italic 22px/1.05 var(--display);text-transform:uppercase;white-space:nowrap}
-.lpace-list button small{color:var(--muted);font-size:13px;white-space:nowrap}
+.lpace-list button b{font:800 italic 20px/1.05 var(--display);text-transform:uppercase;white-space:nowrap}
+.lpace-list button small{max-width:100%;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lpace-list button.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
-.lpace-card{cursor:default;padding:24px}
+.lpace-card{cursor:default;padding:22px;display:flex;flex-direction:column}
 .lpace-card .ht{padding-right:0}
 .lpace-text{margin:10px 0 0;font:600 16px/1.45 var(--body);max-width:560px}
+/* Light tints on the orange (not dark ones), so the card stays bright. */
 .lpace-facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.lpace-facts span{padding:6px 12px;border-radius:min(20px,var(--rmax));background:color-mix(in srgb,var(--on-accent) 14%,transparent);font:700 13px var(--body)}
+.lpace-facts span{padding:6px 12px;border-radius:min(20px,var(--rmax));background:rgba(255,255,255,.28);font:700 13px var(--body)}
 .lpace-wk{display:block;margin-top:20px}
 .lpace-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:8px}
-.lpace-week span{display:flex;flex-direction:column;gap:4px;min-height:74px;padding:8px 6px;border-radius:min(10px,var(--rmax));background:color-mix(in srgb,var(--on-accent) 16%,transparent)}
-.lpace-week span.rest{background:none;border:1px dashed color-mix(in srgb,var(--on-accent) 30%,transparent)}
-.lpace-week small{font:700 11px var(--body);opacity:.7}
+.lpace-week span{display:flex;flex-direction:column;gap:4px;min-height:70px;padding:8px 6px;border-radius:min(10px,var(--rmax));background:rgba(255,255,255,.26)}
+.lpace-week span.rest{background:none;border:1.5px dashed rgba(255,255,255,.55)}
+.lpace-week small{font:700 11px var(--body);opacity:.75;text-transform:uppercase}
 .lpace-week b{font:800 15px/1.05 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
-.lpace-week .rest b{opacity:.55}
+.lpace-week .rest b{opacity:.6}
+/* Phones: the week as a short list of days. */
+@media (max-width:559px){
+  .lpace-week{grid-template-columns:1fr;gap:4px}
+  .lpace-week span{flex-direction:row;align-items:center;gap:12px;min-height:0;padding:7px 12px}
+  .lpace-week small{width:34px;flex:none}
+}
 .lsocial{display:grid;gap:18px;max-width:880px;margin:0 auto;align-items:center}
 @media (min-width:760px){.lsocial{grid-template-columns:1fr 1fr;gap:24px}}
 .lfriends{display:flex;flex-direction:column;padding:8px 16px;border:1px solid var(--line);background:var(--surface);border-radius:min(20px,var(--rmax))}
