@@ -165,6 +165,11 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
       title = "Get the update";
       body = <UpdateSheetBody />;
       break;
+    case "privacy":
+      // The same page the app stores link to, shown here so there's always a way back.
+      title = "Privacy policy";
+      body = <iframe className="privframe" src="/privacypolicy.html" title="Privacy policy" />;
+      break;
     case "streak":
       title = "Streak";
       body = <StreakSheetBody />;

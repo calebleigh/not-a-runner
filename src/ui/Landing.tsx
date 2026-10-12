@@ -48,7 +48,27 @@ const FEATURES: { icon: () => React.JSX.Element; title: string; text: string }[]
   { icon: Icon.steps, title: "Steps count too", text: "Set a step goal. Extra walks and hikes add to your totals without wrecking the plan." },
 ];
 
-const PLANS = ["Daily walk", "Walk more", "Get fit", "5K", "10K", "Half marathon", "Marathon"];
+/** The plans, and how each one works (tap a pill to read it). */
+const PLANS: [string, string][] = [
+  ["Daily walk", "The same easy walk on the days you pick, 10 to 45 minutes. No running, ever. It's about the habit, not the miles."],
+  ["Walk more", "Walks start where you're comfortable and grow a little each week, up to about an hour. One longer walk a week, an easier week every fourth. No running."],
+  ["Get fit", "A year of steady progress. Biking and brisk walks first, then short jogs with walk breaks once your body is ready. No race needed."],
+  ["5K", "3.1 miles. Biking and walking first, then jogs with walk breaks that build to race day. About 4 to 10 weeks, depending on where you start."],
+  ["10K", "6.2 miles. The same gentle start, with longer walk/runs and an easier week now and then. About 8 to 16 weeks."],
+  ["Half marathon", "13.1 miles. Long walk/runs build slowly, with cutback weeks and a taper before race day. About 3 to 7 months; up to a year if you're starting from the couch."],
+  ["Marathon", "26.2 miles. The long game: a steady build over 5 months to a year, with walk breaks welcome the whole way."],
+];
+
+/** The plan pills; the picked one says how it works. */
+function PlanPicker() {
+  const [at, setAt] = useState(0);
+  return <>
+    <div className="lgoals" role="tablist" aria-label="Plans">
+      {PLANS.map(([g], i) => <button key={g} role="tab" aria-selected={i === at} className={i === at ? "on" : ""} onClick={() => setAt(i)}>{g}</button>)}
+    </div>
+    <p className="lplan" role="tabpanel" aria-live="polite">{PLANS[at][1]}</p>
+  </>;
+}
 
 /** Made-up friends for the social section. */
 const FRIENDS: { name: string; today: string; done: boolean; streak: number; flames: number }[] = [
@@ -248,7 +268,7 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
 
       <section className="lsec" id="plans">
         <Reveal><h2 className="lh2">Pick your pace.</h2><p className="llead">Every plan starts gentle. Change it whenever you like.</p></Reveal>
-        <Reveal className="lgoals">{PLANS.map((g) => <span key={g}>{g}</span>)}</Reveal>
+        <Reveal><PlanPicker /></Reveal>
       </section>
 
       <section className="lsec lend">
@@ -259,7 +279,7 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
           <StoreLinks />
         </Reveal>
         <p className="ldisc">Not medical advice. Check with your doctor before starting a new exercise program.</p>
-        <a className="lpriv" href="/privacypolicy.html">Privacy policy</a>
+        <a className="lpriv" href="/privacypolicy.html" onClick={(e) => { e.preventDefault(); openSheet({ kind: "privacy" }); }}>Privacy policy</a>
       </section>
       </>}
     </div>

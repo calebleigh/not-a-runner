@@ -21,6 +21,7 @@ export type SheetSpec =
   | { kind: "todos"; which: "later" | "done" }
   | { kind: "notes" }
   | { kind: "streak" }
+  | { kind: "privacy" }
   | { kind: "update" }
   | { kind: "health" }
   | { kind: "account" }
