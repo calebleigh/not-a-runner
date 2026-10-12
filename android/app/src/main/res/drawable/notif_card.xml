@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The workout notification's orange card (the app's accent gradient). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="315" android:startColor="#FF8A3D" android:endColor="#E5540A" />
+    <corners android:radius="16dp" />
+</shape>
