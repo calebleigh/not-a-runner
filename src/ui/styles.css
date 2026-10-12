@@ -27,9 +27,10 @@
 *,*::before,*::after{box-sizing:border-box}
 html{overflow-y:scroll;scrollbar-gutter:stable;background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
-body.locked,body.tracking{overflow:hidden}
-/* Nothing behind an open sheet scrolls or shows a scrollbar. */
+/* Nothing behind an open sheet scrolls or shows a scrollbar. Locked on the page itself, not the body:
+   a body that clips becomes its own scroll box, and the pinned header would jump off screen. */
 html:has(body.locked),html:has(body.tracking){overflow:hidden}
+@supports not selector(:has(a)){body.locked,body.tracking{overflow:hidden}}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#3a3734;border-radius:min(8px,var(--rmax))}::-webkit-scrollbar-track{background:transparent}
 button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 button,input,summary{color:inherit}
