@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AccountSheetBody } from "../SyncSection";
-import { AUTO_PAUSE_CHOICES, MILESTONE_CHOICES, addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
+import { AUTO_PAUSE_CHOICES, MILESTONE_CHOICES, WALK_MINUTES, addDays, isRaceGoal, isWalkGoal, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
 import { TapLogo } from "../Splash";
 import { HealthSection } from "../HealthSection";
@@ -166,7 +166,8 @@ function AboutYou() {
   );
 }
 
-const GOAL_OPTIONS: [RaceGoal, string][] = [["5k", "5K"], ["10k", "10K"], ["half", "Half"], ["full", "Marathon"], ["fitness", "Fitness"]];
+const PLAN_OPTIONS: ["walk" | "walkmore" | "fitness" | "race", string][] = [["walk", "Daily walk"], ["walkmore", "Walk more"], ["fitness", "Get fit"], ["race", "Race"]];
+const RACE_OPTIONS: [RaceGoal, string][] = [["5k", "5K"], ["10k", "10K"], ["half", "Half"], ["full", "Marathon"]];
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -186,10 +187,12 @@ function YourPlan() {
   const set = (p: Partial<PlanProfile>) => setDraft((d) => ({ ...d, ...p }));
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
   const from = changeWeek(state, model.curWeek, model.rawWeek);
-  const isRace = draft.goal !== "fitness";
+  const isRace = isRaceGoal(draft.goal), walking = isWalkGoal(draft.goal);
+  const planKind = isRace ? "race" : (draft.goal as "walk" | "walkmore" | "fitness");
+  const pickPlan = (k: (typeof PLAN_OPTIONS)[number][0]) => set(k === "race" ? { goal: isRace ? draft.goal : "5k" } : { goal: k, ...(k === "walk" || k === "walkmore" ? { walkMin: draft.walkMin ?? 20 } : {}) });
   const maxRace = ymd(addDays(model.spec.start, 52 * 7 - 1)), minRace = ymd(addDays(model.today, 7));
   const raceOk = !isRace || (!!draft.raceDate && draft.raceDate >= minRace && draft.raceDate <= maxRace);
-  const daysOk = draft.days.length >= 3 && draft.days.length <= 6;
+  const daysOk = walking ? draft.days.length >= 1 : draft.days.length >= 3 && draft.days.length <= 6;
   const soon = dirty && raceOk ? tooSoon({ ...draft, startDate: saved.startDate }) : null;
   const toggleDay = (d: number) => setDraft((x) => ({ ...x, days: x.days.includes(d) ? x.days.filter((y) => y !== d) : [...x.days, d].sort((a, b) => a - b) }));
   const strengthOn = state.settings.strength !== false;
@@ -203,11 +206,20 @@ function YourPlan() {
       <div className="sechead"><h3 className="sectitle">Your plan</h3><span className="lbl">{model.spec.weeks} weeks</span></div>
       <section className="card group planform">
         <div className="setrow col">
-          <span>Goal</span>
-          <div className="seg goalseg" role="radiogroup" aria-label="Goal">
-            {GOAL_OPTIONS.map(([g, l]) => <button key={g} role="radio" aria-checked={draft.goal === g} className={draft.goal === g ? "sel" : ""} onClick={() => set({ goal: g })}>{l}</button>)}
+          <span>Plan<small>{walking ? "Walking only. No running, ever." : draft.goal === "fitness" ? "Biking and walking first, running eases in." : "Training for a race."}</small></span>
+          <div className="seg goalseg" role="radiogroup" aria-label="Plan">
+            {PLAN_OPTIONS.map(([k, l]) => <button key={k} role="radio" aria-checked={planKind === k} className={planKind === k ? "sel" : ""} onClick={() => pickPlan(k)}>{l}</button>)}
           </div>
+          {isRace && <div className="seg goalseg" role="radiogroup" aria-label="Race">
+            {RACE_OPTIONS.map(([g, l]) => <button key={g} role="radio" aria-checked={draft.goal === g} className={draft.goal === g ? "sel" : ""} onClick={() => set({ goal: g })}>{l}</button>)}
+          </div>}
         </div>
+        {walking && <div className="setrow col">
+          <span>{draft.goal === "walk" ? "Walk length" : "Walks start at"}<small>{draft.goal === "walk" ? "The same walk every time." : "They grow a little each week."}</small></span>
+          <div className="seg" role="radiogroup" aria-label="Walk length">
+            {WALK_MINUTES.map((m) => <button key={m} role="radio" aria-checked={(draft.walkMin ?? 20) === m} className={(draft.walkMin ?? 20) === m ? "sel" : ""} onClick={() => set({ walkMin: m })}>{m} min</button>)}
+          </div>
+        </div>}
         {isRace && <>
           <label className="setrow" htmlFor="raceName">
             <span>Race name<small>Shows on your Plan</small></span>
@@ -219,19 +231,21 @@ function YourPlan() {
           </label>
         </>}
         <div className="setrow col">
-          <span>Training days<small>{daysOk ? `${draft.days.length} days a week. Your longest session is on the last one.` : "Pick 3 to 6 days."}</small></span>
+          <span>{walking ? "Walk days" : "Training days"}<small>{!daysOk ? (walking ? "Pick at least one day." : "Pick 3 to 6.") : walking ? `${draft.days.length === 7 ? "Every day" : `${draft.days.length} ${draft.days.length === 1 ? "day" : "days"} a week`}.` : `${draft.days.length} days a week. Your longest session is on the last one.`}</small></span>
           <div className="daypick" role="group" aria-label="Training days">
             {DAY_LETTERS.map((l, d) => <button key={d} aria-pressed={draft.days.includes(d)} aria-label={["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][d]} className={draft.days.includes(d) ? "on" : ""} onClick={() => toggleDay(d)}>{l}</button>)}
           </div>
         </div>
-        <div className="setrow">
-          <span>I have a bike<small>Indoor or outdoor. Without one, rides become brisk walks.</small></span>
-          <Switch on={draft.hasBike} label="I have a bike" onChange={(v) => set({ hasBike: v })} />
-        </div>
-        <div className="setrow">
-          <span>Easy on the knees<small>Sore knees or joints: more time on the bike before running ramps up.</small></span>
-          <Switch on={draft.impactSensitive} label="Easy on the knees" onChange={(v) => set({ impactSensitive: v })} />
-        </div>
+        {!walking && <>
+          <div className="setrow">
+            <span>I have a bike<small>Indoor or outdoor. Without one, rides become brisk walks.</small></span>
+            <Switch on={draft.hasBike} label="I have a bike" onChange={(v) => set({ hasBike: v })} />
+          </div>
+          <div className="setrow">
+            <span>Easy on the knees<small>Sore knees or joints: more time on the bike before running ramps up.</small></span>
+            <Switch on={draft.impactSensitive} label="Easy on the knees" onChange={(v) => set({ impactSensitive: v })} />
+          </div>
+        </>}
         {soon && <TooSoonNote soon={soon} onDate={(v) => set({ raceDate: v })} onGoal={(g) => set({ goal: g })} />}
         {dirty && (
           <div className="plansave">

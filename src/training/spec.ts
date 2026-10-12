@@ -5,7 +5,16 @@
 import { GEAR, MILE_TESTS, milestones, phases, type GearItem, type Phase } from "./data";
 import type { State } from "./types";
 
-export type RaceGoal = "5k" | "10k" | "half" | "full" | "fitness";
+/**
+ * What the plan is for: a race, getting fit (bike and walking first, running eases in), or walking
+ * only: the same walk every day ("walk") or walks that grow slowly ("walkmore"). Walking plans never run.
+ */
+export type RaceGoal = "5k" | "10k" | "half" | "full" | "fitness" | "walk" | "walkmore";
+export type RaceDistance = "5k" | "10k" | "half" | "full";
+export const isRaceGoal = (g: RaceGoal): g is RaceDistance => g === "5k" || g === "10k" || g === "half" || g === "full";
+export const isWalkGoal = (g: RaceGoal) => g === "walk" || g === "walkmore";
+/** Walk lengths to pick from, in minutes. */
+export const WALK_MINUTES = [10, 15, 20, 30, 45] as const;
 export type StartLevel = "cant_run_mile" | "run_1_mile" | "run_3_miles" | "run_6_plus";
 
 /** The saved plan: the current answers, plus the answers earlier weeks were built from. */
@@ -28,6 +37,8 @@ export interface PlanProfile {
   hasBike: boolean;
   /** Sore knees or joints: leans on bike and walking longer. */
   impactSensitive: boolean;
+  /** Walking plans: the walk's length (a daily walk), or where it starts (walk more). Minutes. */
+  walkMin?: number;
 }
 
 /** The plan the app was built around. Existing data without a profile uses this. */
@@ -99,6 +110,8 @@ export const GOALS_INFO: Record<RaceGoal, { label: string; miles: number; peakLo
   half: { label: "Half marathon", miles: 13.1, peakLong: 11, shortScale: 1 },
   full: { label: "Marathon", miles: 26.2, peakLong: 20, shortScale: 1.15 },
   fitness: { label: "Fitness", miles: 0, peakLong: 6, shortScale: 1 },
+  walk: { label: "Daily walk", miles: 0, peakLong: 6, shortScale: 1 },
+  walkmore: { label: "Walk more", miles: 0, peakLong: 6, shortScale: 1 },
 };
 
 /**
@@ -106,14 +119,14 @@ export const GOALS_INFO: Record<RaceGoal, { label: string; miles: number; peakLo
  * people this app is for are starting from little or nothing. Shorter plans can still be built
  * (the user is warned); the volume governor keeps them from ramping too fast.
  */
-export const MIN_WEEKS: Record<Exclude<RaceGoal, "fitness">, Record<StartLevel, number>> = {
+export const MIN_WEEKS: Record<RaceDistance, Record<StartLevel, number>> = {
   "5k": { cant_run_mile: 10, run_1_mile: 8, run_3_miles: 6, run_6_plus: 4 },
   "10k": { cant_run_mile: 16, run_1_mile: 12, run_3_miles: 10, run_6_plus: 8 },
   half: { cant_run_mile: 30, run_1_mile: 22, run_3_miles: 16, run_6_plus: 12 },
   full: { cant_run_mile: 52, run_1_mile: 40, run_3_miles: 26, run_6_plus: 20 },
 };
-const RACE_GOALS: Exclude<RaceGoal, "fitness">[] = ["5k", "10k", "half", "full"];
-const goalName = (g: RaceGoal) => ({ "5k": "5K", "10k": "10K", half: "half marathon", full: "marathon", fitness: "fitness plan" })[g];
+const RACE_GOALS: RaceDistance[] = ["5k", "10k", "half", "full"];
+const goalName = (g: RaceGoal) => ({ "5k": "5K", "10k": "10K", half: "half marathon", full: "marathon", fitness: "fitness plan", walk: "daily walk", walkmore: "walking plan" })[g];
 
 export interface TooSoon {
   weeks: number;
@@ -127,7 +140,7 @@ export interface TooSoon {
 
 /** Whether a race is too soon to train for from this starting level. Null when it's fine. */
 export function tooSoon(profile: PlanProfile): TooSoon | null {
-  if (profile.goal === "fitness") return null;
+  if (!isRaceGoal(profile.goal)) return null;
   const race = parseYmd(profile.raceDate), start = parseYmd(profile.startDate);
   if (!race || !start) return null;
   const s = mondayOf(start);
@@ -170,7 +183,7 @@ function spread(from: number, to: number, count: number, weight: (c: number) => 
 
 export function buildSpec(profile: PlanProfile): PlanSpec {
   const g = GOALS_INFO[profile.goal];
-  const isRace = profile.goal !== "fitness";
+  const isRace = isRaceGoal(profile.goal), walking = isWalkGoal(profile.goal);
   const race = isRace ? parseYmd(profile.raceDate) : null;
   const warnings: string[] = [];
   let start = mondayOf(parseYmd(profile.startDate) ?? new Date());
@@ -186,9 +199,10 @@ export function buildSpec(profile: PlanProfile): PlanSpec {
   const offset = LEVEL_OFFSET[profile.startLevel];
   // Sore knees take the template at its own pace; otherwise the bike-heavy early phases go faster.
   const weight = (c: number) => (profile.impactSensitive ? 1 : c <= 13 ? 0.7 : c <= 26 ? 0.85 : 1);
-  const canon = race
-    ? [...spread(offset + 1, 49, weeks - 3, weight), 50, 51, 52]
-    : spread(offset + 1, 39, weeks, weight);
+  // Walking plans stay in the gentle first phase all year (it only sets how hard strength gets).
+  const canon = walking ? spread(1, 13, weeks, () => 1)
+    : race ? [...spread(offset + 1, 49, weeks - 3, weight), 50, 51, 52]
+      : spread(offset + 1, 39, weeks, weight);
 
   // Phase ranges in plan weeks.
   const plan = phases.map((p) => {
@@ -196,13 +210,15 @@ export function buildSpec(profile: PlanProfile): PlanSpec {
     return { ...p, from: ns.length ? ns[0] : 0, to: ns.length ? ns[ns.length - 1] : -1 };
   });
   // A mile test lands on the first plan week that reaches each template test week.
-  const mileTests = MILE_TESTS.filter((t) => t > offset + 1).map((t) => canon.findIndex((c) => c >= t) + 1).filter((n, i, a) => n > 0 && a.indexOf(n) === i);
+  const mileTests = walking ? [] : MILE_TESTS.filter((t) => t > offset + 1).map((t) => canon.findIndex((c) => c >= t) + 1).filter((n, i, a) => n > 0 && a.indexOf(n) === i);
 
   // Sessions: the template's five roles on the chosen days, the long one on the last day.
   const days = [...new Set(profile.days)].filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b);
   const raceDay = race ? (race.getDay() + 6) % 7 : -1;
   const slots = canon.map((c, i): Slot[] => {
     const n = i + 1;
+    // Walking: a walk on every chosen day, the last one the week's longer walk (for walk more).
+    if (walking) return days.map((d, j) => ({ d, role: j === days.length - 1 ? 4 : j % 4 }));
     if (race && n === weeks) {
       const before = days.filter((d) => d < raceDay);
       const roles = [0, 1, 2, 3, 4].slice(0, before.length);
@@ -221,12 +237,12 @@ export function buildSpec(profile: PlanProfile): PlanSpec {
     profile,
     start,
     race,
-    raceName: profile.raceName || (isRace ? `Your ${g.label}` : "Fitness"),
+    raceName: profile.raceName || (isRace ? `Your ${g.label}` : g.label),
     weeks,
     phases: plan,
     mileTests,
     raceDay,
-    milestones: owner ? milestones : genericMilestones(canon),
+    milestones: owner ? milestones : walking ? { 1: WEEK1_TIP } : genericMilestones(canon),
     canon,
     slots,
     longScale: g.peakLong / 11,
@@ -237,10 +253,12 @@ export function buildSpec(profile: PlanProfile): PlanSpec {
   };
 }
 
+const WEEK1_TIP = "This week: decide what time of day you'll train, and keep it the same.";
+
 /** Milestone tips for any plan, placed at the matching template weeks. */
 function genericMilestones(canon: number[]): Record<number, string> {
   const at: Record<number, string> = {
-    1: "This week: decide what time of day you'll train, and keep it the same.",
+    1: WEEK1_TIP,
     19: "Optional: find a local 5K and walk/run it just to see a finish line.",
     26: "This week: register for your race if you haven't yet.",
     44: "On your long session this week, test your race-day shoes, clothes and fuel.",

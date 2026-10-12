@@ -1,6 +1,7 @@
 import {
   LONGDAY, birthdayInfo, dateOf, isBirthdayOn, quoteForWeek, weekProgress, dayDoneFrac, phaseOf, phases,
   dayAt, whyForDay, todayList,
+  isWalkGoal,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -12,6 +13,7 @@ import { Grow, Num } from "../motion";
 
 export function Home() {
   const { model, state, openSheet, setTab, now } = useApp();
+  const walking = isWalkGoal(model.spec.profile.goal);
   const { curWeek, rawWeek, dow } = model;
   const wk = model.weeks[curWeek - 1];
   const name = (state.settings.name || "").trim();
@@ -46,13 +48,13 @@ export function Home() {
         <div className="top">
           <span className="lbl">This week</span>
           <span className="wkcounts">
-            <b>{prog.cardioDone} / {prog.cardioTotal} cardio</b>
+            <b>{prog.cardioDone} / {prog.cardioTotal} {walking ? "walks" : "cardio"}</b>
             {prog.strengthTotal > 0 && <small>{prog.strengthDone} / {prog.strengthTotal} strength</small>}
           </span>
         </div>
         <div className="meter">
           <Grow pct={pct} />
-          <div className="mtxt"><span className="num"><Num value={pct} /><span className="unit">%</span></span><em>{phases[phaseOf(model.spec, curWeek)].name}</em></div>
+          <div className="mtxt"><span className="num"><Num value={pct} /><span className="unit">%</span></span>{!walking && <em>{phases[phaseOf(model.spec, curWeek)].name}</em>}</div>
         </div>
         <div className="days7">
           {[0, 1, 2, 3, 4, 5, 6].map((d) => {

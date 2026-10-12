@@ -6,7 +6,8 @@ Rule-based. No AI. Pure function: `generatePlan(profile) -> Plan`. Same profile,
 
 | Field | Options |
 |---|---|
-| goal | `5k`, `10k`, `half`, `full`, `fitness` (no race) |
+| goal | `5k`, `10k`, `half`, `full`, `fitness` (no race), `walk` (the same walk every chosen day), `walkmore` (walks that grow about 3% a week to an hour, easier every 4th week). Walking plans never run, have no phases or mile tests, and allow 1 to 7 days. |
+| walkMin | walking plans: the walk's length, or where walk more starts (10 to 45 min) |
 | raceDate | date, required unless goal is `fitness` |
 | startLevel | `cant_run_mile`, `run_1_mile`, `run_3_miles`, `run_6_plus` |
 | daysPerWeek | 3 to 6 (prototype uses 5, weekdays) |

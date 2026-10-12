@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   DN, dateOf, dayGrade, isBirthdayOn, daysBetween, extrasFor, fmtShort, hms, monthGrid, phaseOf, phases, planMonths, sameDay, weekProgress,
   type CardioKind, type Day, type MonthCell,
+  isWalkGoal,
 } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
@@ -25,6 +26,7 @@ const STATUS: Record<Status, () => ReactNode> = {
 
 export function Plan() {
   const { model, state, openSheet } = useApp();
+  const walking = isWalkGoal(model.spec.profile.goal);
   const { curWeek, today } = model;
   const [planWeek, setPlanWeek] = useMirroredState("planWeek", curWeek);
   const [jump, setJump] = useState(0);
@@ -71,7 +73,7 @@ export function Plan() {
     <section className="view stack" aria-label="Plan">
       <div className="greet racehead">
         <div>
-          <div className="lbl">{race ? `Race day, ${race.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}` : `${model.spec.weeks}-week fitness plan`}</div>
+          <div className="lbl">{race ? `Race day, ${race.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}` : `${model.spec.weeks}-week ${walking ? "walking" : "fitness"} plan`}</div>
           <h2 className="racename">{model.spec.raceName}</h2>
         </div>
         <div className="countdown">
@@ -81,7 +83,8 @@ export function Plan() {
         </div>
       </div>
 
-      <section className="panelc phasep">
+      {/* Walking plans have no phases: they never build toward running. */}
+      {!walking && <section className="panelc phasep">
         <div className="top"><span className="lbl">Phase {ph + 1} of {phases.length}</span><b>{P.to - curWeek + 1} weeks left</b></div>
         <h3 className="phname">{P.name}</h3>
         <p className="phnote">{P.note}</p>
@@ -91,7 +94,7 @@ export function Plan() {
           ))}
         </div>
         <div className="phlabels">{phases.map((p, i) => <small key={p.name} className={i === ph ? "now" : ""}>{p.name}</small>)}</div>
-      </section>
+      </section>}
 
       <MonthCalendar planWeek={planWeek} onDay={(c) => { setPlanWeek(c.w); openSheet({ kind: "day", w: c.w, d: c.d }); }}
         onToday={() => { setPlanWeek(curWeek); setJump((j) => j + 1); }} />
@@ -100,9 +103,9 @@ export function Plan() {
         <div className="col">
           <section className="panelc slist" aria-label="Sessions">
             <div className="slhead">
-              <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}, {phases[phaseOf(model.spec, planWeek)].name}</span></span>
+              <span className="lbl">{isCur ? "This week" : `Week ${planWeek}`}<span className="sub2">{fmtShort(w.s)} to {fmtShort(weekEnd)}{walking ? "" : `, ${phases[phaseOf(model.spec, planWeek)].name}`}</span></span>
               <span className="wkcounts">
-                <b>{prog.cardioDone} / {prog.cardioTotal} cardio</b>
+                <b>{prog.cardioDone} / {prog.cardioTotal} {walking ? "walks" : "cardio"}</b>
                 {prog.strengthTotal > 0 && <small>{prog.strengthDone} / {prog.strengthTotal} strength</small>}
               </span>
             </div>

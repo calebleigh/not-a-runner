@@ -33,9 +33,27 @@ export const slotOf = (spec: PlanSpec, n: number, d: number): Slot | undefined =
 export function cardio(spec: PlanSpec, n: number, d: number, s: number, bs: number): Cardio | undefined {
   const slot = slotOf(spec, n, d);
   if (!slot) return undefined;
+  if (spec.profile.goal === "walk" || spec.profile.goal === "walkmore") return walkCardio(spec, n, slot.role, s);
   const first = spec.slots[n - 1][0].d === d;
   const c = templateCardio(spec, spec.canon[n - 1], slot.role, spec.mileTests.includes(n) && first, s, bs, runScales(spec)[n - 1]);
   return c && !spec.profile.hasBike && c.kind === "bike" ? noBike(c) : c;
+}
+
+/**
+ * Walking plans. A daily walk is the same walk every day. Walk more starts at your length and grows
+ * about 3% a week to an hour (the week's longer walk, half again, to 90 minutes), with an easier
+ * week every fourth; how sessions feel nudges it like any other plan.
+ */
+function walkCardio(spec: PlanSpec, n: number, role: number, s: number): Cardio {
+  const base = spec.profile.walkMin ?? 20;
+  if (spec.profile.goal === "walk") return { t: `Walk ${base} min`, d: "Easy pace. You can talk the whole time.", m: base, kind: "walk" };
+  const cut = n % 4 === 0;
+  const m = r5(Math.min(Math.max(60, base), base * Math.pow(1.03, n - 1)) * (cut ? 0.85 : 1) * (1 + 0.1 * s));
+  if (role === 4) {
+    const L = r5(Math.min(90, m * 1.5));
+    return { t: `Long walk ${L} min`, d: cut ? "Easier week. Enjoy it." : "Your longer walk of the week. Bring water.", m: L, kind: "walk" };
+  }
+  return { t: `Walk ${m} min`, d: cut ? "Easier week. Keep it relaxed." : "Brisk but comfortable.", m, kind: "walk" };
 }
 
 /** Without a bike, bike sessions become brisk walks of the same length. */

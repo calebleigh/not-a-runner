@@ -62,5 +62,10 @@ export function whyForDay(settings: Settings, today: Date): string | null {
   return formatWhy(list[day % list.length]);
 }
 
-/** Suggested reasons, offered in onboarding and Settings. */
-export const WHY_IDEAS = ["Finish my first race", "Lose weight", "Keep up with my kids", "Feel better day to day", "Prove I can"];
+/** Suggested reasons (what people want out of it), offered in onboarding and Settings. Kid-friendly too. */
+export const WHY_IDEAS = [
+  "Walk more", "Move every day", "Feel better", "Get outside", "More energy", "Sleep better", "Feel less stressed",
+  "Keep up with my kids", "Play with my grandkids", "Walk the dog more", "Time with family", "Keep up with my friends",
+  "Get better at sports", "Get stronger", "Lose weight", "Get back in shape", "Stay active as I age", "Prove I can",
+  "Run my first 5K", "Train for a race",
+];
