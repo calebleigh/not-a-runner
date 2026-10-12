@@ -9,6 +9,7 @@ import { Icon } from "../icons";
 import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Preset, type Shape } from "../theme";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 import { APP_VERSION, IS_NATIVE } from "../apk";
+import { trackLogText } from "../trackLog";
 
 const HOWTO: [string, string][] = [
   ["Every weekday", "Cardio and strength. The Home screen shows today's session; the Plan tab shows the whole year and your gear list. Weekends are rest or a make-up day."],
@@ -249,6 +250,22 @@ function YourPlan() {
   );
 }
 
+/** Copies the tracker's log (steps, checks, pauses and why), to send when a workout acts up. */
+function TrackLogRow() {
+  const { toast } = useApp();
+  const copy = async () => {
+    const text = trackLogText();
+    if (!text) { toast("Nothing tracked yet."); return; }
+    try { await navigator.clipboard.writeText(text); toast("Tracking log copied. Paste it in a message."); } catch { toast("Couldn't copy the log."); }
+  };
+  return (
+    <div className="setrow">
+      <span>Tracking log<small>What auto-pause saw on recent workouts. Copy it to send for help.</small></span>
+      <button className="chip" onClick={copy}>Copy</button>
+    </div>
+  );
+}
+
 export function Settings() {
   const { openSheet } = useApp();
   return (
@@ -275,6 +292,7 @@ export function Settings() {
           <span>Backup<small>Saved on this phone. Export a copy now and then.</small></span>
           <span className="btnpair"><button className="chip" onClick={() => openSheet({ kind: "export" })}>Export</button><button className="chip" onClick={() => openSheet({ kind: "import" })}>Import</button></span>
         </div>
+        <TrackLogRow />
         <VersionRow />
       </section>
       </div>

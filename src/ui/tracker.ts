@@ -8,6 +8,7 @@ import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../tra
 import { addFix, newTrack, pause, resume, trackStats, type Fix, type Track, type TrackKind } from "../training/track";
 import { AUTO_PAUSE_DEFAULT, autoPauseDue, autoPauseWake, gpsMoving, keepRecent, keepSteps, stepsMoving, type StepMark } from "../training/autopause";
 import { hideNotice, liveInBackground, onNoticeAction, onNoticeTick, showNotice } from "../native/workoutNotice";
+import { logTrack } from "./trackLog";
 
 /** Where a finished workout gets saved: a planned session, or an extra activity for today. */
 export interface TrackTarget { w: number; d: number; title: string; /** The session's instructions (for intervals). */ instructions?: string }
@@ -105,9 +106,18 @@ function notice() {
     ...themeColors(),
   });
 }
-onNoticeAction((action) => { if (action === "pause") pauseTracking(); else if (action === "resume") resumeTracking(); });
+onNoticeAction((action) => { logTrack(`notification ${action}`); if (action === "pause") pauseTracking(); else if (action === "resume") resumeTracking(); });
 // The app's own timers crawl in a pocket, so on Android a native tick keeps these on time.
-onNoticeTick(() => { checkAutoPause(); checkCue(); notice(); });
+onNoticeTick(() => { tick("native"); checkAutoPause(); checkCue(); notice(); });
+
+// Notes in the log when the once-a-second check went quiet (the app was asleep), since auto-pause
+// can only start on a check.
+let lastTick = 0;
+function tick(from: string) {
+  const now = Date.now();
+  if (lastTick && now - lastTick > 3000 && active?.status === "recording") logTrack(`no check for ${Math.round((now - lastTick) / 1000)}s (${from})`);
+  lastTick = now;
+}
 
 // Auto-pause setting (seconds; 0 is off).
 export function autoPausePref(): number {
@@ -133,6 +143,7 @@ function checkAutoPause(moved = false) {
     // Moving the whole time: the pause was a mistake, so it's erased and the clock catches up.
     const track = wake === "erase" ? { ...a.track, pausedAt: null } : resume(a.track, now);
     set({ ...a, status: "recording", autoPaused: false, apFrom: undefined, lastMoveAt: now, track });
+    logTrack(`auto-resume (${wake}) after ${Math.round((now - a.track.pausedAt) / 1000)}s, ${a.steps - from.steps} steps`);
     cue("Resumed", { voice: false });
     return;
   }
@@ -141,6 +152,7 @@ function checkAutoPause(moved = false) {
   if (!autoPauseDue({ now, lastMoveAt: a.lastMoveAt ?? a.track.startedAt, secs: a.track.autoPause, kind: a.kind, indoor: a.mode === "indoor", background })) return;
   // The clock stops now, not back when you stopped, so it never jumps backward.
   set({ ...a, status: "paused", autoPaused: true, apFrom: { steps: a.steps, distM: a.track.distM }, track: pause(a.track, now) });
+  logTrack(`auto-pause, ${Math.round((now - (a.lastMoveAt ?? a.track.startedAt)) / 1000)}s since moving, ${a.steps} steps`);
   cue("Paused", { voice: false });
 }
 // Back on the website the step count catches up; give it a moment before judging you stopped.
@@ -187,6 +199,7 @@ export function setSimulate(simulate: boolean) { if (active?.status === "ready")
 export async function startTracking() {
   if (!active || active.status !== "ready") return;
   const now = Date.now(), ap = canAutoPause(active) ? autoPausePref() : 0;
+  logTrack(`start ${active.kind} ${active.mode}, auto-pause ${ap ? `${ap}s` : "off"}`);
   set({ ...active, status: "recording", track: { ...newTrack(active.kind, now), ...(ap ? { autoPause: ap } : {}) }, lastMoveAt: now, autoPaused: false, error: null });
   await startFeed();
 }
@@ -206,6 +219,7 @@ async function startFeed() {
       // Walking is a few steps in a few seconds; a stray one while standing doesn't count as moving.
       const steps = active.stepBase + n, stepLog = keepSteps(active.stepLog, { t: Date.now(), n: steps });
       const moved = steps > active.steps && stepsMoving(stepLog);
+      if (steps !== active.steps) logTrack(`steps ${steps} (+${steps - active.steps})${moved ? " moving" : ""}${active.status === "paused" ? " while auto-paused" : ""}`);
       set({ ...active, steps, stepLog, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
       if (moved) checkAutoPause(true);
     });
@@ -225,6 +239,7 @@ async function startFeed() {
       const recent = f.acc != null && f.acc > 30 ? active.recent ?? [] : keepRecent(active.recent, f);
       const bySteps = !!stepFeed && active.steps > 0;
       const moved = !bySteps && gpsMoving(recent, active.kind);
+      if (moved && Date.now() - (active.lastMoveAt ?? 0) > 5000) logTrack(`GPS moving${active.status === "paused" ? " while auto-paused" : ""}`);
       set({ ...active, track, recent, lastFixAt: Date.now(), error: null, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
       checkAutoPause(moved);
       checkCue();
@@ -237,7 +252,7 @@ async function startFeed() {
 function startClock() {
   keepAwake(true);
   clearInterval(cueTimer);
-  cueTimer = window.setInterval(() => { checkAutoPause(); checkCue(); notice(); }, 1000);
+  cueTimer = window.setInterval(() => { tick("app"); checkAutoPause(); checkCue(); notice(); }, 1000);
   checkCue();
 }
 
@@ -246,10 +261,12 @@ export function minimizeTracker() { if (active?.status === "recording" || active
 export function expandTracker() { if (active?.min) set({ ...active, min: false }); }
 
 export function pauseTracking() {
+  if (active?.status === "recording") logTrack("pause tapped");
   if (active?.status !== "recording" || !active.track) return;
   set({ ...active, status: "paused", autoPaused: false, apFrom: undefined, track: pause(active.track, Date.now()) });
 }
 export function resumeTracking() {
+  if (active?.status === "paused") logTrack(`resume tapped${active.autoPaused ? " (was auto-paused)" : ""}`);
   if (active?.status !== "paused" || !active.track) return;
   set({ ...active, status: "recording", autoPaused: false, apFrom: undefined, lastMoveAt: Date.now(), track: resume(active.track, Date.now()) });
 }
@@ -258,6 +275,7 @@ export function resumeTracking() {
 export async function finishTracking() {
   if (!active?.track || (active.status !== "recording" && active.status !== "paused")) return;
   const now = Date.now(), track = active.track;
+  logTrack(`finish, ${active.steps} steps`);
   // A pause running at the finish counts as paused time, so close it at the finish.
   set({ ...active, status: "done", min: false, track: track.pausedAt != null ? resume(track, now) : track, finishedAt: now });
   await feed?.stop();
@@ -281,6 +299,7 @@ export async function closeTracker() {
 
 /** If the app was closed while recording, pick the GPS back up. */
 export function resumeAfterReload() {
+  if (active && (active.status === "recording" || active.status === "paused") && !feed) logTrack(`app reopened, ${active.status}`);
   if (active && (active.status === "recording" || active.status === "paused") && !feed) startFeed();
 }
 

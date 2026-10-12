@@ -46,4 +46,26 @@ describe("auto-pause, indoors on steps", () => {
     }
     await T.closeTracker();
   });
+
+  it("pauses again after you tap Resume and keep standing", async () => {
+    const T = await import("./tracker");
+    T.openTracker("walk", null);
+    await T.startTracking();
+    let n = 0;
+    for (let i = 0; i < 30; i++) { n += 2; onSteps!(n); await vi.advanceTimersByTimeAsync(1000); }
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(now()).toMatchObject({ status: "paused", autoPaused: true });
+    for (let round = 1; round <= 3; round++) {
+      T.resumeTracking();
+      expect(now(), `resumed ${round}`).toMatchObject({ status: "recording" });
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(now(), `stood after resume ${round}`).toMatchObject({ status: "paused", autoPaused: true });
+    }
+    // The log (Settings, Tracking log) tells the story.
+    const log = JSON.parse(store.get("trackLog") ?? "[]") as string[];
+    expect(log.some((l) => l.includes("start walk indoor, auto-pause 15s"))).toBe(true);
+    expect(log.filter((l) => l.includes("resume tapped (was auto-paused)")).length).toBe(3);
+    expect(log.filter((l) => / auto-pause, \d+s since moving/.test(l)).length).toBeGreaterThanOrEqual(4);
+    await T.closeTracker();
+  });
 });
