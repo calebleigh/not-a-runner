@@ -17,6 +17,16 @@ describe("to-do list", () => {
     expect(later.every((g) => g.gear!.week > 5)).toBe(true);
   });
 
+  it("leaves out gear you removed", () => {
+    const s = emptyState();
+    s.settings.gearHidden = ["helmet", "fitband"];
+    const { now, later, done } = todoLists(computeModel(s, WEEK3));
+    const keys = [...now, ...later, ...done].map((x) => x.key);
+    expect(keys).not.toContain("g:helmet");
+    expect(keys).not.toContain("g:fitband");
+    expect(keys).toContain("g:bottle");
+  });
+
   it("moves checked items to done, newest first, with owned gear", () => {
     const s = emptyState();
     s.todos.a = { text: "PT visit", at: 1, done: 50 };

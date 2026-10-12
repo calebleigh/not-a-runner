@@ -5,10 +5,31 @@ import { useApp } from "./app-state";
 import { ConfirmButton } from "./cards";
 import { Icon } from "./icons";
 
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 function Row({ it, full }: { it: TodoItem; full: boolean }) {
   const { update } = useApp();
   const [why, setWhy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const id = it.key.slice(2), g = it.gear;
+  /** Suggested gear comes off the list; your own items are deleted. */
+  const remove = () => update((s) => {
+    if (g) s.settings.gearHidden = [...new Set([...(s.settings.gearHidden ?? []), g.k])];
+    else delete s.todos[id];
+  });
+  /** Saves an edit. Edited gear becomes your own item (with the same due date) in its place. */
+  const save = (text: string, due: string) => update((s) => {
+    if (g) {
+      s.settings.gearHidden = [...new Set([...(s.settings.gearHidden ?? []), g.k])];
+      s.todos[newId()] = { text, at: Date.now(), ...(due ? { due } : {}) };
+      return;
+    }
+    const t = s.todos[id];
+    if (!t) return;
+    t.text = text;
+    if (due) t.due = due; else delete t.due;
+  });
+  if (editing) return <div className="gitem"><EditRow text={it.text} due={it.due ? ymd(it.due) : ""} onSave={(t, d) => { save(t, d); setEditing(false); }} onCancel={() => setEditing(false)} /></div>;
   const toggle = (on: boolean) => update((s) => {
     if (g) { if (on) s.gear[g.k] = 1; else delete s.gear[g.k]; return; }
     const t = s.todos[id];
@@ -26,10 +47,30 @@ function Row({ it, full }: { it: TodoItem; full: boolean }) {
         <span className="gt"><b>{it.text}</b>{g && <small>{g.need ? "Gear you need" : "Helpful gear"}, {g.cost}</small>}</span>
         {due && <span className="due">{due}</span>}
         {full && g && <button className="ibtn" aria-label={`Why ${it.text}`} aria-expanded={why} onClick={() => setWhy(!why)}>i</button>}
-        {full && !g && <ConfirmButton className="tdel" label="×" confirmLabel="Delete" onConfirm={() => update((s) => { delete s.todos[id]; })} />}
+        {full && <button className="tdel tedit" aria-label={`Edit ${it.text}`} onClick={() => setEditing(true)}><Icon.pencil /></button>}
+        {full && <ConfirmButton className="tdel" label="×" confirmLabel={g ? "Remove" : "Delete"} onConfirm={remove} />}
       </div>
       {why && g && <div className="gwhy">{g.why}{g.mp ? " Facebook Marketplace is fine for this one." : ""}</div>}
     </div>
+  );
+}
+
+/** A to-do being edited: its text and due date, in place. */
+function EditRow({ text, due, onSave, onCancel }: { text: string; due: string; onSave: (text: string, due: string) => void; onCancel: () => void }) {
+  const [t, setT] = useState(text), [d, setD] = useState(due);
+  return (
+    <form className="todoadd todoedit" onSubmit={(e) => { e.preventDefault(); if (t.trim()) onSave(t.trim(), d); }}>
+      <input className="txtin todotext" maxLength={80} aria-label="To-do" value={t} autoFocus onChange={(e) => setT(e.target.value)} />
+      <label className="tododue">
+        <span>Due</span>
+        <input className="txtin" type="date" aria-label="Due date (optional)" value={d} onChange={(e) => setD(e.target.value)} />
+        {d && <button type="button" className="clrdate" aria-label="Clear due date" onClick={() => setD("")}>&times;</button>}
+      </label>
+      <span className="btnpair">
+        <button className="chip" type="button" onClick={onCancel}>Cancel</button>
+        <button className="chip" type="submit" disabled={!t.trim()}>Save</button>
+      </span>
+    </form>
   );
 }
 

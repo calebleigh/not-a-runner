@@ -72,6 +72,8 @@ export interface Settings {
   stepGoal?: number;
   /** Optional daily active minutes goal (everything logged that day counts). */
   activeGoal?: number;
+  /** Suggested gear taken off the to-do list (gear keys). */
+  gearHidden?: string[];
   /** Missing means dark. */
   mode?: "light" | "system";
 }

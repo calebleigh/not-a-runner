@@ -695,6 +695,9 @@ input[type="date"].txtin{width:150px}
 .todoadd .chip{flex:none}
 .todop .more{padding:12px 16px 8px;text-align:left}
 .tdel{flex:none;min-width:30px;height:30px;padding:0 8px;border-radius:var(--rc);border:1px solid var(--line);background:none;color:var(--muted);font:700 15px var(--body);cursor:pointer}
+.tedit{display:grid;place-items:center;padding:0}
+.tedit svg{width:15px;height:15px}
+.todoedit{padding:10px 0;border-bottom:0}
 .tdel.confirm{background:var(--bad);border-color:var(--bad);color:#fff;font-size:13px}
 /* Landscape Home: both columns always end together. The last card in each fills the gap. */
 @media (min-width:900px){

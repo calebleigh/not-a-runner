@@ -28,7 +28,8 @@ export interface TodoLists {
 
 export function todoLists(model: Model): TodoLists {
   const { state, spec, curWeek, today } = model;
-  const gear = gearFor(spec).map((g): TodoItem => {
+  const hidden = new Set(state.settings.gearHidden ?? []);
+  const gear = gearFor(spec).filter((g) => !hidden.has(g.k)).map((g): TodoItem => {
     const done = !!state.gear[g.k];
     const status = done ? "none" : g.week < curWeek ? "overdue" : g.week === curWeek ? "due" : g.week <= curWeek + 2 ? "soon" : "later";
     return { key: `g:${g.k}`, kind: "gear", text: g.name, done, gear: g, due: addDays(spec.start, (g.week - 1) * 7), status };

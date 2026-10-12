@@ -26,7 +26,7 @@ export const GEAR: GearItem[] = [
   {k:"tuneup",name:"Bike tune-up",wk:1,need:true,cost:"$0 to $60",why:"Air in the tires, oil the chain, set seat height so your knee is almost straight at the bottom. Wrong seat height is a top cause of knee pain."},
   {k:"bottle",name:"Water bottle",wk:1,need:true,cost:"$0 to $10",why:"St. George is dry. Drink before, during and after."},
   {k:"lights",name:"Bike lights, front and rear",wk:3,need:true,cost:"$15 to $25",why:"Winter mornings and evenings are dark."},
-  {k:"fitband",name:"Galaxy Fit3 heart rate band",wk:6,need:false,cost:"about $50",why:"Shows heart rate on your wrist so easy days stay easy. Pairs with Samsung Health. Log your average heart rate with each session."},
+  {k:"fitband",name:"Fitness tracker or heart rate band",wk:6,need:false,cost:"about $50 and up",why:"Shows heart rate on your wrist so easy days stay easy. Any band or watch that syncs with Health Connect works. Log your average heart rate with each session."},
   {k:"mat",name:"Exercise mat",wk:2,need:false,cost:"$10 to $20",why:"Makes floor work comfortable. Marketplace is fine.",mp:true},
   {k:"bands",name:"Resistance band set with door anchor",wk:8,need:false,cost:"$15 to $25",why:"Unlocks band rows, pull-aparts and banded bridges. Best value upgrade for your back and hips.",mp:true},
   {k:"shoes",name:"Running shoes, fitted at a running store",wk:12,need:true,cost:"$100 to $150",why:"Required before walk/run starts. Ask for cushioned and stable. Buy new, not used."},

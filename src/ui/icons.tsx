@@ -77,5 +77,6 @@ export const Icon = {
     </svg>
   ),
   bigPlus: () => <svg viewBox="0 0 24 24" width="24" height="24" {...S} strokeWidth={2.8} aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>,
+  pencil: () => <svg viewBox="0 0 24 24" {...S} aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" /></svg>,
   box: () => <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" style={{ stroke: "var(--on-accent)" }} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 };
