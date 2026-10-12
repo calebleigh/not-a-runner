@@ -9,7 +9,7 @@ import { Icon } from "./icons";
 import { RouteMapView } from "./RouteMap";
 import { trackKindFor } from "./trackFor";
 import {
-  autoPausePref, closeTracker, finishTracking, setAutoPause, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
+  autoPausePref, closeTracker, expandTracker, finishTracking, minimizeTracker, setAutoPause, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
 
 const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Run"], ["bike", "Bike"]];
@@ -24,8 +24,10 @@ export function TrackerScreen() {
   // Distance typed on the summary (e.g. from a treadmill); empty means use the measured one.
   const [typed, setTyped] = useState("");
 
-  // The page behind the tracker stays still while it's open.
-  const open = !!t;
+  // The page behind the tracker stays still while it's open (not while it's tucked in the bar).
+  const live = t?.status === "recording" || t?.status === "paused";
+  const mini = !!t?.min && live;
+  const open = !!t && !mini;
   useEffect(() => {
     document.body.classList.toggle("tracking", open);
     return () => document.body.classList.remove("tracking");
@@ -33,14 +35,16 @@ export function TrackerScreen() {
 
   // The clock moves every second while recording; GPS fixes don't arrive on a beat.
   useEffect(() => {
-    if (t?.status !== "recording" && t?.status !== "paused") return;
+    if (!live) return;
     const id = window.setInterval(() => tick((n) => n + 1), 1000);
     return () => clearInterval(id);
-  }, [t?.status]);
+  }, [live]);
+  useEffect(() => { document.body.classList.toggle("has-mini", mini); return () => document.body.classList.remove("has-mini"); }, [mini]);
   useEffect(() => { resumeAfterReload(); }, []);
   useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setTyped(""); } }, [t?.status]);
 
   if (!t) return null;
+  if (mini) return <MiniTracker />;
   const day = t.target ? dayAt(model, t.target.w, t.target.d) : undefined;
   const already = !!day && !!state.done[day.ids[0]];
   const planned = t.target ? effKind(state, t.target.w, t.target.d) : null;
@@ -54,9 +58,9 @@ export function TrackerScreen() {
   const waiting = !indoor && t.status === "recording" && !t.simulate && (!t.lastFixAt || Date.now() - t.lastFixAt > 15_000);
   const typedMiles = typed.trim() === "" ? undefined : Math.max(0, parseFloat(typed) || 0);
   const extras = { indoor, steps: t.steps, miles: typedMiles };
-  const live = t.track ? trackResult(state, t.track, now, { indoor, steps: t.steps }) : null;
+  const liveRes = t.track ? trackResult(state, t.track, now, { indoor, steps: t.steps }) : null;
   // Indoors, the numbers come from steps (or just time); outdoors, from GPS.
-  const miles = indoor ? live?.dist ?? 0 : s?.miles ?? 0;
+  const miles = indoor ? liveRes?.dist ?? 0 : s?.miles ?? 0;
   const paceS = indoor ? (miles >= 0.05 && s ? Math.round(s.elapsedS / miles) : null) : s?.paceS ?? null;
   const mph = indoor ? (s && s.elapsedS ? miles / (s.elapsedS / 3600) : 0) : s?.mph ?? 0;
   const stride = strideFor(state, t.kind === "run" ? "run" : "walk");
@@ -78,6 +82,7 @@ export function TrackerScreen() {
           <h2>{where}</h2>
         </div>
         {t.status === "ready" && <button className="xbtn" aria-label="Close" onClick={() => closeTracker()}>&times;</button>}
+        {live && <button className="xbtn trk-min" aria-label="Use the app while recording" onClick={() => minimizeTracker()}><Icon.down /></button>}
       </div>
 
       {t.status === "ready" ? (
@@ -209,6 +214,32 @@ export function TrackerScreen() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/** A running workout tucked above the nav, like a music player's mini bar: tap it to open the tracker. */
+function MiniTracker() {
+  const t = useTracker();
+  const { state } = useApp();
+  if (!t?.track) return null;
+  const s = trackStats(t.track, Date.now());
+  const indoor = t.mode === "indoor", paused = t.status === "paused";
+  const miles = indoor ? trackResult(state, t.track, Date.now(), { indoor, steps: t.steps }).dist : s.miles;
+  const I = t.kind === "bike" ? Icon.bike : t.kind === "run" ? Icon.run : Icon.shoe;
+  const what = paused ? (t.autoPaused ? "Auto-paused" : "Paused") : t.kind === "bike" ? "Riding" : t.kind === "run" ? "Walk/run" : "Walking";
+  return (
+    <div className={"trk-mini " + t.status}>
+      <button className="trk-mini-open" aria-label="Open the workout tracker" onClick={() => expandTracker()}>
+        <span className="trk-mini-art"><I /></span>
+        <span className="trk-mini-txt">
+          <b className="num">{hms(s.elapsedS)}</b>
+          <small><span className={"trk-status " + t.status}>{what}</span> · {miles.toFixed(2)} mi{t.steps && t.kind !== "bike" ? ` · ${t.steps.toLocaleString("en-US")} steps` : ""}</small>
+        </span>
+      </button>
+      {paused
+        ? <button className="trk-mini-btn" aria-label="Resume" onClick={() => resumeTracking()}><Icon.play /></button>
+        : <button className="trk-mini-btn" aria-label="Pause" onClick={() => pauseTracking()}><Icon.pause /></button>}
     </div>
   );
 }

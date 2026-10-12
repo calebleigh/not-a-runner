@@ -44,6 +44,8 @@ export interface ActiveTrack {
   lastMoveAt?: number;
   /** Steps and meters when the auto-pause began, to tell a real stop from a late step count. */
   apFrom?: { steps: number; distM: number };
+  /** Tucked into the bar above the nav, so the rest of the app can be used. */
+  min?: boolean;
   /** The last 20 seconds of GPS fixes, to tell walking from GPS drift. */
   recent?: Fix[];
 }
@@ -142,7 +144,8 @@ export const useTracker = () => useSyncExternalStore((f) => { subs.add(f); retur
 
 /** Opens the tracker, ready to start. */
 export function openTracker(kind: TrackKind, target: TrackTarget | null, simulate = false) {
-  if (active && active.status !== "ready") return; // something is already being tracked
+  // Something is already being tracked: bring it back up instead.
+  if (active && active.status !== "ready") { if (active.min) expandTracker(); return; }
   set({ status: "ready", mode: modePref(), steps: 0, stepBase: 0, kind, target, track: null, simulate, error: null, lastFixAt: null, intervals: plansFor(kind, target), voice: voicePref(), cuedIndex: -1 });
 }
 
@@ -226,6 +229,10 @@ function startClock() {
   checkCue();
 }
 
+/** Shrinks a running workout to the bar above the nav, or opens it full screen again. */
+export function minimizeTracker() { if (active?.status === "recording" || active?.status === "paused") set({ ...active, min: true }); }
+export function expandTracker() { if (active?.min) set({ ...active, min: false }); }
+
 export function pauseTracking() {
   if (active?.status !== "recording" || !active.track) return;
   set({ ...active, status: "paused", autoPaused: false, apFrom: undefined, track: pause(active.track, Date.now()) });
@@ -240,7 +247,7 @@ export async function finishTracking() {
   if (!active?.track || (active.status !== "recording" && active.status !== "paused")) return;
   const now = Date.now(), track = active.track;
   // A pause running at the finish counts as paused time, so close it at the finish.
-  set({ ...active, status: "done", track: track.pausedAt != null ? resume(track, now) : track, finishedAt: now });
+  set({ ...active, status: "done", min: false, track: track.pausedAt != null ? resume(track, now) : track, finishedAt: now });
   await feed?.stop();
   feed = null;
   await stepFeed?.stop();

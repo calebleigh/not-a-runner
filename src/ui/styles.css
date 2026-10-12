@@ -1343,3 +1343,26 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .tdlstats small{font:700 10px/1.4 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .tdltags{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
 .tdltags span{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--muted)}
+
+/* A running workout tucked above the nav (like a music player's mini bar). Clears the big + button. */
+.trk-mini{position:fixed;left:10px;right:10px;bottom:calc(98px + var(--sab));z-index:14;max-width:540px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:8px;
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:min(18px,var(--rmax));box-shadow:0 12px 30px -10px rgba(0,0,0,.55)}
+.trk-mini.paused{border-left-color:var(--muted)}
+.trk-mini-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;color:var(--ink);text-align:left;padding:0;cursor:pointer}
+.trk-mini-art{flex:none;width:48px;height:48px;border-radius:min(12px,var(--rmax));display:grid;place-items:center;color:var(--accent);
+  background:radial-gradient(circle at 50% 50%,rgba(var(--accent-rgb),.32),rgba(var(--accent-rgb),.08) 60%,transparent 100%),var(--paper)}
+.trk-mini-art svg{width:30px;height:30px}
+.trk-mini-txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.trk-mini-txt b{font:800 24px/1 var(--display)}
+.trk-mini-txt small{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trk-mini-txt .trk-status{font-weight:700}
+.trk-mini-txt .trk-status::before{width:8px;height:8px}
+.trk-mini-btn{flex:none;width:48px;height:48px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;color:var(--on-accent);background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo))}
+.trk-mini-btn svg{width:22px;height:22px}
+body.has-mini .wrap{padding-bottom:calc(196px + var(--sab))}
+.trk-min{display:grid;place-items:center;color:var(--ink)}
+.trk-min svg{width:22px;height:22px}
+@media (min-width:700px){
+  .trk-mini{left:calc(var(--rail) + 16px);right:16px;bottom:calc(16px + var(--sab));max-width:560px}
+  body.has-mini .wrap{padding-bottom:110px}
+}
