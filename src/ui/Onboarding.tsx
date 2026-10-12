@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { DN, WALK_MINUTES, WHY_IDEAS as WANTS, addDays, buildSpec, fmtLong, isRaceGoal, isWalkGoal, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { LookControls } from "./LookControls";
 import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
 import { Welcome } from "./Landing";
@@ -129,7 +130,7 @@ export function Onboarding() {
   const soon = raceOk && profile ? tooSoon(profile) : null;
 
   const steps = [
-    "welcome", "you", "wants", "plan",
+    "welcome", "you", "look", "wants", "plan",
     ...(walking ? ["walk"] : plan === "race" ? ["race", "level", "date", "days", "body"] : ["level", "days", "body"]),
     ...(walking ? ["strength"] : []), "goals", "extras", "done",
   ] as const;
@@ -167,6 +168,11 @@ export function Onboarding() {
         <label className="onbfield">Birthday<input className="xt" type="date" max={ymd(model.today)} value={d.birthday} onChange={(e) => set({ birthday: e.target.value })} /></label>
       </>;
       cta = d.name.trim() || d.birthday ? "Next" : "Skip";
+      break;
+    case "look":
+      title = "Make it yours";
+      sub = "Pick a color and a style. The whole app changes as you tap. Switch anytime in Settings.";
+      body = <div className="card lookcard onblook"><LookControls /></div>;
       break;
     case "wants":
       title = "What do you want out of this?";
