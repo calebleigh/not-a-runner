@@ -1,7 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { computeModel, emptyState, todayDay, todayList, todayLogs } from "./index";
+import { computeModel, emptyState, todayDay, todayList, todayLogs, todayTotals } from "./index";
 
 const WEEK3 = new Date(2026, 9, 21); // Wed of week 3
+
+describe("today totals", () => {
+  it("adds up today's steps, miles, time and calories", () => {
+    const s = emptyState();
+    expect(todayTotals(computeModel(s, WEEK3))).toEqual({ steps: 0, miles: 0, secs: 0, cal: 0 });
+    const day = todayDay(computeModel(s, WEEK3))!;
+    s.done[day.ids[0]] = 1;
+    s.logs[day.ids[0]] = { dist: 2, time: 1500, at: 1 };
+    s.extras["3-2"] = [{ kind: "hike", dist: 1.25, time: 600 }];
+    s.extras["3-1"] = [{ kind: "hike", dist: 5, time: 6000 }]; // yesterday
+    s.steps["3-2"] = 9000;
+    const t = todayTotals(computeModel(s, WEEK3));
+    expect(t).toMatchObject({ steps: 9000, miles: 3.25, secs: 2100 });
+    expect(t.cal).toBeGreaterThan(0);
+  });
+});
 
 describe("today list", () => {
   it("lists today's session, steps and to-dos due, and counts what's done", () => {

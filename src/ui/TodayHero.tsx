@@ -10,7 +10,8 @@ function splitTitle(t: string) {
 }
 
 /** The orange card for today's cardio, shared by Home, Today and Plan. On Home it opens the Today tab. */
-export function TodayHero({ onTap }: { onTap?: () => void } = {}) {
+/** `sums: false` where the page already shows today's totals (Today), so the done card doesn't repeat them. */
+export function TodayHero({ onTap, sums = true }: { onTap?: () => void; sums?: boolean } = {}) {
   const { model, state, openSheet } = useApp();
   const { curWeek, rawWeek, todayIdx, today } = model;
   const wk = model.weeks[curWeek - 1];
@@ -51,12 +52,12 @@ export function TodayHero({ onTap }: { onTap?: () => void } = {}) {
     return (
       <button className="hero done tap" onClick={open}>
         <span className="lbl">Today, done</span>
-        {day.dist ? <div className="ht"><span className="nw"><Num value={day.dist} dec={1} /><small>mi today</small></span></div> : ht}
-        <div className="hstats">
+        {sums && day.dist ? <div className="ht"><span className="nw"><Num value={day.dist} dec={1} /><small>mi today</small></span></div> : ht}
+        {sums && <div className="hstats">
           {day.secs ? <div><div className="num">{hms(day.secs)}</div><div className="lbl">Moving</div></div> : null}
           {steps ? <div><div className="num">{kfmt(steps)}</div><div className="lbl">Steps</div></div> : null}
           {day.cal ? <div><div className="num"><Num value={day.cal} /></div><div className="lbl">Calories</div></div> : null}
-        </div>
+        </div>}
         <p>{planLine}</p>
         <span className="go"><Icon.check /></span>
       </button>

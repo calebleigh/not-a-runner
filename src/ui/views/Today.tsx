@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { statKind, todayDay, todayList, todayLogs, type TodayLog, type TodayTask } from "../../training";
+import { statKind, todayDay, todayList, todayLogs, todayTotals, type TodayLog, type TodayTask } from "../../training";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { Grow } from "../motion";
@@ -50,6 +50,12 @@ function LogCard({ x, onOpen }: { x: TodayLog; onOpen: () => void }) {
   );
 }
 
+/** Active time, short: "42m", "1h 05m". */
+const activeTime = (secs: number) => {
+  const m = Math.round(secs / 60);
+  return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+};
+
 /** Today: everything on for today, as a list to check off, and what's already done. */
 export function Today() {
   const { model, update, openSheet, now } = useApp();
@@ -57,6 +63,7 @@ export function Today() {
   const l = todayList(model);
   const todo = l.tasks.filter((t) => !t.done), checked = l.tasks.filter((t) => t.done && t.kind === "todo");
   const logs = todayLogs(model);
+  const sums = todayTotals(model);
   const pct = l.total ? Math.round((100 * l.done) / l.total) : 0;
 
   const openLog = (x: TodayLog) => {
@@ -92,7 +99,14 @@ export function Today() {
       </div>
       <div className="meter tdmeter"><Grow pct={pct} /></div>
 
-      <TodayHero />
+      <section className="panelc tdsums" aria-label="Today so far">
+        <div><span className="num">{sums.steps.toLocaleString("en-US")}</span><span className="lbl">Steps</span></div>
+        <div><span className="num">{sums.miles ? sums.miles.toFixed(sums.miles < 10 ? 2 : 1) : "0"}</span><span className="lbl">Miles</span></div>
+        <div><span className="num">{activeTime(sums.secs)}</span><span className="lbl">Active</span></div>
+        <div><span className="num">{sums.cal.toLocaleString("en-US")}</span><span className="lbl">Calories</span></div>
+      </section>
+
+      <TodayHero sums={false} />
 
       <section className="panelc slist tdlist" aria-label="To do today">
         <div className="slhead"><span className="lbl">To do</span><b>{todo.length ? `${todo.length} left` : "Nothing left"}</b></div>

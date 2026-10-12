@@ -1,5 +1,6 @@
 // The Today tab: what's on for today (session, strength, steps, weigh-in, to-dos due) and what's done.
 import { dayKey } from "./calendar";
+import { activities } from "./insights";
 import { FEEL, hms, kfmt } from "./format";
 import { todayDay } from "./model";
 import { EXTRA_KINDS, cardioCal, extraCal, extraKind, statKind } from "./stats";
@@ -85,6 +86,18 @@ export interface TodayLog {
 const KIND_LABEL = { walk: "Walk", run: "Run", bike: "Bike" } as const;
 const speed = (kind: string, time?: number, dist?: number) =>
   !time || !dist ? null : kind === "bike" ? { v: (dist / (time / 3600)).toFixed(1), u: "mph" } : { v: hms(time / dist), u: "/mi" };
+
+/** Today at a glance: steps, and the miles, active time and calories of everything done today. */
+export function todayTotals(model: Model): { steps: number; miles: number; secs: number; cal: number } {
+  const acts = activities(model).filter((a) => a.date.getTime() === model.today.getTime());
+  const sum = (f: (a: (typeof acts)[number]) => number) => acts.reduce((n, a) => n + f(a), 0);
+  return {
+    steps: model.state.steps[dayKey(model.spec, model.today)] || 0,
+    miles: Math.round(sum((a) => a.dist) * 100) / 100,
+    secs: sum((a) => a.secs),
+    cal: Math.round(sum((a) => a.cal)),
+  };
+}
 
 /** Everything logged today, one card each: the session, strength, extras, steps and the weigh-in. */
 export function todayLogs(model: Model): TodayLog[] {

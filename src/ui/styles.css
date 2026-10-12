@@ -89,6 +89,10 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 .hero.rest{background:repeating-linear-gradient(135deg,var(--surface2) 0 14px,var(--surface) 14px 28px);color:var(--ink);box-shadow:none;animation:none;border:1px solid var(--line)}
 .hero.rest .lbl,.hero.rest p{color:var(--muted)}
 .hstats{display:flex;gap:22px;margin-top:12px;padding-right:78px}
+.tdsums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:14px 16px}
+.tdsums>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tdsums .num{font-size:24px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tdsums .lbl{font-size:11px}
 .hstats .num{font-size:30px}
 .hstats .lbl{font-size:11px}
 
