@@ -166,7 +166,7 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
       body = <UpdateSheetBody />;
       break;
     case "streak":
-      title = "Weekly streak";
+      title = "Streak";
       body = <StreakSheetBody />;
       break;
     case "friends":

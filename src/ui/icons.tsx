@@ -1,6 +1,21 @@
 // Icon set from the prototype.
 const S = { fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
+/**
+ * The streak's flame in three layers, one per missed day you have left: it burns down from the
+ * outside in as training days go by without anything, and fills back up when you do something.
+ */
+export function StreakFlame({ level }: { level: number }) {
+  const f = "M12 22c4 0 7-2.7 7-6.8 0-4.2-3.3-6.6-4.2-10.2-2.4 1.5-3.6 3.6-3.4 6.2-1.3-.6-2.2-1.9-2.4-3.4C7 9.6 5 12.2 5 15.2 5 19.3 8 22 12 22z";
+  return (
+    <svg viewBox="0 0 24 24" className={"sflame l" + level} aria-hidden="true">
+      <path className="f3" d={f} />
+      <path className="f2" d={f} transform="translate(12 22) scale(.74) translate(-12 -22)" />
+      <path className="f1" d={f} transform="translate(12 22) scale(.48) translate(-12 -22)" />
+    </svg>
+  );
+}
+
 export const Icon = {
   play: () => <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>,
   check: () => <svg viewBox="0 0 24 24" {...S} strokeWidth={3} aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>,

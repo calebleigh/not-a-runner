@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { notifications, streakOf, type Note } from "../training";
 import { useApp } from "./app-state";
-import { Icon } from "./icons";
+import { Icon, StreakFlame } from "./icons";
 import { Logo } from "./Logo";
 
 import { unseenPokes, useFriends } from "./friendsStore";
@@ -52,8 +52,8 @@ export function AppHeader() {
       {/* The logo shows on phones; on wide screens the side rail already has it. */}
       <h1 className="apphead-title"><span className="apphead-logo"><Logo size={30} /></span>{tab === "home" ? "Not a Runner" : TITLES[tab]}</h1>
       <span className="apphead-acts">
-        <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Weekly streak: ${streak.current} ${streak.current === 1 ? "week" : "weeks"}`} onClick={() => openSheet({ kind: "streak" })}>
-          <Icon.flame /><b>{streak.current}</b>
+        <button className={"hicon streakbtn" + (lit ? " lit" : "")} aria-label={`Streak: ${streak.current} ${streak.current === 1 ? "day" : "days"}, ${streak.flames} of 3 flames`} onClick={() => openSheet({ kind: "streak" })}>
+          <StreakFlame level={streak.flames} /><b>{streak.current}</b>
         </button>
         <button className="hicon" aria-label={unseen ? `Notifications, ${unseen} new` : "Notifications"} onClick={() => { markSeen(notes.map((n) => n.key)); openSheet({ kind: "notes" }); }}>
           <Icon.bell />
@@ -99,30 +99,37 @@ export function NotesSheetBody() {
   );
 }
 
-/** The streak sheet: how many weeks in a row, this week's progress, and the rule. */
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The streak sheet: how many days, how many flames are left, the last week, and the rule. */
 export function StreakSheetBody() {
   const { model } = useApp();
-  const k = streakOf(model), left = Math.max(0, k.thisWeek.need - k.thisWeek.done);
+  const k = streakOf(model);
+  const now = !k.current ? "Log a workout or hit your step goal to start one."
+    : k.today ? "Today counts. Nice work."
+      : k.flames === 3 ? "Do something today to add it."
+        : k.flames === 2 ? "One training day missed. Do something to fill the flame back up."
+          : "Last flame. Do something today or it goes out.";
   return (
     <div className="streaksheet">
       <div className="streakbig">
-        <span className={"streakflame" + (k.current ? " lit" : "")}><Icon.flame /></span>
+        <span className={"streakflame" + (k.current ? " lit" : "")}><StreakFlame level={k.flames} /></span>
         <span className="num">{k.current}</span>
-        <span className="unit">{k.current === 1 ? "week" : "weeks"} in a row</span>
+        <span className="unit">{k.current === 1 ? "day" : "days"}</span>
       </div>
-      <p className="streaknow">{k.thisWeek.met ? "This week counts. Nice work." : k.thisWeek.need ? `${left} more ${left === 1 ? "session" : "sessions"} this week to keep it going.` : "Your streak starts with your first week."}</p>
-      <div className="streakweeks" aria-label="Recent weeks">
+      <p className="streaknow">{now}</p>
+      <div className="streakweeks days" aria-label="The last week">
         {k.recent.map((r) => (
-          <span key={r.week} className={(r.met ? "met" : "") + (r.current ? " now" : "")} title={`Week ${r.week}`}>
-            <i>{r.met && <Icon.flame />}</i><small>{r.current ? "Now" : `W${r.week}`}</small>
+          <span key={r.date.getTime()} className={(r.active ? "met" : r.rest ? "rest" : "") + (r.today ? " now" : "")}>
+            <i>{r.active && <Icon.flame />}</i><small>{r.today ? "Today" : WD[r.date.getDay()]}</small>
           </span>
         ))}
       </div>
       <div className="streakfacts">
-        <div><b>{k.best}</b><small>Best streak</small></div>
-        <div><b>{k.thisWeek.done}</b><small>Done this week, {k.thisWeek.need} needed</small></div>
+        <div><b>{k.best}</b><small>Best streak, days</small></div>
+        <div><b>{k.flames} of 3</b><small>Flames left</small></div>
       </div>
-      <p className="setnote">A week counts when you do most of your planned cardio, like 3 of 5. Rest days and the odd missed day never break it.</p>
+      <p className="setnote">A workout or your step goal keeps a day. Rest days never count against you. Each missed training day burns a flame; miss 3 in a row and it goes out. Doing something fills it right back up.</p>
     </div>
   );
 }

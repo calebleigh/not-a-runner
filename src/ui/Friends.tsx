@@ -215,7 +215,7 @@ export function FriendSheetBody({ uid }: { uid: string }) {
         </div>
       </div>
       <div className="frbigstreak">
-        <div><span className="num"><Icon.flame />{c.streak}</span><small>Week streak</small></div>
+        <div><span className="num"><Icon.flame />{c.streak}</span><small>Day streak</small></div>
         <div><span className="num">{c.best}</span><small>Best</small></div>
       </div>
       <section className={"frtoday " + s}>
@@ -277,7 +277,7 @@ export function InviteSheetBody({ code }: { code: string }) {
         <small>Friend invite</small>
         <div className="invbig">{name ? `${name} invited you` : "You're invited"}</div>
         <div className="invfoot">
-          <span>{streak > 0 ? <><Icon.flame /> {streak} week streak</> : "Streaks, pokes and a plan that eases you in."}</span>
+          <span>{streak > 0 ? <><Icon.flame /> {streak} day streak</> : "Streaks, pokes and a plan that eases you in."}</span>
           <span className="invjoin">Tap to join</span>
         </div>
       </div>

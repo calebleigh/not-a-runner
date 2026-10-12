@@ -1,45 +1,51 @@
-// Weekly streak: weeks in a row where most of the planned cardio got done. Weekly on purpose:
-// rest days are part of the plan, so a missed day never breaks it; only a mostly missed week does.
-import { weekProgress } from "./stats";
+// Day streak: days in a row of doing something, forgiving on purpose. Any workout (planned, extra or
+// strength) or hitting the step goal keeps a day. Rest days never count against you, and it takes 3
+// missed training days in a row to put it out. The flame shows how many of those are left, and doing
+// something brings it straight back to full.
+import { activities } from "./insights";
+import { addDays, dayKey, parseDayKey, sameDay } from "./calendar";
+import { dayAt } from "./model";
 import type { Model } from "./types";
 
-/** Share of a week's planned cardio that keeps the streak going (3 of 5, 2 of 3, 3 of 4). */
-export const STREAK_SHARE = 0.6;
+/** Missed training days in a row that put a streak out (also the flame's layers). */
+export const STREAK_GRACE = 3;
 
 export interface Streak {
-  /** Weeks in a row, ending with this week if it's already met, otherwise last week. */
+  /** Days from the streak's first active day to its latest one (rest and missed days in between count). */
   current: number;
   best: number;
-  /** This week: done so far, and how many it takes. */
-  thisWeek: { done: number; need: number; met: boolean };
-  /** The last few weeks, oldest first, for the little row of marks. */
-  recent: { week: number; met: boolean; current: boolean }[];
+  /** Flame layers left (0 is out): the full 3, less each training day missed since you last did something. */
+  flames: number;
+  /** Today already counts. */
+  today: boolean;
+  /** The last week, oldest first, for the little row of marks. */
+  recent: { date: Date; active: boolean; rest: boolean; today: boolean }[];
 }
 
+const DAY = 864e5;
+const span = (a: Date, b: Date) => Math.round((b.getTime() - a.getTime()) / DAY) + 1;
+
 export function streakOf(model: Model): Streak {
-  const { state, weeks, curWeek, rawWeek } = model;
-  const met = (n: number) => {
-    const w = weeks[n - 1];
-    if (!w) return false;
-    const p = weekProgress(state, w);
-    return p.cardioTotal > 0 && p.cardioDone >= Math.ceil(p.cardioTotal * STREAK_SHARE);
+  const { state, spec, today } = model;
+  const active = new Set(activities(model).map((a) => a.date.getTime()));
+  const goal = state.settings.stepGoal;
+  if (goal) for (const [k, v] of Object.entries(state.steps)) if (v >= goal) { const [w, d] = parseDayKey(k); active.add(addDays(spec.start, (w - 1) * 7 + d).getTime()); }
+  const isActive = (d: Date) => active.has(d.getTime());
+  const isRest = (d: Date) => {
+    const [w, n] = parseDayKey(dayKey(spec, d));
+    const day = w >= 1 && w <= spec.weeks ? dayAt(model, w, n) : undefined;
+    return !day || day.c.kind === "rest";
   };
-  const started = rawWeek >= 1;
-  const last = started ? Math.min(curWeek, weeks.length) : 0;
 
-  // This week counts once it's met; until then it can't break the streak.
-  let current = 0;
-  for (let n = met(last) ? last : last - 1; n >= 1 && met(n); n--) current++;
-
-  let best = 0, run = 0;
-  for (let n = 1; n <= last; n++) {
-    run = met(n) ? run + 1 : n === last ? run : 0;
-    best = Math.max(best, run);
+  let start: Date | null = null, last: Date | null = null, misses = 0, best = 0;
+  for (let d = spec.start; d <= today; d = addDays(d, 1)) {
+    if (isActive(d)) { start ??= d; last = d; misses = 0; continue; }
+    // Today is still open, so it can't count as a miss yet.
+    if (!start || sameDay(d, today) || isRest(d)) continue;
+    if (++misses >= STREAK_GRACE) { best = Math.max(best, span(start, last!)); start = last = null; misses = 0; }
   }
-
-  const p = last ? weekProgress(state, weeks[last - 1]) : { cardioDone: 0, cardioTotal: 0 };
-  const need = Math.ceil(p.cardioTotal * STREAK_SHARE);
+  const current = start && last ? span(start, last) : 0;
   const recent = [];
-  for (let n = Math.max(1, last - 7); n <= last; n++) recent.push({ week: n, met: met(n), current: n === last });
-  return { current, best: Math.max(best, current), thisWeek: { done: p.cardioDone, need, met: last > 0 && met(last) }, recent };
+  for (let i = 6; i >= 0; i--) { const d = addDays(today, -i); recent.push({ date: d, active: isActive(d), rest: isRest(d), today: i === 0 }); }
+  return { current, best: Math.max(best, current), flames: start ? STREAK_GRACE - misses : 0, today: isActive(today), recent };
 }
