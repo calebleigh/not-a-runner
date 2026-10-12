@@ -122,6 +122,7 @@ function notice() {
     cueMiles: cues.mi,
     cueMins: cues.min,
     cueSteps: cues.steps,
+    cuePause: !!cues.pause,
     ...themeColors(),
   });
 }
@@ -165,12 +166,12 @@ onNoticeAuto((d) => {
   if (d.state === "pause" && a.status === "recording") {
     logTrack(`auto-pause by the phone at ${at}, ${a.steps} steps`);
     set({ ...a, status: "paused", autoPaused: true, autoSeq: d.seq, apFrom: { steps: a.steps, distM: a.track.distM }, track: pause(a.track, d.at) });
-    if (fresh) cue("Paused", { voice: false });
+    if (fresh) pauseCue(a, true);
   } else if (d.state === "resume" && a.status === "paused" && a.autoPaused) {
     logTrack(`auto-resume by the phone at ${at} (${d.erase ? "erase" : "resume"}) after ${Math.round((d.pausedMs ?? 0) / 1000)}s, ${d.steps ?? 0} steps`);
     const track = d.erase ? { ...a.track, pausedAt: null } : resume(a.track, d.at);
     set({ ...a, status: "recording", autoPaused: false, apFrom: undefined, autoSeq: d.seq, lastMoveAt: d.at, track });
-    if (fresh) cue("Resumed", { voice: false });
+    if (fresh) pauseCue(a, false);
   } else {
     set({ ...a, autoSeq: d.seq }, false);
   }
@@ -191,7 +192,7 @@ function checkAutoPause(moved = false) {
     const track = wake === "erase" ? { ...a.track, pausedAt: null } : resume(a.track, now);
     set({ ...a, status: "recording", autoPaused: false, apFrom: undefined, lastMoveAt: now, track });
     logTrack(`auto-resume (${wake}) after ${Math.round((now - a.track.pausedAt) / 1000)}s, ${a.steps - from.steps} steps`);
-    cue("Resumed", { voice: false });
+    pauseCue(a, false);
     return;
   }
   if (a.status !== "recording") return;
@@ -200,7 +201,7 @@ function checkAutoPause(moved = false) {
   // The clock stops now, not back when you stopped, so it never jumps backward.
   set({ ...a, status: "paused", autoPaused: true, apFrom: { steps: a.steps, distM: a.track.distM }, track: pause(a.track, now) });
   logTrack(`auto-pause, ${Math.round((now - (a.lastMoveAt ?? a.track.startedAt)) / 1000)}s since moving, ${a.steps} steps`);
-  cue("Paused", { voice: false });
+  pauseCue(a, true);
 }
 // The log notes the screen locking or the app leaving sight (and coming back) during a workout.
 if (typeof document !== "undefined") {
@@ -247,9 +248,13 @@ export function setMilestonePrefs(p: Partial<MilestonePrefs>) {
 /** What gets spoken for this workout: nothing with voice off, no steps on a bike, no miles without a way to measure. */
 function cuesFor(a: ActiveTrack): MilestonePrefs {
   const p = milestonePrefs();
-  if (!a.voice) return { mi: 0, min: 0, steps: 0 };
+  if (!a.voice) return { mi: 0, min: 0, steps: 0, pause: 0 };
   const bike = a.kind === "bike";
-  return { mi: bike && a.mode === "indoor" ? 0 : p.mi, min: p.min, steps: bike ? 0 : p.steps };
+  return { mi: bike && a.mode === "indoor" ? 0 : p.mi, min: p.min, steps: bike ? 0 : p.steps, pause: p.pause };
+}
+/** A pause or resume: a buzz, and said out loud if that's on (the Android app says it itself). */
+function pauseCue(a: ActiveTrack, paused: boolean) {
+  cue(paused ? "Workout paused" : "Workout resumed", { voice: !liveInBackground && !!cuesFor(a).pause });
 }
 /** Distance so far: GPS outdoors, steps times stride indoors. */
 const distMeters = (a: ActiveTrack) => (a.mode === "indoor" ? (a.kind === "bike" ? 0 : a.steps * (a.stride ?? 0)) : a.track?.distM ?? 0);
@@ -347,11 +352,13 @@ export function pauseTracking() {
   if (active?.status === "recording") logTrack("pause tapped");
   if (active?.status !== "recording" || !active.track) return;
   set({ ...active, status: "paused", autoPaused: false, apFrom: undefined, track: pause(active.track, Date.now()) });
+  if (!liveInBackground && cuesFor(active).pause) cue("Workout paused", { voice: true });
 }
 export function resumeTracking() {
   if (active?.status === "paused") logTrack(`resume tapped${active.autoPaused ? " (was auto-paused)" : ""}`);
   if (active?.status !== "paused" || !active.track) return;
   set({ ...active, status: "recording", autoPaused: false, apFrom: undefined, lastMoveAt: Date.now(), track: resume(active.track, Date.now()) });
+  if (!liveInBackground && cuesFor(active).pause) cue("Workout resumed", { voice: true });
 }
 
 /** Stops recording and shows the summary. */

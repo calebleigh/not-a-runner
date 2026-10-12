@@ -97,6 +97,8 @@ public class WorkoutNoticePlugin extends Plugin {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private String pendingSay = null;
+    /** Say "Workout paused" and "Workout resumed". */
+    private boolean cuePause = false;
     private AudioFocusRequest focus;
 
     @Override
@@ -137,6 +139,7 @@ public class WorkoutNoticePlugin extends Plugin {
             } else return;
             shownAt = now;
             render();
+            sayPause();
         }
         JSObject d = new JSObject();
         d.put("action", action);
@@ -166,6 +169,7 @@ public class WorkoutNoticePlugin extends Plugin {
         stride = st == null ? 0 : st;
         // The app hasn't heard about a pause or resume decided here yet: keep that, not its older idea.
         boolean stale = call.getInt("autoSeq", 0) < autoSeq;
+        cuePause = Boolean.TRUE.equals(call.getBoolean("cuePause", false));
         if (!stale) {
             boolean wasPaused = paused;
             status = call.getString("status", "Recording");
@@ -176,6 +180,8 @@ public class WorkoutNoticePlugin extends Plugin {
             shownAt = now;
             // Starting, or resumed in the app: the auto-pause wait starts over.
             if (!showing) ap.reset(now); else if (wasPaused && !paused) ap.restart(now);
+            // Paused or resumed in the app.
+            if (showing && wasPaused != paused) sayPause();
             if (autoPaused && autoPausedAt == 0) { autoPausedAt = now; totalAtPause = lastTotal; }
             if (!autoPaused) autoPausedAt = 0;
         }
@@ -311,6 +317,7 @@ public class WorkoutNoticePlugin extends Plugin {
         totalAtPause = lastTotal;
         status = "Auto-paused";
         render();
+        sayPause();
         JSObject d = new JSObject();
         d.put("state", "pause");
         d.put("at", System.currentTimeMillis());
@@ -333,6 +340,7 @@ public class WorkoutNoticePlugin extends Plugin {
         autoPausedAt = 0;
         status = "Recording";
         render();
+        sayPause();
         JSObject d = new JSObject();
         d.put("state", "resume");
         d.put("at", System.currentTimeMillis());
@@ -379,6 +387,12 @@ public class WorkoutNoticePlugin extends Plugin {
             ttsReady = true;
             if (pendingSay != null) { say(pendingSay); pendingSay = null; }
         });
+    }
+
+    /** Says the pause or resume that just happened (however it happened). */
+    private void sayPause() {
+        if (!cuePause) return;
+        say(paused ? "Workout paused" : "Workout resumed");
     }
 
     private static AudioAttributes speech() {

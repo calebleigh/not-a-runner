@@ -21,7 +21,7 @@ describe("milestones", () => {
   });
 
   it("skips what's off", () => {
-    expect(milestoneCue({ mi: 0, min: 10, steps: 0 }, zero, { miles: 3, elapsedS: 600, steps: 9000 })!.text).toBe("10 minutes");
+    expect(milestoneCue({ mi: 0, min: 10, steps: 0, pause: 0 }, zero, { miles: 3, elapsedS: 600, steps: 9000 })!.text).toBe("10 minutes");
   });
 
   it("starts from where a reopened workout is", () => {

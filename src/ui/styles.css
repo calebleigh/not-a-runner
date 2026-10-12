@@ -322,7 +322,7 @@ html,body{overscroll-behavior:none}
    900px+: content splits into two columns.
    1200px+ (desktop): wider rail with labels. */
 :root{--rail:0px;--gutter:16px}
-.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-look,.area-how,.area-sync,.area-health{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cols,.col,.pagehead,.setgrid,.area-you,.area-data,.area-plan,.area-track,.area-look,.area-how,.area-sync,.area-health{display:flex;flex-direction:column;gap:14px;min-width:0}
 .logtxt{display:none}
 
 @media (min-width:700px){
@@ -349,8 +349,8 @@ html,body{overscroll-behavior:none}
   .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
   .pagehead{flex-direction:row;align-items:center;justify-content:space-between}
   .pagehead .seg{flex:0 1 320px}
-  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"sync sync" "health health" "you you" "plan plan" "look look" "how how" "data data";gap:22px 18px}
-  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-health{grid-area:health}.area-sync{grid-area:sync}
+  .setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"sync sync" "health health" "you you" "plan plan" "track track" "look look" "how how" "data data";gap:22px 18px}
+  .area-you{grid-area:you}.area-plan{grid-area:plan}.area-track{grid-area:track}.area-data{grid-area:data}.area-look{grid-area:look}.area-how{grid-area:how}.area-health{grid-area:health}.area-sync{grid-area:sync}
   .area-sync>.card{flex:1}
   /* Top two cards match heights. */
   .area-you>.card,.area-data>.card{flex:1}
@@ -839,7 +839,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .hcitem{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);background:var(--surface);border-radius:min(14px,var(--rmax))}
 .hcitem small{color:var(--muted);font-size:13px}
 .hcitem .btnpair{flex-wrap:wrap;margin-top:4px}
-.setgrid:not(:has(.area-health)){grid-template-areas:"sync sync" "you you" "plan plan" "look look" "how how" "data data"}
+.setgrid:not(:has(.area-health)){grid-template-areas:"sync sync" "you you" "plan plan" "track track" "look look" "how how" "data data"}
 
 /* Home totals: lifetime numbers in big type */
 .totals{display:block;width:100%;text-align:left;color:inherit;font:inherit;cursor:pointer}
@@ -1317,10 +1317,10 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 .trk-auto>span{display:flex;flex-direction:column;gap:2px}
 .trk-auto b{font:700 15px var(--body)}
 .trk-auto small{color:var(--muted);font-size:13px}
-.trk-say .chip{align-self:flex-start}
-.trk-say-row{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px}
-.trk-say-row>span{font:600 13px var(--body);color:var(--muted)}
-.trk-say-row .seg button{padding:7px 0;font-size:13px}
+#set-workouts{scroll-margin-top:84px}
+.trk-prefs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:min(14px,var(--rmax));background:var(--surface);border:1px solid var(--line);color:var(--muted);font:500 13px var(--body);text-align:left;cursor:pointer}
+.trk-prefs b{color:var(--ink);font-weight:700}
+.trk-prefs small{flex:none;color:var(--accent);font:700 13px var(--body)}
 
 /* Tracker: save to the day's goal or as an extra, two equal buttons. */
 .trk-saveto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}

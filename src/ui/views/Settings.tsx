@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AccountSheetBody } from "../SyncSection";
-import { addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
+import { AUTO_PAUSE_CHOICES, MILESTONE_CHOICES, addDays, birthdayInfo, changePlan, changeWeek, formatWhy, parseBirthday, tooSoon, whyList, type PlanProfile, type RaceGoal } from "../../training";
 import { TooSoonNote } from "../TooSoonNote";
 import { TapLogo } from "../Splash";
 import { HealthSection } from "../HealthSection";
@@ -10,6 +10,7 @@ import { DEFAULT_PRESET, PRESETS, presetFor, sameAccent, type Accent, type Prese
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 import { APP_VERSION, IS_NATIVE } from "../apk";
 import { trackLogText } from "../trackLog";
+import { autoPausePref, milestonePrefs, setAutoPause, setMilestonePrefs } from "../tracker";
 
 const HOWTO: [string, string][] = [
   ["Every weekday", "Cardio and strength. The Home screen shows today's session; the Plan tab shows the whole year and your gear list. Weekends are rest or a make-up day."],
@@ -250,6 +251,38 @@ function YourPlan() {
   );
 }
 
+/** How tracked workouts behave: auto-pause and what gets said out loud. */
+function Workouts() {
+  const [ap, setAp] = useState(autoPausePref);
+  const [say, setSay] = useState(milestonePrefs);
+  const pick = (p: Parameters<typeof setMilestonePrefs>[0]) => { setMilestonePrefs(p); setSay(milestonePrefs()); };
+  const row = <K extends keyof typeof MILESTONE_CHOICES>(k: K, label: string, note: string, text: (v: number) => string) => (
+    <div className="setrow col">
+      <span>{label}<small>{note}</small></span>
+      <div className="seg" role="radiogroup" aria-label={label}>
+        {MILESTONE_CHOICES[k].map((v: number) => <button key={v} role="radio" aria-checked={say[k] === v} className={say[k] === v ? "sel" : ""} onClick={() => pick({ [k]: v })}>{text(v)}</button>)}
+      </div>
+    </div>
+  );
+  return (
+    <div className="area-track" id="set-workouts">
+      <div className="sechead"><h3 className="sectitle">Workouts</h3></div>
+      <section className="card group">
+        <div className="setrow col">
+          <span>Auto-pause<small>{ap ? `Pauses after ${ap} seconds without moving, starts again when you move.` : "Off. Pause by hand."}</small></span>
+          <div className="seg" role="radiogroup" aria-label="Auto-pause">
+            {AUTO_PAUSE_CHOICES.map((v) => <button key={v} role="radio" aria-checked={ap === v} className={ap === v ? "sel" : ""} onClick={() => { setAutoPause(v); setAp(v); }}>{v ? `${v}s` : "Off"}</button>)}
+          </div>
+        </div>
+        {row("mi", "Say distance", "Out loud, like \"2 miles\".", (v) => (v ? (v === 1 ? "Each mile" : "Each ½ mi") : "Off"))}
+        {row("min", "Say time", "Like \"10 minutes\".", (v) => (v ? `${v} min` : "Off"))}
+        {row("steps", "Say steps", "Like \"3,000 steps\". Not on a bike.", (v) => (v ? `${v / 1000}k` : "Off"))}
+        {row("pause", "Say pauses", "\"Workout paused\" and \"Workout resumed\".", (v) => (v ? "On" : "Off"))}
+      </section>
+    </div>
+  );
+}
+
 /** Copies the tracker's log (steps, checks, pauses and why), to send when a workout acts up. */
 function TrackLogRow() {
   const { toast } = useApp();
@@ -278,6 +311,7 @@ export function Settings() {
       <HealthSection />
       <AboutYou />
       <YourPlan />
+      <Workouts />
       <LookPicker />
       <div className="area-how">
       <div className="sechead"><h3 className="sectitle">How it works</h3></div>

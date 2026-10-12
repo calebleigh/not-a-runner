@@ -1,15 +1,16 @@
 // Spoken updates during a workout: every mile, every few minutes, every thousand steps. Pure, and
 // the Android app runs the same rules itself (Milestones.java) so they keep coming with the screen off.
 
-/** How often to speak each one (0 is off): miles, minutes, steps. */
-export interface MilestonePrefs { mi: number; min: number; steps: number }
+/** How often to speak each one (0 is off): miles, minutes, steps. `pause` says pauses and resumes (1 is on). */
+export interface MilestonePrefs { mi: number; min: number; steps: number; pause: number }
 
 export const MILESTONE_CHOICES = {
   mi: [0, 0.5, 1],
   min: [0, 5, 10, 15],
   steps: [0, 1000, 2000, 5000],
+  pause: [0, 1],
 } as const;
-export const MILESTONES_DEFAULT: MilestonePrefs = { mi: 1, min: 5, steps: 1000 };
+export const MILESTONES_DEFAULT: MilestonePrefs = { mi: 1, min: 5, steps: 1000, pause: 1 };
 
 /** Where the workout is now. */
 export interface MilestoneAt { miles: number; elapsedS: number; steps: number }

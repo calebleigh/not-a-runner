@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { AUTO_PAUSE_CHOICES, DN, MILESTONE_CHOICES, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
+import { DN, dayAt, effKind, fmtShort, hms, intervalAt, saveTrack, strideFor, trackResult, trackStats, type Feel, type TrackKind } from "../training";
 import { canTrackInBackground, openLocationSettings } from "../native/location";
 import { canCountSteps } from "../native/steps";
 import { newId } from "../sync/engine";
@@ -10,7 +10,7 @@ import { Icon } from "./icons";
 import { RouteMapView } from "./RouteMap";
 import { trackKindFor } from "./trackFor";
 import {
-  autoPausePref, closeTracker, milestonePrefs, setMilestonePrefs, expandTracker, finishTracking, minimizeTracker, setAutoPause, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
+  autoPausePref, closeTracker, milestonePrefs, expandTracker, finishTracking, minimizeTracker, pauseTracking, resumeAfterReload, resumeTracking, setSimulate, setTrackKind, setTrackMode, setVoice, startTracking, useTracker,
 } from "./tracker";
 
 const KINDS: [TrackKind, string][] = [["walk", "Walk"], ["run", "Run"], ["bike", "Bike"]];
@@ -19,7 +19,7 @@ const pace = (s: number | null) => (s ? hms(s) : "--:--");
 /** Full-screen workout tracker: ready, recording, then a summary to save. */
 export function TrackerScreen() {
   const t = useTracker();
-  const { model, state, update, toast } = useApp();
+  const { model, state, update, toast, setTab } = useApp();
   const [, tick] = useState(0);
   const [feel, setFeel] = useState<Feel | undefined>();
   // Distance typed on the summary (e.g. from a treadmill); empty means use the measured one.
@@ -80,8 +80,8 @@ export function TrackerScreen() {
   const stride = strideFor(state, t.kind === "run" ? "run" : "walk");
   const autoPause = autoPausePref();
   const say = milestonePrefs();
-  const sayMi = !(bike && indoor) && say.mi, saySteps = !bike && say.steps;
-  const sayWhat = [sayMi ? (say.mi === 1 ? "each mile" : "each half mile") : "", say.min ? `every ${say.min} minutes` : "", saySteps ? `every ${say.steps.toLocaleString("en-US")} steps` : ""].filter(Boolean);
+  const sayWhat = [!(bike && indoor) && say.mi ? "miles" : "", say.min ? "time" : "", !bike && say.steps ? "steps" : "", say.pause ? "pauses" : ""].filter(Boolean);
+  const toSettings = () => { closeTracker(); setTab("settings"); requestAnimationFrame(() => document.getElementById("set-workouts")?.scrollIntoView({ block: "start" })); };
 
   const save = (asExtra: boolean) => {
     if (!t.track || !t.finishedAt) return;
@@ -142,23 +142,13 @@ export function TrackerScreen() {
                   : "Distance comes from your steps, using an average stride until a couple of outdoor walks teach the app yours. You can correct it at the end."
               : canTrackInBackground ? "Keeps recording with your screen off. Android shows a notice while it does." : "On the website, keep this screen open while you go. The Android app records with the screen off."}
           </p>
-          {!(bike && indoor) && (
-            <div className="trk-auto">
-              <span><b>Auto-pause</b><small>{autoPause ? `Pauses after ${autoPause} seconds without ${bike ? "moving" : "steps"}, starts again when you move.` : "Off. Pause by hand."}</small></span>
-              <div className="seg">{AUTO_PAUSE_CHOICES.map((v) => <button key={v} className={autoPause === v ? "sel" : ""} aria-pressed={autoPause === v} onClick={() => setAutoPause(v)}>{v ? `${v}s` : "Off"}</button>)}</div>
-            </div>
-          )}
-          <div className="trk-auto trk-say">
+          <button className="trk-prefs" onClick={toSettings}>
             <span>
-              <b>Voice updates</b>
-              <small>{!t.voice ? "Voice is off for this workout." : sayWhat.length ? `Says ${sayWhat.length > 1 ? sayWhat.slice(0, -1).join(", ") + " and " + sayWhat.at(-1) : sayWhat[0]}, out loud.` : "Off."}</small>
+              {!(bike && indoor) && <>Auto-pause <b>{autoPause ? `${autoPause}s` : "off"}</b><span aria-hidden="true">  ·  </span></>}
+              Voice <b>{!t.voice || !sayWhat.length ? "off" : sayWhat.join(", ")}</b>
             </span>
-            {!t.voice ? <button className="chip" onClick={() => setVoice(true)}>Turn voice on</button> : <>
-              {!(bike && indoor) && <div className="trk-say-row"><span>Distance</span><div className="seg">{MILESTONE_CHOICES.mi.map((v) => <button key={v} className={say.mi === v ? "sel" : ""} aria-pressed={say.mi === v} onClick={() => setMilestonePrefs({ mi: v })}>{v ? (v === 1 ? "1 mi" : "½ mi") : "Off"}</button>)}</div></div>}
-              <div className="trk-say-row"><span>Time</span><div className="seg">{MILESTONE_CHOICES.min.map((v) => <button key={v} className={say.min === v ? "sel" : ""} aria-pressed={say.min === v} onClick={() => setMilestonePrefs({ min: v })}>{v ? `${v} min` : "Off"}</button>)}</div></div>
-              {!bike && <div className="trk-say-row"><span>Steps</span><div className="seg">{MILESTONE_CHOICES.steps.map((v) => <button key={v} className={say.steps === v ? "sel" : ""} aria-pressed={say.steps === v} onClick={() => setMilestonePrefs({ steps: v })}>{v ? `${v / 1000}k` : "Off"}</button>)}</div></div>}
-            </>}
-          </div>
+            <small>Settings ›</small>
+          </button>
           {t.intervals && (
             <div className="trk-ivinfo">
               <b>Interval coaching on</b>

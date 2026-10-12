@@ -31,6 +31,8 @@ export interface NoticeState {
   cueMiles?: number;
   cueMins?: number;
   cueSteps?: number;
+  /** Say "Workout paused" and "Workout resumed". */
+  cuePause?: boolean;
 }
 
 /** An auto-pause or resume the phone decided, and when. */
