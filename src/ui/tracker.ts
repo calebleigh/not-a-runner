@@ -7,7 +7,7 @@ import { watchSteps, type StepFeed } from "../native/steps";
 import { intervalAt, intervalCue, intervalPlan, type IntervalPlan } from "../training/intervals";
 import { addFix, newTrack, pause, resume, trackStats, type Fix, type Track, type TrackKind } from "../training/track";
 import { AUTO_PAUSE_DEFAULT, autoPauseDue, autoPauseWake, gpsMoving, keepRecent, keepSteps, stepsMoving, type StepMark } from "../training/autopause";
-import { hideNotice, liveInBackground, onNoticeAction, onNoticeTick, showNotice } from "../native/workoutNotice";
+import { hideNotice, liveInBackground, onNoticeAction, onNoticeAuto, onNoticeTick, showNotice } from "../native/workoutNotice";
 import { logTrack } from "./trackLog";
 
 /** Where a finished workout gets saved: a planned session, or an extra activity for today. */
@@ -51,6 +51,8 @@ export interface ActiveTrack {
   recent?: Fix[];
   /** Recent step counts, to tell walking from a stray step while standing. */
   stepLog?: StepMark[];
+  /** The last auto-pause decision from the phone that's been applied here. */
+  autoSeq?: number;
 }
 
 const KEY = "activeTrack";
@@ -95,6 +97,7 @@ function notice() {
   const what = a.kind === "bike" ? "Bike" : a.kind === "run" ? "Run" : "Walk";
   const dist = a.mode === "indoor" ? "" : `${s.miles.toFixed(2)} mi`;
   const speed = a.mode === "indoor" ? "" : a.kind === "bike" ? (s.mph ? `${s.mph.toFixed(1)} mph` : "") : s.paceS ? `${Math.floor(s.paceS / 60)}:${String(s.paceS % 60).padStart(2, "0")} /mi` : "";
+  const phoneSteps = !!stepFeed?.native && a.kind !== "bike";
   showNotice({
     kind: a.kind,
     title: what,
@@ -102,7 +105,12 @@ function notice() {
     elapsedMs: s.elapsedS * 1000,
     paused: a.status === "paused",
     line1: [dist, speed].filter(Boolean).join("  ·  ") || "Indoors",
-    line2: a.steps ? `${a.steps.toLocaleString("en-US")} steps` : "",
+    // The phone counts steps on the card itself when it can, so they stay live with the screen off.
+    line2: phoneSteps || !a.steps ? "" : `${a.steps.toLocaleString("en-US")} steps`,
+    ...(phoneSteps ? { steps: a.steps } : {}),
+    autoPauseSecs: phoneAutoPause(a) ? a.track.autoPause : 0,
+    autoPaused: !!a.autoPaused,
+    autoSeq: a.autoSeq ?? 0,
     ...themeColors(),
   });
 }
@@ -130,10 +138,38 @@ export function setAutoPause(secs: number) {
 /** Indoors on a bike there's nothing to sense movement with. */
 const canAutoPause = (a: ActiveTrack) => !(a.kind === "bike" && a.mode === "indoor");
 
+/**
+ * On foot with the app's Android step counter, the phone does auto-pause itself: the app sleeps
+ * after a minute or so with the screen off, so it couldn't. Its decisions arrive here, timestamped.
+ */
+function phoneAutoPause(a: ActiveTrack): a is ActiveTrack & { track: Track } {
+  return liveInBackground && !!stepFeed?.native && a.kind !== "bike" && !!a.track?.autoPause;
+}
+onNoticeAuto((d) => {
+  const a = active;
+  if (!a?.track || (a.status !== "recording" && a.status !== "paused")) return;
+  const at = new Date(d.at).toLocaleTimeString("en-US", { hour12: false });
+  // A cue only when it's fresh: one arriving as the phone unlocks would just be confusing.
+  const fresh = Date.now() - d.at < 3000;
+  if (d.state === "pause" && a.status === "recording") {
+    logTrack(`auto-pause by the phone at ${at}, ${a.steps} steps`);
+    set({ ...a, status: "paused", autoPaused: true, autoSeq: d.seq, apFrom: { steps: a.steps, distM: a.track.distM }, track: pause(a.track, d.at) });
+    if (fresh) cue("Paused", { voice: false });
+  } else if (d.state === "resume" && a.status === "paused" && a.autoPaused) {
+    logTrack(`auto-resume by the phone at ${at} (${d.erase ? "erase" : "resume"}) after ${Math.round((d.pausedMs ?? 0) / 1000)}s, ${d.steps ?? 0} steps`);
+    const track = d.erase ? { ...a.track, pausedAt: null } : resume(a.track, d.at);
+    set({ ...a, status: "recording", autoPaused: false, apFrom: undefined, autoSeq: d.seq, lastMoveAt: d.at, track });
+    if (fresh) cue("Resumed", { voice: false });
+  } else {
+    set({ ...a, autoSeq: d.seq }, false);
+  }
+});
+
 /** Pauses after a while without movement; ends an auto-pause when you move. */
 function checkAutoPause(moved = false) {
   const a = active;
   if (!a?.track || !a.track.autoPause) return;
+  if (phoneAutoPause(a)) return;
   const now = Date.now();
   if (a.status === "paused") {
     if (!a.autoPaused || !moved || a.track.pausedAt == null) return;
@@ -224,7 +260,7 @@ async function startFeed() {
       if (active.status === "paused" && !active.autoPaused) { set({ ...active, stepBase: active.steps - n }, false); return; }
       // Walking is a few steps in a few seconds; a stray one while standing doesn't count as moving.
       const steps = active.stepBase + n, stepLog = keepSteps(active.stepLog, { t: Date.now(), n: steps });
-      const moved = steps > active.steps && stepsMoving(stepLog);
+      const moved = steps > active.steps && stepsMoving(stepLog) && !phoneAutoPause(active);
       if (steps !== active.steps) logTrack(`steps ${steps} (+${steps - active.steps})${moved ? " moving" : ""}${active.status === "paused" ? " while auto-paused" : ""}`);
       set({ ...active, steps, stepLog, ...(moved ? { lastMoveAt: Date.now() } : {}) }, false);
       if (moved) checkAutoPause(true);

@@ -37,6 +37,11 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  * theme's accent with the app's drifting stripes, the clock (it counts on its own), distance, pace and steps, and a
  * Pause / Resume button. WorkoutService keeps it alive with the screen off, and this also counts
  * steps itself, since the step plugin stops listening when the app is in the background.
+ *
+ * Android still puts the app's own code to sleep after a minute or so with the screen off, so on
+ * foot this also keeps the step count on the card live and does auto-pause itself (the same rule
+ * as the app: moving is 3 steps in about 6 seconds). It tells the app what it decided and when, and
+ * the app applies that when it wakes.
  */
 @CapacitorPlugin(name = "WorkoutNotice")
 public class WorkoutNoticePlugin extends Plugin {
@@ -62,7 +67,21 @@ public class WorkoutNoticePlugin extends Plugin {
 
     // Steps: counted from the phone's step counter, which keeps counting with the screen off.
     private SensorEventListener stepListener;
-    private float stepBase = -1;
+    private float stepBase = -1, lastTotal = -1;
+
+    // The card's step count: the app's count when it last checked in, plus steps since then.
+    private boolean showSteps = false;
+    private int appSteps = 0;
+    private float totalAtCheckIn = -1;
+
+    // Auto-pause on steps (0 is off, or the app is deciding, e.g. by GPS on a bike).
+    private int autoSecs = 0;
+    private boolean autoPaused = false;
+    private long autoPausedAt = 0;
+    private float totalAtPause = 0;
+    /** Counts the decisions made here, so a late check-in from the app can't undo a newer one. */
+    private int autoSeq = 0;
+    private final StepAutoPause ap = new StepAutoPause();
 
     @Override
     public void load() {
@@ -90,9 +109,14 @@ public class WorkoutNoticePlugin extends Plugin {
             if ("pause".equals(action) && !paused) {
                 elapsedMs += now - shownAt;
                 paused = true;
+                autoPaused = false;
+                autoPausedAt = 0;
                 status = "Paused";
             } else if ("resume".equals(action) && paused) {
                 paused = false;
+                autoPaused = false;
+                autoPausedAt = 0;
+                ap.restart(now);
                 status = "Recording";
             } else return;
             shownAt = now;
@@ -110,17 +134,32 @@ public class WorkoutNoticePlugin extends Plugin {
     }
 
     private void showNow(PluginCall call) {
-        kind = call.getString("kind", "walk");
-        title = call.getString("title", "Workout");
-        status = call.getString("status", "Recording");
-        line1 = call.getString("line1", "");
-        line2 = call.getString("line2", "");
-        paused = Boolean.TRUE.equals(call.getBoolean("paused", false));
+        long now = SystemClock.elapsedRealtime();
         accent = color(call.getString("accent"), accent);
         onAccent = color(call.getString("onAccent"), onAccent);
-        Double ms = call.getDouble("elapsedMs", 0.0);
-        elapsedMs = ms == null ? 0 : ms.longValue();
-        shownAt = SystemClock.elapsedRealtime();
+        kind = call.getString("kind", "walk");
+        title = call.getString("title", "Workout");
+        line1 = call.getString("line1", "");
+        line2 = call.getString("line2", "");
+        Integer steps = call.getInt("steps");
+        showSteps = steps != null;
+        if (showSteps) { appSteps = steps; totalAtCheckIn = lastTotal; }
+        autoSecs = call.getInt("autoPauseSecs", 0);
+        // The app hasn't heard about a pause or resume decided here yet: keep that, not its older idea.
+        boolean stale = call.getInt("autoSeq", 0) < autoSeq;
+        if (!stale) {
+            boolean wasPaused = paused;
+            status = call.getString("status", "Recording");
+            paused = Boolean.TRUE.equals(call.getBoolean("paused", false));
+            autoPaused = paused && Boolean.TRUE.equals(call.getBoolean("autoPaused", false));
+            Double ms = call.getDouble("elapsedMs", 0.0);
+            elapsedMs = ms == null ? 0 : ms.longValue();
+            shownAt = now;
+            // Starting, or resumed in the app: the auto-pause wait starts over.
+            if (!showing) ap.reset(now); else if (wasPaused && !paused) ap.restart(now);
+            if (autoPaused && autoPausedAt == 0) { autoPausedAt = now; totalAtPause = lastTotal; }
+            if (!autoPaused) autoPausedAt = 0;
+        }
         showing = true;
         if (!signature().equals(shown)) render();
         keepAwake(true);
@@ -154,6 +193,10 @@ public class WorkoutNoticePlugin extends Plugin {
     private void stop() {
         showing = false;
         shown = null;
+        autoSecs = 0;
+        autoPaused = false;
+        autoPausedAt = 0;
+        autoSeq = 0;
         keepAwake(false);
         if (serviceOn) {
             serviceOn = false;
@@ -174,9 +217,12 @@ public class WorkoutNoticePlugin extends Plugin {
             public void onSensorChanged(SensorEvent e) {
                 float total = e.values[0];
                 if (stepBase < 0) stepBase = total;
+                if (totalAtCheckIn < 0) totalAtCheckIn = total;
+                lastTotal = total;
                 JSObject d = new JSObject();
                 d.put("steps", (int) (total - stepBase));
                 notifyListeners("steps", d);
+                onStep(total);
             }
             @Override
             public void onAccuracyChanged(Sensor sensor, int accuracy) { }
@@ -199,11 +245,67 @@ public class WorkoutNoticePlugin extends Plugin {
         stepListener = null;
     }
 
-    /** Once a second from WorkoutService: let the app check auto-pause (the clock runs itself). */
+    /** Once a second from WorkoutService: auto-pause, the card's steps, and a nudge for the app. */
     static void tick() {
         WorkoutNoticePlugin p = instance;
         if (p == null || !p.showing) return;
+        long now = SystemClock.elapsedRealtime();
+        if (p.ap.due(now, p.autoSecs, p.paused)) p.autoPause(now);
+        if (!p.signature().equals(p.shown)) p.render();
         p.notifyListeners("tick", new JSObject());
+    }
+
+    /** A new step count: moving again ends an auto-pause. */
+    private void onStep(float total) {
+        long now = SystemClock.elapsedRealtime();
+        if (ap.step(now, (long) total) && showing && autoPaused && autoSecs > 0) autoResume(now, total);
+    }
+
+    /** Steps shown on the card: the app's count when it last checked in, plus the steps since. */
+    private int stepsNow() {
+        boolean counting = !(paused && !autoPaused); // a tapped pause doesn't count steps
+        return appSteps + (counting && lastTotal >= 0 && totalAtCheckIn >= 0 ? Math.max(0, (int) (lastTotal - totalAtCheckIn)) : 0);
+    }
+
+    private void autoPause(long now) {
+        elapsedMs += now - shownAt;
+        shownAt = now;
+        paused = true;
+        autoPaused = true;
+        autoPausedAt = now;
+        totalAtPause = lastTotal;
+        status = "Auto-paused";
+        render();
+        JSObject d = new JSObject();
+        d.put("state", "pause");
+        d.put("at", System.currentTimeMillis());
+        d.put("seq", ++autoSeq);
+        notifyListeners("auto", d, true);
+    }
+
+    /**
+     * Moving again: resume. Steps the whole time (as many as seconds paused) means the pause was a
+     * mistake, so it's erased and the clock catches up, like the app's rule.
+     */
+    private void autoResume(long now, float total) {
+        long pausedMs = now - autoPausedAt;
+        int steps = Math.max(0, (int) (total - totalAtPause));
+        boolean erase = StepAutoPause.erase(pausedMs, steps);
+        if (erase) elapsedMs += pausedMs;
+        shownAt = now;
+        paused = false;
+        autoPaused = false;
+        autoPausedAt = 0;
+        status = "Recording";
+        render();
+        JSObject d = new JSObject();
+        d.put("state", "resume");
+        d.put("at", System.currentTimeMillis());
+        d.put("pausedMs", pausedMs);
+        d.put("steps", steps);
+        d.put("erase", erase);
+        d.put("seq", ++autoSeq);
+        notifyListeners("auto", d, true);
     }
 
     static Notification currentNotification() {
@@ -226,7 +328,7 @@ public class WorkoutNoticePlugin extends Plugin {
 
     /** What the card shows; the clock's own count isn't part of it. */
     private String signature() {
-        return kind + "|" + title + "|" + status + "|" + line1 + "|" + line2 + "|" + paused + "|" + accent + "|" + onAccent;
+        return kind + "|" + title + "|" + status + "|" + line1 + "|" + line2 + "|" + paused + "|" + accent + "|" + onAccent + "|" + (showSteps ? stepsNow() : -1);
     }
 
     private static int color(String hex, int fallback) {
@@ -265,6 +367,7 @@ public class WorkoutNoticePlugin extends Plugin {
         if (paused) sub.append(status);
         if (!line1.isEmpty()) sub.append(sub.length() > 0 ? "  ·  " : "").append(line1);
         if (!line2.isEmpty()) sub.append(sub.length() > 0 ? "  ·  " : "").append(line2);
+        if (showSteps && stepsNow() > 0) sub.append(sub.length() > 0 ? "  ·  " : "").append(String.format(java.util.Locale.US, "%,d steps", stepsNow()));
         shown = signature();
 
         // The big card says Paused in its header, so its bottom line doesn't repeat it.

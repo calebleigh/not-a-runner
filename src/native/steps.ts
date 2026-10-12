@@ -3,7 +3,11 @@
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { watchNativeSteps } from "./workoutNotice";
 
-export interface StepFeed { stop(): Promise<void> }
+export interface StepFeed {
+  stop(): Promise<void>;
+  /** Counted by the app's own Android code, which also auto-pauses on steps with the screen off. */
+  native?: boolean;
+}
 
 export const canCountSteps = Capacitor.isNativePlatform();
 

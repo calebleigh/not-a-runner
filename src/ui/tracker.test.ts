@@ -11,7 +11,7 @@ vi.mock("../native/steps", () => ({
 vi.mock("../native/location", () => ({ watchLocation: async () => ({ stop: async () => {} }), canTrackInBackground: true }));
 vi.mock("../native/cues", () => ({ cue: () => {} }));
 vi.mock("../native/workoutNotice", () => ({
-  liveInBackground: true, showNotice: () => {}, hideNotice: () => {}, onNoticeAction: () => {}, onNoticeTick: () => {},
+  liveInBackground: true, showNotice: () => {}, hideNotice: () => {}, onNoticeAction: () => {}, onNoticeTick: () => {}, onNoticeAuto: () => {},
 }));
 
 const store = new Map<string, string>();
