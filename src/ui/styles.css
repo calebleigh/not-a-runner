@@ -1370,3 +1370,5 @@ body.has-mini .apphead{top:calc(var(--minih) + var(--sat));padding-top:8px}
 @media (min-width:700px){
   .trk-mini{left:var(--rail);max-width:none;padding-left:max(20px,calc((100vw - var(--rail) - 640px) / 2));padding-right:max(20px,calc((100vw - var(--rail) - 640px) / 2))}
 }
+/* Log workout: the orange workout cards' drifting stripes, so it stands apart from the picked toggle. */
+.trk-btn.trk-log{background:repeating-linear-gradient(135deg,rgba(0,0,0,.1) 0 14px,transparent 14px 28px),linear-gradient(135deg,var(--accent-hi),var(--accent-lo));background-size:40px 40px,100% 100%;animation:stripes 3.5s linear infinite;box-shadow:0 14px 30px -14px rgba(var(--accent-rgb),.6)}

@@ -23,6 +23,8 @@ export function TrackerScreen() {
   const [feel, setFeel] = useState<Feel | undefined>();
   // Distance typed on the summary (e.g. from a treadmill); empty means use the measured one.
   const [typed, setTyped] = useState("");
+  // Where the finished workout saves (the day's goal or an extra); unset means the likely one.
+  const [pickExtra, setPickExtra] = useState<boolean | undefined>();
 
   // The page behind the tracker stays still while it's open (not while it's tucked in the bar).
   const live = t?.status === "recording" || t?.status === "paused";
@@ -41,7 +43,7 @@ export function TrackerScreen() {
   }, [live]);
   useEffect(() => { document.body.classList.toggle("has-mini", mini); return () => document.body.classList.remove("has-mini"); }, [mini]);
   useEffect(() => { resumeAfterReload(); }, []);
-  useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setTyped(""); } }, [t?.status]);
+  useEffect(() => { if (t?.status === "ready") { setFeel(undefined); setTyped(""); setPickExtra(undefined); } }, [t?.status]);
 
   if (!t) return null;
   if (mini) return <MiniTracker />;
@@ -188,20 +190,20 @@ export function TrackerScreen() {
               </label>
               <span className="lbl">How did it feel?</span>
               <FeelPicker value={feel} onPick={setFeel} />
-              {day ? (
-                // Two ways to save: the day's goal, or an extra. The likely one is orange.
-                <div className="trk-saveto">
-                  <button className={mismatch ? "" : "solid"} onClick={() => save(false)}>
-                    <b>Daily goal</b><small>{already ? "Replaces your log" : t.target!.title}</small>
-                  </button>
-                  <button className={mismatch ? "solid" : ""} onClick={() => save(true)}>
-                    <b>Extra</b><small>Goal stays open</small>
-                  </button>
+              {day && (
+                // Where it saves: the day's goal, or an extra. Starts on the likely one; orange is picked.
+                <div className="trk-saveto" role="radiogroup" aria-label="Save to">
+                  {[false, true].map((x) => {
+                    const sel = (pickExtra ?? mismatch) === x;
+                    return (
+                      <button key={String(x)} role="radio" aria-checked={sel} className={sel ? "solid" : ""} onClick={() => setPickExtra(x)}>
+                        {x ? <><b>Extra</b><small>Goal stays open</small></> : <><b>Daily goal</b><small>{already ? "Replaces your log" : t.target!.title}</small></>}
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : (
-                <button className="btn solid" onClick={() => save(true)}>Save as extra activity</button>
               )}
-              {(() => { const r = trackResult(state, t.track!, now, extras); return <p className="setnote">Saving logs {r.dist ? `${r.dist} mi in ` : ""}{hms(r.time)}{t.steps ? `, ${t.steps.toLocaleString("en-US")} steps` : ""}.</p>; })()}
+              <button className="trk-btn go trk-log" onClick={() => save(day ? pickExtra ?? mismatch : true)}><Icon.check /><span>Log workout</span></button>
               <ConfirmButton className="btn small" label="Discard" confirmLabel="Discard this workout?" onConfirm={() => closeTracker()} />
             </div>
           ) : (
