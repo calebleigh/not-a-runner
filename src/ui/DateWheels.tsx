@@ -6,6 +6,7 @@ const ROW = 40;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const pad = (n: number) => String(n).padStart(2, "0");
 const daysIn = (y: number, m: number) => new Date(y, m, 0).getDate();
+const todayYmd = () => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
 
 /** "YYYY-MM-DD" parts, or null. */
 export function ymdParts(v: string): [number, number, number] | null {
@@ -51,8 +52,8 @@ function Wheel({ items, value, onChange, label }: { items: { v: number; t: strin
   );
 }
 
-/** Picks "YYYY-MM-DD". Shows `fallback` (a likely date) until something is picked. */
-export function DateWheels({ value, onChange, fallback = "1990-01-01", maxYear = new Date().getFullYear(), years = 100 }: {
+/** Picks "YYYY-MM-DD". Shows `fallback` (today, unless given) until something is picked. */
+export function DateWheels({ value, onChange, fallback = todayYmd(), maxYear = new Date().getFullYear(), years = 100 }: {
   value: string; onChange: (v: string) => void; fallback?: string; maxYear?: number; years?: number;
 }) {
   const [y, m, d] = ymdParts(value) ?? ymdParts(fallback)!;
