@@ -10,22 +10,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Shader;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.SystemClock;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
+import android.view.View;
+import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.PathParser;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -34,11 +33,10 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * The workout being tracked, shown as a music player so it fills the whole player on the lock
- * screen and in the shade: the theme's striped card as the "album art", what you're doing and how
- * far as the song, the workout clock as the song's time, today's session length as its length,
- * and one Pause / Resume button. WorkoutService keeps it alive with the screen off, and this also
- * counts steps itself, since the step plugin stops listening when the app is in the background.
+ * The workout being tracked, on the lock screen and in the notification shade: a card in the
+ * theme's accent with the app's drifting stripes, the clock (it counts on its own), distance, pace and steps, and a
+ * Pause / Resume button. WorkoutService keeps it alive with the screen off, and this also counts
+ * steps itself, since the step plugin stops listening when the app is in the background.
  */
 @CapacitorPlugin(name = "WorkoutNotice")
 public class WorkoutNoticePlugin extends Plugin {
@@ -46,21 +44,20 @@ public class WorkoutNoticePlugin extends Plugin {
     /** The same id as the GPS service's notification, so a workout only ever shows one. */
     static final int ID = 28351;
     private static final String ACTION = "com.notarunner.app.WORKOUT_NOTICE";
+    /** The theme's accent and the text that sits on it (the app sends them; Ember until then). */
+    private int accent = 0xFFFF6A13, onAccent = 0xFF141210;
 
     private static WorkoutNoticePlugin instance;
 
     private BroadcastReceiver receiver;
-    private MediaSessionCompat session;
     private boolean showing = false, serviceOn = false;
     // The last state from the app, so the clock and the button work without waiting for it.
     private String kind = "walk", title = "", status = "", line1 = "", line2 = "";
     private boolean paused = false;
-    private long elapsedMs = 0, shownAt = 0, goalMs = 0;
-    /** The theme's accent (the app sends it; Ember until then). */
-    private int accent = 0xFFFF6A13;
-    private String artKey = null;
+    private long elapsedMs = 0, shownAt = 0;
+    private String artKind = null;
     private Bitmap art;
-    /** What the player shows, so it's only updated when that changes. */
+    /** What the card shows, so it's only redrawn when that changes (a redraw restarts the stripes). */
     private String shown = null;
 
     // Steps: counted from the phone's step counter, which keeps counting with the screen off.
@@ -85,7 +82,7 @@ public class WorkoutNoticePlugin extends Plugin {
         if (instance == this) instance = null;
     }
 
-    /** Pause or Resume from the player, the lock screen or a headset button. */
+    /** Pause or Resume from the notification, the lock screen player or a headset button. */
     private void act(String action) {
         if (action == null) return;
         if (showing) {
@@ -108,7 +105,7 @@ public class WorkoutNoticePlugin extends Plugin {
 
     @PluginMethod
     public void show(PluginCall call) {
-        // Notification and media session work happens on the main thread, like the tick.
+        // Notification work happens on the main thread, like the tick.
         getBridge().executeOnMainThread(() -> showNow(call));
     }
 
@@ -120,10 +117,9 @@ public class WorkoutNoticePlugin extends Plugin {
         line2 = call.getString("line2", "");
         paused = Boolean.TRUE.equals(call.getBoolean("paused", false));
         accent = color(call.getString("accent"), accent);
+        onAccent = color(call.getString("onAccent"), onAccent);
         Double ms = call.getDouble("elapsedMs", 0.0);
         elapsedMs = ms == null ? 0 : ms.longValue();
-        Double goal = call.getDouble("goalMs", 0.0);
-        goalMs = goal == null ? 0 : goal.longValue();
         shownAt = SystemClock.elapsedRealtime();
         showing = true;
         if (!signature().equals(shown)) render();
@@ -150,7 +146,6 @@ public class WorkoutNoticePlugin extends Plugin {
             serviceOn = false;
             getContext().stopService(new Intent(getContext(), WorkoutService.class));
         }
-        if (session != null) { session.setActive(false); session.release(); session = null; }
         NotificationManagerCompat.from(getContext()).cancel(ID);
     }
 
@@ -191,14 +186,10 @@ public class WorkoutNoticePlugin extends Plugin {
         stepListener = null;
     }
 
-    /**
-     * Once a second from WorkoutService: let the app check auto-pause (the player runs the clock
-     * itself), and stretch the bar once you go past its end.
-     */
+    /** Once a second from WorkoutService: let the app check auto-pause (the clock runs itself). */
     static void tick() {
         WorkoutNoticePlugin p = instance;
         if (p == null || !p.showing) return;
-        if (!p.signature().equals(p.shown)) p.render();
         p.notifyListeners("tick", new JSObject());
     }
 
@@ -211,19 +202,18 @@ public class WorkoutNoticePlugin extends Plugin {
         return elapsedMs + (paused ? 0 : SystemClock.elapsedRealtime() - shownAt);
     }
 
-    /**
-     * The bar's length: today's session, then the next 5 minutes once you're past it. With no
-     * session, the next 5 minutes, so the bar always has an end to count toward.
-     */
-    private long barMs() {
-        long e = elapsedNow(), step = 5 * 60_000L;
-        if (goalMs > 0 && e < goalMs) return goalMs;
-        return (e / step + 1) * step;
+
+    private void render() {
+        try {
+            NotificationManagerCompat.from(getContext()).notify(ID, build());
+        } catch (SecurityException e) {
+            // Notifications are off for the app; the workout still records.
+        }
     }
 
-    /** What the player shows; the clock's own count isn't part of it. */
+    /** What the card shows; the clock's own count isn't part of it. */
     private String signature() {
-        return kind + "|" + title + "|" + status + "|" + line1 + "|" + line2 + "|" + paused + "|" + accent + "|" + barMs();
+        return kind + "|" + title + "|" + status + "|" + line1 + "|" + line2 + "|" + paused + "|" + accent + "|" + onAccent;
     }
 
     private static int color(String hex, int fallback) {
@@ -236,14 +226,6 @@ public class WorkoutNoticePlugin extends Plugin {
         int g = (int) (((a >> 8) & 255) + ((((b >> 8) & 255) - ((a >> 8) & 255)) * t));
         int bl = (int) ((a & 255) + (((b & 255) - (a & 255)) * t));
         return 0xFF000000 | (r << 16) | (g << 8) | bl;
-    }
-
-    private void render() {
-        try {
-            NotificationManagerCompat.from(getContext()).notify(ID, build());
-        } catch (SecurityException e) {
-            // Notifications are off for the app; the workout still records.
-        }
     }
 
     private Notification build() {
@@ -265,37 +247,27 @@ public class WorkoutNoticePlugin extends Plugin {
         Intent act = new Intent(ACTION).setPackage(pkg).putExtra("action", paused ? "resume" : "pause");
         PendingIntent button = PendingIntent.getBroadcast(ctx, 1, act, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // The "song": what you're doing (or that it's paused), then distance, pace and steps.
-        String doing = paused ? status : "bike".equals(kind) ? "Riding" : "run".equals(kind) ? "Walk/run" : "Walking";
-        StringBuilder sub = new StringBuilder(line1);
+        // Under the clock: distance and pace, then steps; while paused, say so first.
+        StringBuilder sub = new StringBuilder();
+        if (paused) sub.append(status);
+        if (!line1.isEmpty()) sub.append(sub.length() > 0 ? "  ·  " : "").append(line1);
         if (!line2.isEmpty()) sub.append(sub.length() > 0 ? "  ·  " : "").append(line2);
-        long bar = barMs();
         shown = signature();
 
-        MediaSessionCompat s = session(content);
-        s.setMetadata(new MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, doing)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, sub.toString())
-            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, title)
-            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, bar)
-            .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, art())
-            .build());
-        // Only play and pause: no seeking (the bar can't be dragged) and no skip buttons.
-        s.setPlaybackState(new PlaybackStateCompat.Builder()
-            .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE)
-            .setState(paused ? PlaybackStateCompat.STATE_PAUSED : PlaybackStateCompat.STATE_PLAYING, elapsedNow(), paused ? 0f : 1f)
-            .build());
+        // The big card says Paused in its header, so its bottom line doesn't repeat it.
+        String detail = sub.toString(), bigDetail = paused && detail.startsWith(status) ? detail.substring(status.length()).replaceFirst("^  ·  ", "") : detail;
+        RemoteViews big = card(R.layout.notif_workout, bigDetail, button);
+        big.setTextViewText(R.id.nw_status, (title + "  ·  " + status).toUpperCase(java.util.Locale.US));
+        RemoteViews small = card(R.layout.notif_workout_small, sub.toString(), button);
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_track)
-            .setLargeIcon(art())
             .setColor(accent)
-            .setContentTitle(doing)
+            .setContentTitle(title + "  ·  " + status)
             .setContentText(sub.toString())
-            .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(s.getSessionToken())
-                .setShowActionsInCompactView(0))
-            .addAction(paused ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause, paused ? "Resume" : "Pause", button)
+            .setCustomContentView(small)
+            .setCustomBigContentView(big)
+            .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
@@ -307,47 +279,64 @@ public class WorkoutNoticePlugin extends Plugin {
         return b.build();
     }
 
-    private MediaSessionCompat session(PendingIntent content) {
-        if (session != null) return session;
-        session = new MediaSessionCompat(getContext(), "NotARunnerWorkout");
-        session.setCallback(new MediaSessionCompat.Callback() {
-            @Override public void onPlay() { act("resume"); }
-            @Override public void onPause() { act("pause"); }
-        });
-        if (content != null) session.setSessionActivity(content);
-        session.setActive(true);
-        return session;
+    /** One size of the card: the stripes drift while recording and hold still (faded) while paused. */
+    private RemoteViews card(int layout, String sub, PendingIntent button) {
+        RemoteViews v = new RemoteViews(getContext().getPackageName(), layout);
+        // The theme's accent; faded toward grey while paused, like the app's card.
+        v.setInt(R.id.nw_fill, "setColorFilter", paused ? mix(accent, 0xFF8F8A84, 0.5f) : accent);
+        int text = paused ? mix(onAccent, 0xFF8F8A84, 0.25f) : onAccent;
+        v.setTextColor(R.id.nw_time, text);
+        v.setTextColor(R.id.nw_line, (text & 0x00FFFFFF) | 0xD9000000);
+        if (layout == R.layout.notif_workout) v.setTextColor(R.id.nw_status, (text & 0x00FFFFFF) | 0xB8000000);
+        v.setInt(R.id.nw_btn, "setColorFilter", accent);
+        v.setViewVisibility(R.id.nw_stripes, paused ? View.GONE : View.VISIBLE);
+        v.setViewVisibility(R.id.nw_stripes_still, paused ? View.VISIBLE : View.GONE);
+        v.setImageViewBitmap(R.id.nw_icon, icon());
+        v.setChronometer(R.id.nw_time, SystemClock.elapsedRealtime() - elapsedNow(), null, !paused);
+        v.setTextViewText(R.id.nw_line, sub);
+        v.setImageViewResource(R.id.nw_btn, paused ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause);
+        v.setContentDescription(R.id.nw_btn, paused ? "Resume" : "Pause");
+        v.setOnClickPendingIntent(R.id.nw_btn, button);
+        return v;
     }
 
-    /**
-     * The "album art", which fills the player: the theme's accent gradient with the app's diagonal
-     * stripes, faded toward grey while paused (like the app's card).
-     */
-    private Bitmap art() {
-        String key = accent + "|" + paused;
-        if (art != null && key.equals(artKey)) return art;
-        int size = 640;
-        int base = paused ? mix(accent, 0xFF8F8A84, 0.5f) : accent;
+    /** The activity's icon (the app's shoe, toes-up shoe or bike) in the accent, for the card's dark tile. */
+    private Bitmap icon() {
+        if (art != null && (kind + accent).equals(artKind)) return art;
+        int size = 144;
         Bitmap bm = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bm);
-        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-        fill.setShader(new LinearGradient(0, 0, size, size, mix(base, 0xFFFFFFFF, 0.18f), mix(base, 0xFF000000, 0.14f), Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, size, size, fill);
-        // "/" stripes at 45 degrees, half stripe and half gap, like the app's cards.
-        Paint stripe = new Paint(Paint.ANTI_ALIAS_FLAG);
-        stripe.setColor(0x24000000);
-        Path p = new Path();
-        float gap = 56, w = 28;
-        for (float x = -size; x < size * 2; x += gap) {
-            p.moveTo(x, size);
-            p.lineTo(x + w, size);
-            p.lineTo(x + w + size, 0);
-            p.lineTo(x + size, 0);
-            p.close();
+        Path icon = new Path();
+        if ("bike".equals(kind)) {
+            Path g = new Path();
+            g.addCircle(5.5f, 16.5f, 3.5f, Path.Direction.CW);
+            g.addCircle(18.5f, 16.5f, 3.5f, Path.Direction.CW);
+            g.addPath(PathParser.createPathFromPathData("M5.5 16.5L9 9h6l3.5 7.5M9 9l3 7.5L15 9M8 6h3"));
+            Matrix m = new Matrix();
+            m.setValues(new float[] { -0.9f, 0, 22.8f, 0, 0.9f, -1.5f, 0, 0, 1 });
+            g.transform(m);
+            icon.addPath(g);
+        } else if ("run".equals(kind)) {
+            icon.addPath(PathParser.createPathFromPathData("M15 16.5H21v-2.2a2 2 0 0 0-1.4-1.9L16.8 12 16.3 7.6 13.3 5.9 11.8 7.1 9.4 5.8 5.4 9 4.4 10.9z"));
+        } else {
+            icon.addPath(PathParser.createPathFromPathData("M3 16.5h18v-2.2a2 2 0 0 0-1.4-1.9l-5.1-1.6-2.5-4.3H8.5l-.8 2H5L3 14z"));
         }
-        c.drawPath(p, stripe);
+        icon.addPath(PathParser.createPathFromPathData("M3 19h18"));
+        // Drawn on a 24-unit grid, with a little room for the stroke.
+        float scale = size / 26f;
+        Matrix fit = new Matrix();
+        fit.setScale(scale, scale);
+        fit.postTranslate(scale, scale);
+        icon.transform(fit);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(2f * scale);
+        stroke.setStrokeCap(Paint.Cap.ROUND);
+        stroke.setStrokeJoin(Paint.Join.ROUND);
+        stroke.setColor(accent);
+        c.drawPath(icon, stroke);
         art = bm;
-        artKey = key;
+        artKind = kind + accent;
         return bm;
     }
 }

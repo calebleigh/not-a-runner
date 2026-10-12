@@ -1,4 +1,4 @@
-// The workout on the lock screen and in the notification shade, shown as a music player with a
+// The workout on the lock screen and in the notification shade, shown like a music player with a
 // Pause / Resume button (Android: android/.../WorkoutNoticePlugin.java). While it shows, the app
 // keeps going in a pocket: a native tick every second and the phone's step counter. Elsewhere these
 // do nothing.
@@ -14,10 +14,9 @@ export interface NoticeState {
   paused: boolean;
   line1: string;
   line2: string;
-  /** The theme's accent, for the player's striped background. */
+  /** The theme's accent and the text color on it, so the card matches the app. */
   accent?: string;
-  /** Today's session length, the player bar's end (0 when there isn't one). */
-  goalMs?: number;
+  onAccent?: string;
 }
 
 type Remove = Promise<{ remove(): Promise<void> }>;

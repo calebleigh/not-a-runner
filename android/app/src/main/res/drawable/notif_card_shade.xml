@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Over the accent fill: lighter top left, darker bottom right, like the app's accent gradient. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="315" android:startColor="#2EFFFFFF" android:centerColor="#00000000" android:endColor="#2E000000" />
+    <corners android:radius="16dp" />
+</shape>
