@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GoogleButton, useSync } from "./SyncSection";
-import { IS_NATIVE, RELEASES_URL } from "./apk";
+import { IS_NATIVE, RELEASES_URL, latestRelease } from "./apk";
 import { useApp } from "./app-state";
 import { Icon, StreakFlame } from "./icons";
 import { Logo } from "./Logo";
@@ -48,26 +48,53 @@ const FEATURES: { icon: () => React.JSX.Element; title: string; text: string }[]
   { icon: Icon.steps, title: "Steps count too", text: "Set a step goal. Extra walks and hikes add to your totals without wrecking the plan." },
 ];
 
-/** The plans, and how each one works (tap a pill to read it). */
-const PLANS: [string, string][] = [
-  ["Daily walk", "The same easy walk on the days you pick, 10 to 45 minutes. No running, ever. It's about the habit, not the miles."],
-  ["Walk more", "Walks start where you're comfortable and grow a little each week, up to about an hour. One longer walk a week, an easier week every fourth. No running."],
-  ["Get fit", "A year of steady progress. Biking and brisk walks first, then short jogs with walk breaks once your body is ready. No race needed."],
-  ["5K", "3.1 miles. Biking and walking first, then jogs with walk breaks that build to race day. About 4 to 10 weeks, depending on where you start."],
-  ["10K", "6.2 miles. The same gentle start, with longer walk/runs and an easier week now and then. About 8 to 16 weeks."],
-  ["Half marathon", "13.1 miles. Long walk/runs build slowly, with cutback weeks and a taper before race day. About 3 to 7 months; up to a year if you're starting from the couch."],
-  ["Marathon", "26.2 miles. The long game: a steady build over 5 months to a year, with walk breaks welcome the whole way."],
+/** The plans: a tagline, how it works, a few facts and a typical week (Monday first; "" is a rest day). */
+interface PlanInfo { name: string; tag: string; text: string; facts: string[]; week: string[] }
+const PLANS: PlanInfo[] = [
+  { name: "Daily walk", tag: "Same easy walk, no running", text: "The same easy walk on the days you pick, 10 to 45 minutes. It's about the habit, not the miles.",
+    facts: ["All year", "1 to 7 days", "No running"], week: ["Walk 20", "Walk 20", "Walk 20", "Walk 20", "Walk 20", "Walk 20", "Walk 20"] },
+  { name: "Walk more", tag: "Walks that grow, no running", text: "Walks start where you're comfortable and grow a little each week, up to about an hour. One longer walk a week, an easier week every fourth.",
+    facts: ["52 weeks", "1 to 7 days", "No running"], week: ["Walk 25", "", "Walk 25", "", "Walk 25", "Long walk 40", ""] },
+  { name: "Get fit", tag: "Bike and walk, running eases in", text: "A year of steady progress. Biking and brisk walks first, then short jogs with walk breaks once your body is ready. No race needed.",
+    facts: ["52 weeks", "3 to 6 days", "Running later"], week: ["Bike 25", "Walk 25", "Bike 25", "Walk 25", "Long ride 35", "", ""] },
+  { name: "5K", tag: "3.1 miles, a great first race", text: "Biking and walking first, then jogs with walk breaks that build to race day.",
+    facts: ["4 to 10 weeks", "3 to 6 days", "3.1 mi race"], week: ["Bike 30", "Walk/run 25", "Bike 30", "Walk/run 25", "Long ride 60", "", ""] },
+  { name: "10K", tag: "6.2 miles", text: "The same gentle start, with longer walk/runs and an easier week now and then.",
+    facts: ["8 to 16 weeks", "3 to 6 days", "6.2 mi race"], week: ["Walk/run 30", "Bike 30", "Walk/run 30", "Bike 30", "Long 4 mi", "", ""] },
+  { name: "Half marathon", tag: "13.1 miles", text: "Long walk/runs build slowly, with cutback weeks and a taper before race day. Up to a year if you're starting from the couch.",
+    facts: ["3 to 12 months", "3 to 6 days", "13.1 mi race"], week: ["Walk/run 35", "Bike 30", "Walk/run 35", "Bike 30", "Long 7 mi", "", ""] },
+  { name: "Marathon", tag: "26.2 miles, the long game", text: "A steady build over 5 months to a year, with walk breaks welcome the whole way.",
+    facts: ["5 to 12 months", "3 to 6 days", "26.2 mi race"], week: ["Walk/run 40", "Bike 30", "Walk/run 40", "Bike 30", "Long 12 mi", "", ""] },
 ];
+const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
-/** The plan pills; the picked one says how it works. */
+/** Pick a plan on the left; the card shows how it works and a typical week. */
 function PlanPicker() {
   const [at, setAt] = useState(0);
-  return <>
-    <div className="lgoals" role="tablist" aria-label="Plans">
-      {PLANS.map(([g], i) => <button key={g} role="tab" aria-selected={i === at} className={i === at ? "on" : ""} onClick={() => setAt(i)}>{g}</button>)}
+  const p = PLANS[at];
+  return (
+    <div className="lpace">
+      <div className="lpace-list" role="tablist" aria-label="Plans">
+        {PLANS.map((x, i) => (
+          <button key={x.name} role="tab" aria-selected={i === at} className={i === at ? "on" : ""} onClick={() => setAt(i)}>
+            <b>{x.name}</b><small>{x.tag}</small>
+          </button>
+        ))}
+      </div>
+      <div className="hero lpace-card" role="tabpanel" aria-live="polite">
+        <span className="lbl">How it works</span>
+        <span className="ht">{p.name}</span>
+        <p className="lpace-text">{p.text}</p>
+        <div className="lpace-facts">{p.facts.map((f) => <span key={f}>{f}</span>)}</div>
+        <span className="lbl lpace-wk">A typical week</span>
+        <div className="lpace-week">
+          {p.week.map((d, k) => (
+            <span key={k} className={d ? "" : "rest"}><small>{WEEKDAYS[k]}</small><b>{d || "Rest"}</b></span>
+          ))}
+        </div>
+      </div>
     </div>
-    <p className="lplan" role="tabpanel" aria-live="polite">{PLANS[at][1]}</p>
-  </>;
+  );
 }
 
 /** Made-up friends for the social section. */
@@ -82,11 +109,14 @@ const FRIENDS: { name: string; today: string; done: boolean; streak: number; fla
  * iPhone, coming soon. Plain buttons, not store badges, since neither store has it yet.
  */
 function StoreLinks() {
+  // Straight to the newest APK file once GitHub says which it is; the releases page until then.
+  const [apk, setApk] = useState<{ url: string; version: string } | null>(null);
+  useEffect(() => { latestRelease().then((r) => r && setApk(r)).catch(() => {}); }, []);
   return (
     <div className="lstores">
-      <a className="lstore" href={`${RELEASES_URL}/latest`} target="_blank" rel="noopener">
+      <a className="lstore" href={apk?.url ?? `${RELEASES_URL}/latest`} {...(apk ? { download: "" } : { target: "_blank", rel: "noopener" })}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 20h14" /></svg>
-        <span><small>Download for</small><b>Android</b></span>
+        <span><small>Download for</small><b>Android{apk && <em> {apk.version}</em>}</b></span>
       </a>
       <span className="lstore soon" aria-disabled="true">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></svg>

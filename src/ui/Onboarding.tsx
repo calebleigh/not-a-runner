@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { DN, WALK_MINUTES, WHY_IDEAS as WANTS, addDays, buildSpec, fmtLong, isRaceGoal, isWalkGoal, onboardingStart, parseBirthday, tooSoon, type PlanProfile, type RaceGoal, type StartLevel } from "../training";
+import { DateWheels, fmtBirthday } from "./DateWheels";
 import { LookControls } from "./LookControls";
 import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
@@ -165,7 +166,10 @@ export function Onboarding() {
       sub = "Both are optional. We'll have cake on your birthday.";
       body = <>
         <label className="onbfield">Name<input className="xt" maxLength={20} placeholder="Your name" value={d.name} onChange={(e) => set({ name: e.target.value })} /></label>
-        <label className="onbfield">Birthday<input className="xt" type="date" max={ymd(model.today)} value={d.birthday} onChange={(e) => set({ birthday: e.target.value })} /></label>
+        <div className="onbfield">
+          <span className="dw-head">Birthday{d.birthday ? <><b>{fmtBirthday(d.birthday)}</b><button className="dw-clear" onClick={() => set({ birthday: "" })}>Clear</button></> : <small>Scroll to set it, or skip</small>}</span>
+          <DateWheels value={d.birthday} maxYear={model.today.getFullYear()} onChange={(v) => set({ birthday: v })} />
+        </div>
       </>;
       cta = d.name.trim() || d.birthday ? "Next" : "Skip";
       break;

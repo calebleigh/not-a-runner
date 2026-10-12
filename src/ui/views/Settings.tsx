@@ -7,6 +7,7 @@ import { HealthSection } from "../HealthSection";
 import { useApp } from "../app-state";
 import { Icon } from "../icons";
 import { LookControls, useLook } from "../LookControls";
+import { DateWheels, fmtBirthday } from "../DateWheels";
 import { BUILT_AT, applyUpdate, checkForUpdate, useUpdateReady, type CheckResult } from "../updates";
 import { APP_VERSION, IS_NATIVE } from "../apk";
 import { trackLogText } from "../trackLog";
@@ -80,6 +81,7 @@ function AboutYou() {
   const st = state.settings;
   const [name, setName] = useField(st.name || "");
   const [bday, setBday] = useField(st.birthday || "");
+  const [bdayOpen, setBdayOpen] = useState(false);
   const whys = whyList(st);
   const [wt, setWt] = useField(st.startWt ? String(st.startWt) : "");
   const [goal, setGoal] = useField(st.goalWt ? String(st.goalWt) : "");
@@ -97,12 +99,18 @@ function AboutYou() {
           <input className="txtin" id="pName" maxLength={20} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
             onBlur={() => update((s) => { const v = name.trim(); if (v) s.settings.name = v; else delete s.settings.name; })} />
         </label>
-        <label className={"setrow" + (b?.isToday ? " bdaytoday" : "")} htmlFor="pBday">
+        <div className={"setrow" + (bdayOpen ? " col" : "") + (b?.isToday ? " bdaytoday" : "")}>
           <span className="withicon">{b?.isToday && <Icon.cake />}<span>Birthday<small>{bdayNote}</small></span></span>
-          <input className="txtin" id="pBday" type="date" max={new Date().toISOString().slice(0, 10)} value={bday}
-            onChange={(e) => setBday(e.target.value)}
-            onBlur={() => update((s) => { if (parseBirthday(bday)) s.settings.birthday = bday; else delete s.settings.birthday; })} />
-        </label>
+          {!bdayOpen
+            ? <button className="chip" onClick={() => setBdayOpen(true)}>{st.birthday ? fmtBirthday(st.birthday) : "Add"}</button>
+            : <>
+              <DateWheels value={bday} onChange={setBday} />
+              <span className="btnpair">
+                <button className="chip" onClick={() => { update((s) => { if (parseBirthday(bday)) s.settings.birthday = bday; }); setBdayOpen(false); }}>Done</button>
+                {st.birthday && <button className="chip" onClick={() => { update((s) => { delete s.settings.birthday; }); setBday(""); setBdayOpen(false); }}>Remove</button>}
+              </span>
+            </>}
+        </div>
         <button className="setrow whybtn" onClick={() => openSheet({ kind: "why" })}>
           <span>Your why<small>{whys.length ? `${whys.length} ${whys.length === 1 ? "reason" : "reasons"}: ${whys.map(formatWhy).join(" ")}` : "What keeps you going"}</small></span>
           <span className="chip">{whys.length ? "Edit" : "Add"}</span>
