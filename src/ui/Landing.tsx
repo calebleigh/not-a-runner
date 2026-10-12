@@ -12,12 +12,12 @@ const MODES = ["Bike", "Walk", "Lift", "Walk/run", "Hike", "Run", "Rest"];
 /** The headline's second line, one at a time: things people want, said kindly. */
 const DREAMS = [
   "Train for a race anyway.",
-  "Walk your way fit.",
+  "Walk your way to fitness.",
   "Keep up with your kids.",
   "Build habits that stick.",
   "Lose weight one walk at a time.",
   "Feel better every day.",
-  "Get outside more.",
+  "Spend more time outside.",
   "Move more, your way.",
 ];
 const DREAM_MS = 2800;
