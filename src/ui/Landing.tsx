@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GoogleButton, useSync } from "./SyncSection";
-import { IS_NATIVE } from "./apk";
+import { IS_NATIVE, RELEASES_URL } from "./apk";
 import { useApp } from "./app-state";
 import { Icon, StreakFlame } from "./icons";
 import { Logo } from "./Logo";
@@ -56,6 +56,51 @@ const FRIENDS: { name: string; today: string; done: boolean; streak: number; fla
   { name: "Jake", today: "Bike 25 min to go", done: false, streak: 12, flames: 2 },
   { name: "Grandpa", today: "Walk 20 min, done", done: true, streak: 87, flames: 3 },
 ];
+
+/**
+ * Get the app: the Android download (the latest GitHub release, until it's on Google Play) and
+ * iPhone, coming soon. Plain buttons, not store badges, since neither store has it yet.
+ */
+function StoreLinks() {
+  return (
+    <div className="lstores">
+      <a className="lstore" href={`${RELEASES_URL}/latest`} target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 20h14" /></svg>
+        <span><small>Download for</small><b>Android</b></span>
+      </a>
+      <span className="lstore soon" aria-disabled="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></svg>
+        <span><small>Coming soon</small><b>iPhone</b></span>
+      </span>
+    </div>
+  );
+}
+
+/** The website's top bar: see-through over the hero, solid once you scroll. */
+function LandHeader({ onStart, signedIn }: { onStart: () => void; signedIn: boolean }) {
+  const [solid, setSolid] = useState(false);
+  useEffect(() => {
+    const on = () => setSolid(window.scrollY > 40);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+  const jump = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "start" });
+  };
+  return (
+    <nav className={"lnav" + (solid ? " solid" : "")} aria-label="Site">
+      <a className="lnav-brand" href="#top" onClick={jump("top")}><Logo size={28} /><b>Not a Runner</b></a>
+      <span className="lnav-links">
+        <a href="#how" onClick={jump("how")}>How it works</a>
+        <a href="#friends" onClick={jump("friends")}>Friends</a>
+        <a href="#plans" onClick={jump("plans")}>Plans</a>
+      </span>
+      <button className="btn solid small lnav-go" onClick={onStart}>{signedIn ? "Build my plan" : "Get started"}</button>
+    </nav>
+  );
+}
 
 /** Wait for the launch splash to clear before playing an entrance. */
 function useAfterSplash(): boolean {
@@ -114,7 +159,8 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
   );
 
   return (
-    <div className="land">
+    <div className="land" id="top">
+      {!heroOnly && <LandHeader onStart={onStart} signedIn={signedIn} />}
       <header className={"lhero" + (go ? " go" : "")}>
         <svg className="lroute" viewBox="0 0 400 220" preserveAspectRatio="none" aria-hidden="true">
           <path pathLength="1" d="M-10 190 C 60 150, 90 200, 150 160 S 240 60, 300 100 S 380 40, 410 20" />
@@ -125,6 +171,7 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
           <h1 className="lh1"><span>Hate running?</span> <Dreams go={go} /></h1>
           <p className="lsub">Walk, bike and lift your way to a 5K, a habit that sticks, or just feeling better. Running only if you want it, when your body is ready.</p>
           {ctas}
+          {!heroOnly && <StoreLinks />}
           <button className="btn small lback" onClick={() => openSheet({ kind: "import" })}>I have a backup code</button>
           {heroOnly && <p className="ldisc lhero-disc">Not medical advice. Check with your doctor before starting a new exercise program.</p>}
         </div>
@@ -144,7 +191,7 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
         <Stat value={0} label="Gym needed" />
       </section>
 
-      <section className="lsec">
+      <section className="lsec" id="how">
         <Reveal><h2 className="lh2">Running is optional.</h2><p className="llead">Walk, ride, lift or work up to a race. It all counts, and the plan meets you where you are.</p></Reveal>
         <div className="lfeat">
           {FEATURES.map((f, i) => (
@@ -177,7 +224,7 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
         </div>
       </section>
 
-      <section className="lsec">
+      <section className="lsec" id="friends">
         <Reveal><h2 className="lh2">Better together.</h2><p className="llead">Bring your family and friends. See each other's streaks and whether today's done, then send a poke. Nicely, mostly.</p></Reveal>
         <Reveal className="lsocial">
           <div className="lfriends">
@@ -199,7 +246,7 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
         </Reveal>
       </section>
 
-      <section className="lsec">
+      <section className="lsec" id="plans">
         <Reveal><h2 className="lh2">Pick your pace.</h2><p className="llead">Every plan starts gentle. Change it whenever you like.</p></Reveal>
         <Reveal className="lgoals">{PLANS.map((g) => <span key={g}>{g}</span>)}</Reveal>
       </section>
@@ -207,8 +254,9 @@ export function Landing({ onStart, heroOnly = false }: { onStart: () => void; he
       <section className="lsec lend">
         <Reveal>
           <h2 className="lh2">Ready when you are.</h2>
-          <p className="lsub">Free. No account needed. Your plan lives on your phone.</p>
+          <p className="lsub">Free. No account needed. Use it right here, or get the app.</p>
           {ctas}
+          <StoreLinks />
         </Reveal>
         <p className="ldisc">Not medical advice. Check with your doctor before starting a new exercise program.</p>
         <a className="lpriv" href="/privacypolicy.html">Privacy policy</a>

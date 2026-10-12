@@ -909,7 +909,30 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);ba
 
 /* Landing: what someone without an account sees first */
 .land{padding:0 16px calc(28px + var(--sab));overflow-x:clip}
-.land>.lsec{max-width:1040px;margin-inline:auto}
+.land>.lsec{max-width:1040px;margin-inline:auto;scroll-margin-top:72px}
+/* Website header: over the hero at first, solid with a line once scrolled. */
+.lnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:16px;padding:calc(10px + var(--sat)) max(16px,calc((100vw - 1040px) / 2)) 10px;transition:background .3s,border-color .3s,backdrop-filter .3s;border-bottom:1px solid transparent}
+.lnav.solid{background:color-mix(in srgb,var(--paper) 88%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom-color:var(--line)}
+.lnav-brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.lnav-brand b{font:800 italic 22px/1 var(--display);text-transform:uppercase;letter-spacing:-.01em;white-space:nowrap}
+.lnav-links{display:none;gap:26px;margin-left:auto}
+.lnav-links a{color:var(--muted);text-decoration:none;font:600 15px var(--body)}
+.lnav-links a:hover{color:var(--ink)}
+.lnav-go{margin-left:auto;margin-top:0;width:auto;padding:9px 16px}
+@media (min-width:760px){.lnav-links{display:flex}.lnav-go{margin-left:8px}}
+@media (max-width:359px){.lnav-brand b{display:none}}
+.lnav~.lhero{padding-top:calc(76px + var(--sat))}
+/* Get the app */
+.lstores{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.lstore{display:flex;align-items:center;gap:10px;min-width:170px;padding:9px 16px;border:1px solid var(--line);background:var(--surface);border-radius:min(12px,var(--rmax));color:var(--ink);text-decoration:none;text-align:left}
+a.lstore:hover{border-color:var(--accent)}
+.lstore svg{width:26px;height:26px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lstore small{display:block;font:600 11px var(--body);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.lstore b{display:block;font:800 20px/1.1 var(--display)}
+.lstore.soon{opacity:.55;cursor:default}
+.lstore.soon svg{stroke:var(--muted)}
+.lhero.go .lstores{animation:l-up .6s var(--ease) 1.25s both}
+.lhero:not(.go) .lstores{opacity:0}
 .lhero{position:relative;isolation:isolate;min-height:100svh;display:flex;align-items:center;justify-content:center;padding:calc(28px + var(--sat)) 0 28px}
 .lhero::before{content:"";position:absolute;inset:0 -16px;z-index:-1;pointer-events:none;-webkit-mask-image:linear-gradient(#000 65%,transparent);mask-image:linear-gradient(#000 65%,transparent);
   background:radial-gradient(min(640px,90vw) min(520px,70vh) at 50% 40%,rgba(var(--accent-rgb),.22),transparent 70%),repeating-linear-gradient(135deg,rgba(var(--accent-rgb),.04) 0 14px,transparent 14px 28px);
