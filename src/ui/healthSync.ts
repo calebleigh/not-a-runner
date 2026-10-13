@@ -1,8 +1,8 @@
 // Health Connect (Apple Health later) import: on or off, when it last ran, and workouts waiting
 // for an answer. Kept on this device; what it brings in syncs like anything you log.
 import { useSyncExternalStore } from "react";
-import { computeModel, emptyHealthMemory, importHealth, resolveConflict, trimHealthMemory, type ConflictChoice, type HealthConflict, type HealthImportResult, type HealthMemory, type State } from "../training";
-import { connectHealth, healthAllowed, healthName, readHealth } from "../native/health";
+import { computeModel, emptyHealthMemory, importHealth, resolveConflict, startOfDay, trimHealthMemory, type ConflictChoice, type HealthConflict, type HealthData, type HealthImportResult, type HealthMemory, type State } from "../training";
+import { connectHealth, healthAllowed, healthName, readHealth, stepsAllowed } from "../native/health";
 
 export interface HealthStatus {
   on: boolean;
@@ -57,19 +57,34 @@ export function importSummary(r: HealthImportResult, quiet = false): string {
   return parts.length || asks ? `From ${healthName}: ${parts.join(", ") || "nothing new"}.${asks}` : "";
 }
 
-/** Reads the health store and brings it in. Returns the summary ("" when nothing changed). */
-export async function importHealthNow(update: Update, opts: { days?: number; quiet?: boolean } = {}): Promise<string> {
+/**
+ * Why "Import now" brought nothing new, in plain words: steps aren't shared with the app, the
+ * health store has none for today (the step app isn't saving to it), or it's all in already.
+ */
+async function nothingNew(data: HealthData, started: boolean): Promise<string> {
+  if (!(await stepsAllowed())) return `${healthName} isn't sharing steps with Not a Runner. Tap Open ${healthName} below and turn on Steps.`;
+  const today = startOfDay(new Date()).getTime();
+  const n = data.steps.find((s) => startOfDay(s.date).getTime() === today)?.steps ?? 0;
+  if (!n) return `${healthName} has no steps for today. In Samsung Health (or your step app), open Settings, then ${healthName}, and let it share steps.`;
+  if (!started) return `${healthName} has ${Math.round(n).toLocaleString("en-US")} steps today. Steps count once your plan starts.`;
+  return `Up to date. ${Math.round(n).toLocaleString("en-US")} steps today.`;
+}
+
+/** Reads the health store and brings it in. Returns the summary ("" when nothing changed, unless `explain`). */
+export async function importHealthNow(update: Update, opts: { days?: number; quiet?: boolean; explain?: boolean } = {}): Promise<string> {
   if (!status.on || status.busy) return "";
   set({ busy: true, error: undefined });
   try {
     const data = await readHealth(opts.days ?? (status.last ? DAYS : FIRST_DAYS));
     const mem: HealthMemory = structuredClone(status.mem);
     let result: HealthImportResult = { stepDays: 0, workouts: 0, weights: 0, conflicts: 0 };
+    let started = true;
     const now = new Date();
-    update((draft) => { result = importHealth(draft, computeModel(draft, now), data, mem); });
+    update((draft) => { const m = computeModel(draft, now); started = m.rawWeek >= 1; result = importHealth(draft, m, data, mem); });
     trimHealthMemory(mem, now.getTime());
     set({ busy: false, last: Date.now(), mem });
-    return importSummary(result, opts.quiet);
+    const summary = importSummary(result, opts.quiet);
+    return summary || (opts.explain ? nothingNew(data, started) : "");
   } catch (e) {
     set({ busy: false, error: `Couldn't read ${healthName}. ${e instanceof Error ? e.message : ""}`.trim() });
     return "";

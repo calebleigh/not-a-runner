@@ -47,6 +47,15 @@ export async function healthAllowed(): Promise<boolean> {
   }
 }
 
+/** Whether steps in particular can be read (connecting only needs steps or workouts). */
+export async function stepsAllowed(): Promise<boolean> {
+  try {
+    return (await (await mod()).Health.checkAuthorization({ read: ["steps"] })).readAuthorized.includes("steps");
+  } catch {
+    return false;
+  }
+}
+
 export async function openHealthSettings() {
   try { await (await mod()).Health.openHealthConnectSettings(); } catch { /* not on this phone */ }
 }

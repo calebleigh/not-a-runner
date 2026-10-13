@@ -23,7 +23,7 @@ export function HealthSection() {
     const r = await turnOnHealth(update);
     if (r.ok) toast(r.summary || `Connected to ${healthName}.`);
   };
-  const now = async () => { toast((await importHealthNow(update)) || "Already up to date."); };
+  const now = async () => { const s = await importHealthNow(update, { explain: true }); if (s) toast(s); };
 
   return (
     <div className="area-health">
