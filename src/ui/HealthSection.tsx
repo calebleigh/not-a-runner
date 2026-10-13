@@ -43,7 +43,7 @@ export function HealthSection() {
           <>
             <div className="setrow">
               <span>Bringing in steps, workouts and weigh-ins
-                <small aria-live="polite">{h.error || (h.busy ? "Importing" : h.last ? `Last import ${ago(h.last)}` : "")}</small>
+                <small aria-live="polite">{h.error || (h.busy ? "Importing" : h.note || (h.last ? `Last import ${ago(h.last)}` : ""))}</small>
               </span>
               <span className="btnpair">
                 <button className="chip" disabled={h.busy} onClick={now}>Import now</button>

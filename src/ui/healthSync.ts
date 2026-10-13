@@ -10,6 +10,8 @@ export interface HealthStatus {
   /** When the last import finished (ms). */
   last: number | null;
   error?: string;
+  /** What the last "Import now" found, shown on the card (this session only). */
+  note?: string;
   mem: HealthMemory;
 }
 
@@ -62,18 +64,18 @@ export function importSummary(r: HealthImportResult, quiet = false): string {
  * health store has none for today (the step app isn't saving to it), or it's all in already.
  */
 async function nothingNew(data: HealthData, started: boolean): Promise<string> {
-  if (!(await stepsAllowed())) return `${healthName} isn't sharing steps with Not a Runner. Tap Open ${healthName} below and turn on Steps.`;
+  if (!(await stepsAllowed())) return "Steps aren't shared with this app.";
   const today = startOfDay(new Date()).getTime();
-  const n = data.steps.find((s) => startOfDay(s.date).getTime() === today)?.steps ?? 0;
-  if (!n) return `${healthName} has no steps for today. In Samsung Health (or your step app), open Settings, then ${healthName}, and let it share steps.`;
-  if (!started) return `${healthName} has ${Math.round(n).toLocaleString("en-US")} steps today. Steps count once your plan starts.`;
-  return `Up to date. ${Math.round(n).toLocaleString("en-US")} steps today.`;
+  const n = Math.round(data.steps.find((s) => startOfDay(s.date).getTime() === today)?.steps ?? 0).toLocaleString("en-US");
+  if (n === "0") return `${healthName} has no steps today.`;
+  if (!started) return `${n} steps today. They count once your plan starts.`;
+  return `Up to date. ${n} steps today.`;
 }
 
 /** Reads the health store and brings it in. Returns the summary ("" when nothing changed, unless `explain`). */
 export async function importHealthNow(update: Update, opts: { days?: number; quiet?: boolean; explain?: boolean } = {}): Promise<string> {
   if (!status.on || status.busy) return "";
-  set({ busy: true, error: undefined });
+  set({ busy: true, error: undefined, note: undefined });
   try {
     const data = await readHealth(opts.days ?? (status.last ? DAYS : FIRST_DAYS));
     const mem: HealthMemory = structuredClone(status.mem);
@@ -84,7 +86,10 @@ export async function importHealthNow(update: Update, opts: { days?: number; qui
     trimHealthMemory(mem, now.getTime());
     set({ busy: false, last: Date.now(), mem });
     const summary = importSummary(result, opts.quiet);
-    return summary || (opts.explain ? nothingNew(data, started) : "");
+    if (summary || !opts.explain) return summary;
+    const note = await nothingNew(data, started);
+    set({ note });
+    return note;
   } catch (e) {
     set({ busy: false, error: `Couldn't read ${healthName}. ${e instanceof Error ? e.message : ""}`.trim() });
     return "";
