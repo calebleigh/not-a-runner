@@ -52,13 +52,17 @@ final class PhoneStepCounter {
     }
 
     /** Takes a reading (when allowed) and returns the days so far. */
-    static synchronized DailySteps sample(Context ctx, long timeoutMs) {
+    static DailySteps sample(Context ctx, long timeoutMs) {
+        return record(ctx, allowed(ctx) ? read(ctx, timeoutMs) : -1);
+    }
+
+    /** Adds a counter value (ignored when negative) and returns the days so far. */
+    static synchronized DailySteps record(Context ctx, long count) {
         SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         DailySteps d = new DailySteps();
         d.lastCount = p.getLong("count", -1);
         d.lastAt = p.getLong("at", 0);
         d.decodeDays(p.getString("days", ""));
-        long count = allowed(ctx) ? read(ctx, timeoutMs) : -1;
         if (count >= 0) {
             long now = System.currentTimeMillis();
             d.sample(count, now, now - SystemClock.elapsedRealtime(), ZoneId.systemDefault());

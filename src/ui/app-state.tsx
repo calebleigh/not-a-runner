@@ -3,7 +3,8 @@ import { createStorage } from "../storage/store";
 import { initSync, noteChange, signOutSync } from "../sync/controller";
 import { mirrorSend, onMirror } from "./mirror";
 import { applyAccent, applyMode, applyShape, isLight, type Shape } from "./theme";
-import { computeModel, emptyState, mergeState, startOfDay, type Model, type State } from "../training";
+import { computeModel, dayKey, emptyState, mergeState, parseDayKey, startOfDay, type Model, type State } from "../training";
+import { useLiveSteps } from "./phoneSteps";
 
 export type Tab = "home" | "today" | "plan" | "stats" | "settings";
 export type SheetSpec =
@@ -177,7 +178,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Recompute the plan when state changes or the date rolls over (not every minute).
   const dayMs = startOfDay(now).getTime();
-  const model = useMemo(() => (state ? computeModel(state, new Date(dayMs)) : null), [state, dayMs]);
+  // Today's steps as you walk (phone step counter) show right away; they're saved every few minutes.
+  const live = useLiveSteps();
+  const model = useMemo(() => {
+    if (!state) return null;
+    const m = computeModel(state, new Date(dayMs));
+    if (!live || live.day !== dayMs) return m;
+    const key = dayKey(m.spec, new Date(dayMs)), [w] = parseDayKey(key);
+    if (w < 1 || w > m.spec.weeks || (state.steps[key] || 0) >= live.steps) return m;
+    return computeModel({ ...state, steps: { ...state.steps, [key]: live.steps } }, new Date(dayMs));
+  }, [state, dayMs, live]);
 
   if (!state || !model) return null;
   return (

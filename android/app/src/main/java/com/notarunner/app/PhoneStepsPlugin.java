@@ -1,5 +1,11 @@
 package com.notarunner.app;
 
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -16,6 +22,9 @@ import java.util.Map;
  */
 @CapacitorPlugin(name = "PhoneSteps")
 public class PhoneStepsPlugin extends Plugin {
+    /** Listens while the app is on screen, so today's count climbs as you walk. */
+    private SensorEventListener live;
+
 
     @PluginMethod
     public void available(PluginCall call) {
@@ -39,6 +48,46 @@ public class PhoneStepsPlugin extends Plugin {
     public void stop(PluginCall call) {
         PhoneStepCounter.cancel(getContext());
         call.resolve();
+    }
+
+    /** Sends "today" ({date, steps}) as the counter moves, until unwatch. */
+    @PluginMethod
+    public void watch(PluginCall call) {
+        SensorManager sm = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+        Sensor s = sm == null ? null : sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        if (s == null || !PhoneStepCounter.allowed(getContext())) { call.resolve(); return; }
+        stopLive();
+        live = new SensorEventListener() {
+            @Override public void onSensorChanged(SensorEvent e) {
+                DailySteps d = PhoneStepCounter.record(getContext(), (long) e.values[0]);
+                String today = LocalDate.now().toString();
+                JSObject o = new JSObject();
+                o.put("date", today);
+                o.put("steps", d.days.getOrDefault(today, 0L));
+                notifyListeners("today", o);
+            }
+            @Override public void onAccuracyChanged(Sensor sensor, int accuracy) { }
+        };
+        sm.registerListener(live, s, SensorManager.SENSOR_DELAY_NORMAL);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void unwatch(PluginCall call) {
+        stopLive();
+        call.resolve();
+    }
+
+    private void stopLive() {
+        if (live == null) return;
+        SensorManager sm = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+        if (sm != null) sm.unregisterListener(live);
+        live = null;
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        stopLive();
     }
 
     /** Takes a reading, then returns steps per day for the last `days` days. */

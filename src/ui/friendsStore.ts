@@ -77,12 +77,13 @@ export function FriendsSync() {
   const who = { name: state.settings.name || acct?.name || "", photo: acct?.photo ?? null };
   const card = acct ? friendCard(model, who) : null;
   const json = card ? JSON.stringify(card) : "";
-  const last = useRef("");
+  const last = useRef(""), lastAt = useRef(0);
   useEffect(() => {
     if (!uid || !card || json === last.current) return;
+    // At most every 30 seconds, so a step count climbing on screen doesn't write on every step.
     const t = window.setTimeout(async () => {
-      try { await (await social()).publishCard(uid, card); last.current = json; } catch { /* retried on the next change */ }
-    }, 1500);
+      try { await (await social()).publishCard(uid, card); last.current = json; lastAt.current = Date.now(); } catch { /* retried on the next change */ }
+    }, Math.max(1500, 30_000 - (Date.now() - lastAt.current)));
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, json]);

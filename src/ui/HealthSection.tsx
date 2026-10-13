@@ -3,7 +3,7 @@ import { DN, hms, type HealthConflict } from "../training";
 import { healthAvailable, healthName, openHealthSettings, type HealthAvailability } from "../native/health";
 import { useApp } from "./app-state";
 import { IS_NATIVE } from "./apk";
-import { importPhoneSteps, turnOffPhoneSteps, turnOnPhoneSteps, usePhoneSteps } from "./phoneSteps";
+import { importPhoneSteps, turnOffPhoneSteps, turnOnPhoneSteps, usePhoneSteps, watchLiveSteps } from "./phoneSteps";
 import { phoneStepsAvailable } from "../native/phoneSteps";
 import { answerConflict, autoImportHealth, importHealthNow, turnOffHealth, turnOnHealth, useHealth } from "./healthSync";
 
@@ -128,6 +128,19 @@ export function HealthAutoImport() {
     const t = window.setInterval(() => { if (document.visibilityState === "visible") importPhoneSteps(update); }, 5 * 60 * 1000);
     return () => { document.removeEventListener("visibilitychange", onVis); clearInterval(t); };
   }, [update, toast]);
+
+  // The live count while the app is on screen.
+  const phoneOn = usePhoneSteps();
+  useEffect(() => {
+    if (!IS_NATIVE || !phoneOn) return;
+    let stop: (() => void) | null = null, gone = false;
+    const begin = () => { if (!stop) watchLiveSteps().then((s) => { if (gone) s(); else stop = s; }); };
+    const end = () => { stop?.(); stop = null; };
+    const onVis = () => (document.visibilityState === "visible" ? begin() : end());
+    if (document.visibilityState === "visible") begin();
+    document.addEventListener("visibilitychange", onVis);
+    return () => { gone = true; end(); document.removeEventListener("visibilitychange", onVis); };
+  }, [phoneOn]);
   return null;
 }
 

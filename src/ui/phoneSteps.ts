@@ -1,8 +1,8 @@
 // The phone's own step count: on or off (kept on this device), and bringing it into the app. What it
 // brings in syncs like steps you type. Health Connect can bring steps too; each day keeps the bigger.
 import { useSyncExternalStore } from "react";
-import { computeModel, mergeSteps, type State } from "../training";
-import { phoneStepsAllowed, readPhoneSteps, startPhoneSteps, stopPhoneSteps } from "../native/phoneSteps";
+import { computeModel, mergeSteps, startOfDay, type State } from "../training";
+import { phoneStepsAllowed, readPhoneSteps, startPhoneSteps, stopPhoneSteps, watchPhoneSteps } from "../native/phoneSteps";
 
 const KEY = "phoneSteps";
 const DAYS = 14;
@@ -33,6 +33,30 @@ export async function turnOnPhoneSteps(): Promise<boolean> {
 export async function turnOffPhoneSteps() {
   setOn(false);
   await stopPhoneSteps();
+}
+
+/**
+ * Today's count as you walk, shown on screen right away but saved only by the regular import (every
+ * few minutes), so syncing and friend cards don't write on every step.
+ */
+export interface LiveSteps { day: number; steps: number }
+let live: LiveSteps | null = null;
+const liveSubs = new Set<() => void>();
+const subscribeLive = (f: () => void) => { liveSubs.add(f); return () => { liveSubs.delete(f); }; };
+export const useLiveSteps = () => useSyncExternalStore(subscribeLive, () => live);
+
+/** Starts the live count (call while the app is on screen). Returns a stop function. */
+export async function watchLiveSteps(): Promise<() => void> {
+  if (!on) return () => {};
+  let lastAt = 0;
+  return watchPhoneSteps((date, steps) => {
+    // Every couple of seconds is plenty for the eye, and keeps the screen from redrawing every step.
+    const t = Date.now(), day = startOfDay(date).getTime();
+    if (live && live.day === day && (live.steps === steps || t - lastAt < 2000)) return;
+    lastAt = t;
+    live = { day, steps };
+    liveSubs.forEach((f) => f());
+  });
 }
 
 let busy = false;
