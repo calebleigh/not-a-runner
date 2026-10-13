@@ -133,6 +133,23 @@ function addExtra(draft: State, key: string, w: HealthWorkout) {
 }
 
 /**
+ * Steps per day into `draft` (from the health store or the phone's own counter): each day keeps the
+ * bigger of what's there and what came in, so two sources never add up. Days outside the plan are
+ * skipped. Returns how many days changed.
+ */
+export function mergeSteps(draft: State, model: Model, steps: { date: Date; steps: number }[]): number {
+  let n = 0;
+  for (const s of steps) {
+    const key = planKey(model, s.date);
+    const v = Math.round(s.steps);
+    if (!key || v <= 0 || (draft.steps[key] || 0) >= v) continue;
+    draft.steps[key] = v;
+    n++;
+  }
+  return n;
+}
+
+/**
  * Brings health data into `draft`. Steps: the bigger of what's there and what came in. Weigh-ins:
  * the week's latest, unless you typed a different one. Workouts: onto the day's planned session when
  * it fits and is empty, otherwise an extra activity. A session you logged yourself becomes a conflict.
@@ -140,13 +157,7 @@ function addExtra(draft: State, key: string, w: HealthWorkout) {
 export function importHealth(draft: State, model: Model, data: HealthData, mem: HealthMemory): HealthImportResult {
   const r: HealthImportResult = { stepDays: 0, workouts: 0, weights: 0, conflicts: 0 };
 
-  for (const s of data.steps) {
-    const key = planKey(model, s.date);
-    const n = Math.round(s.steps);
-    if (!key || n <= 0 || (draft.steps[key] || 0) >= n) continue;
-    draft.steps[key] = n;
-    r.stepDays++;
-  }
+  r.stepDays = mergeSteps(draft, model, data.steps);
 
   const latest = new Map<number, { at: number; lb: number }>();
   for (const x of data.weights) {

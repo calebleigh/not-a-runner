@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  computeModel, emptyHealthMemory, emptyState, healthKindOf, importHealth, resolveConflict, trimHealthMemory,
+  computeModel, emptyHealthMemory, emptyState, healthKindOf, importHealth, mergeSteps, resolveConflict, trimHealthMemory,
   type HealthData, type HealthWorkout, type Model, type State,
 } from "./index";
 
@@ -43,6 +43,16 @@ describe("health import", () => {
     ] });
     expect(s.steps).toEqual({ "2-0": 9000, "2-1": 10234 });
     expect(r.stepDays).toBe(1);
+  });
+
+  it("keeps the bigger count when the phone and the health store both have steps", () => {
+    const s = emptyState();
+    const model = computeModel(s, NOW);
+    const oct12 = new Date(2026, 9, 12);
+    expect(mergeSteps(s, model, [{ date: oct12, steps: 5812 }])).toBe(1);
+    expect(mergeSteps(s, model, [{ date: oct12, steps: 5790 }])).toBe(0);
+    expect(mergeSteps(s, model, [{ date: oct12, steps: 6020.4 }])).toBe(1);
+    expect(s.steps).toEqual({ "2-0": 6020 });
   });
 
   it("takes the week's latest weigh-in but leaves one you typed", () => {

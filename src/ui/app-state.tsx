@@ -24,7 +24,6 @@ export type SheetSpec =
   | { kind: "privacy" }
   | { kind: "update" }
   | { kind: "health" }
-  | { kind: "stepsHelp" }
   | { kind: "account" }
   | { kind: "friends" }
   | { kind: "friend"; uid: string }

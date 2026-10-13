@@ -11,6 +11,7 @@ public class MainActivity extends BridgeActivity {
         // The app's own native helpers (registered before the bridge starts).
         registerPlugin(InstallHelpPlugin.class);
         registerPlugin(WorkoutNoticePlugin.class);
+        registerPlugin(PhoneStepsPlugin.class);
         super.onCreate(savedInstanceState);
         // No Android stretch when scrolling past the top or bottom.
         if (getBridge() != null) getBridge().getWebView().setOverScrollMode(View.OVER_SCROLL_NEVER);

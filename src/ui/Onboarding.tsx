@@ -4,6 +4,8 @@ import { DateWheels, fmtBirthday } from "./DateWheels";
 import { LookControls } from "./LookControls";
 import { TooSoonNote } from "./TooSoonNote";
 import { useApp } from "./app-state";
+import { turnOffPhoneSteps, turnOnPhoneSteps, usePhoneSteps } from "./phoneSteps";
+import { canCountPhoneSteps } from "../native/phoneSteps";
 import { Welcome } from "./Landing";
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -106,6 +108,7 @@ export function Onboarding() {
   const { model, update, setTab } = useApp();
   const start = onboardingStart(model.today);
   const [step, setStep] = useState(0);
+  const phoneSteps = usePhoneSteps();
   const [d, setD] = useState<Draft>({
     name: "", birthday: "", wants: [], wantText: "", plan: null, race: null, raceName: "", raceDate: "", startLevel: null,
     walkMin: 20, days: null, hasBike: true, impactSensitive: false, strength: null, stepGoal: 6000, activeGoal: 30, weight: "", goalWeight: "", gear: [],
@@ -255,11 +258,12 @@ export function Onboarding() {
       sub = "Something to aim for each day. Off is fine too. Hitting your step goal also keeps your streak going.";
       body = <>
         <div className="onbyn">
-          <div><b>Steps</b><small>{d.stepGoal ? `${d.stepGoal.toLocaleString("en-US")} a day, from your phone or watch.` : "No step goal."}</small></div>
+          <div><b>Steps</b><small>{d.stepGoal ? `${d.stepGoal.toLocaleString("en-US")} a day.` : "No step goal."}</small></div>
           <div className="seg onbseg" role="radiogroup" aria-label="Step goal">
             {STEP_GOALS.map((v) => <button key={v} role="radio" aria-checked={d.stepGoal === v} className={d.stepGoal === v ? "sel" : ""} onClick={() => set({ stepGoal: v })}>{v ? `${v / 1000}k` : "Off"}</button>)}
           </div>
         </div>
+        {canCountPhoneSteps && <YesNo on={phoneSteps} title="Count my steps" sub="Your phone counts them all day, with almost no battery." onChange={(v) => { if (v) turnOnPhoneSteps(); else turnOffPhoneSteps(); }} />}
         <div className="onbyn">
           <div><b>Active minutes</b><small>{d.activeGoal ? `${d.activeGoal} minutes a day. Every workout you log counts.` : "No active minutes goal."}</small></div>
           <div className="seg onbseg" role="radiogroup" aria-label="Active minutes goal">
