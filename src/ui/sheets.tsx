@@ -5,7 +5,7 @@ import { trackKindFor } from "./trackFor";
 import { TodoSheetBody } from "./TodoList";
 import { NotesSheetBody, StreakSheetBody } from "./AppHeader";
 import { UpdateSheetBody } from "./UpdateSheet";
-import { HealthSheetBody } from "./HealthSection";
+import { HealthSheetBody, StepsHelpBody } from "./HealthSection";
 import { AccountSheetBody } from "./SyncSection";
 import { FriendSheetBody, FriendsSheetBody, InviteSheetBody } from "./Friends";
 import { useFriends } from "./friendsStore";
@@ -160,6 +160,10 @@ function SheetContent({ spec }: { spec: SheetSpec }) {
     case "health":
       title = `From ${healthName}`;
       body = <HealthSheetBody />;
+      break;
+    case "stepsHelp":
+      title = "Daily steps";
+      body = <StepsHelpBody />;
       break;
     case "update":
       title = "Get the update";
